@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import sys
+
+import read_il
+import write_spirv
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename', help='intput file name')
+    parser.add_argument('-o', help='output file name', metavar='filename')
+
+    args = parser.parse_args()
+    if args.o:
+        output_file_name = args.o
+    else:
+        name, ext = os.path.splitext(args.filename)
+        if ext == '.il':
+            output_file_name = name + '.spv'
+        else:
+            output_file_name = args.filename + '.spv'
+        output_file_name = os.path.basename(output_file_name)
+
+    try:
+        with open(args.filename, 'r') as stream:
+            module = read_il.read_module(stream)
+    except read_il.ParseError as err:
+        sys.stderr.write(os.path.basename(args.filename) + ":"
+                         + err.value + '\n')
+        sys.exit(1)
+
+    with open(output_file_name, 'wb') as stream:
+        write_spirv.write_module(stream, module)
+
+
+if __name__ == '__main__':
+    main()
