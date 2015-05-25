@@ -9,7 +9,6 @@ The work package here is to
 
 ##Bugs and Limitations
 Known bugs and limitations include:
-* Type instructions are not always written in the pretty-printed output
 * Bitmasks are always written as a number
 * Decorations are only implemented for global variables
 * Structure/arrays/matrices/etc. are not pretty-printed

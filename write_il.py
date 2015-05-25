@@ -1,6 +1,8 @@
 import re
 import sys
 
+import spirv
+
 def output_instruction(stream, module, instr, indent='  '):
     """Output one instruction."""
     line = indent
@@ -135,10 +137,17 @@ def output_global_instructions_raw(stream, module):
 
 
 def add_type_if_needed(module, instr, needed_types):
-    if instr.type is not None:
+    if instr.name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         if instr.name != 'OpTypeFunction':
-            if module.type_id_to_name[instr.type] == instr.type:
-                needed_types.add(instr.type)
+            if module.type_id_to_name[instr.result_id] == instr.result_id:
+                needed_types.add(instr.result_id)
+        for operand in instr.operands:
+            if operand[0] == '%':
+                type_instr = module.id_to_instruction[operand]
+                add_type_if_needed(module, type_instr, needed_types)
+    if instr.type is not None:
+        if module.type_id_to_name[instr.type] == instr.type:
+            needed_types.add(instr.type)
 
 
 def get_needed_types(module):
@@ -147,11 +156,16 @@ def get_needed_types(module):
         for basic_block in function.basic_blocks:
             for instr in basic_block.instrs:
                 add_type_if_needed(module, instr, needed_types)
+        for arg in function.arguments:
+            add_type_if_needed(module, module.id_to_instruction[arg], needed_types)
     for instr in module.instructions:
-        if instr.name != 'OpVariable':
+        if instr.name == 'OpVariable':
+            type_instr = module.id_to_instruction[instr.type]
+            assert type_instr.name == 'OpTypePointer'
+            ptr_type_instr = module.id_to_instruction[type_instr.operands[1]]
+            add_type_if_needed(module, ptr_type_instr, needed_types)
+        elif instr.name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_if_needed(module, instr, needed_types)
-    for arg in function.arguments:
-        add_type_if_needed(module, module.id_to_instruction[arg], needed_types)
     return needed_types
 
 
