@@ -316,31 +316,26 @@ def parse_global_variable(lexer, module):
     parse_decorations(lexer, module, new_id)
 
 
-def parse_global_instruction(lexer, module):
-    """Parse the current instruction.
-
-    If the instruction is an 'OpFunction', then the whole function is
-    parsed."""
-    instr = parse_instruction(lexer, module)
-    if instr.name == 'OpFunction':
-        func = parse_function_raw(lexer, module, instr)
-        module.add_function(func)
-    else:
-        module.add_global_instruction(instr)
-
-
-def parse_global_instructions(lexer, module):
-    """Parse all instructions up to the first 'define' keyword."""
+def parse_instructions(lexer, module):
+    """Parse all instructions."""
     while True:
         token = lexer.get_next_token(peek=True, accept_eol=True)
-        if token is None or token == 'define':
+        if token is None:
             return
-        if token == '':
+        elif token == 'define':
+            func = parse_function(lexer, module)
+            module.add_function(func)
+        elif token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
         elif token[0] == '@':
             parse_global_variable(lexer, module)
         else:
-            parse_global_instruction(lexer, module)
+            instr = parse_instruction(lexer, module)
+            if instr.name == 'OpFunction':
+                func = parse_function_raw(lexer, module, instr)
+                module.add_function(func)
+            else:
+                module.add_global_instruction(instr)
 
 
 def parse_basic_block_body(lexer, module, basic_block):
@@ -418,6 +413,7 @@ def parse_arguments(lexer, module):
 
 def parse_function_definition(lexer, module):
     """Parse the 'definition' line of a pretty-printed function."""
+    lexer.get_next_token('define')
     return_type = parse_type(lexer, module)
     name = parse_id(lexer, module)
     arguments = parse_arguments(lexer, module)
@@ -457,25 +453,11 @@ def parse_function(lexer, module):
             raise ParseError('Syntax error')
 
 
-def parse_functions(lexer, module):
-    """Parse all functions."""
-    while True:
-        token = lexer.get_next_token(accept_eol=True)
-        if token == '':
-            lexer.done_with_line()  # This is an empty line -- nothing to do.
-        elif token == 'define':
-            func = parse_function(lexer, module)
-            module.add_function(func)
-        elif token is None:
-            return
-
-
 def read_module(stream):
     module = ir.Module()
     lexer = Lexer(stream)
     try:
-        parse_global_instructions(lexer, module)
-        parse_functions(lexer, module)
+        parse_instructions(lexer, module)
         module.finalize()
         return module
     except ParseError as err:
