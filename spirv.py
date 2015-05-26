@@ -15,6 +15,7 @@ for fmt in TABLES['instructions']:
     OPNAME_TABLE[fmt['name']] = fmt
 
 CONSTANTS = TABLES['constants']
+DECORATIONS = CONSTANTS['Decoration']
 MASKS = TABLES['masks']
 
 TERMINATING_INSTRUCTIONS = [

@@ -3,7 +3,7 @@ import sys
 
 import spirv
 
-def output_instruction(stream, module, instr, indent='  '):
+def output_instruction(stream, module, instr, is_raw_mode, indent='  '):
     """Output one instruction."""
     line = indent
     if instr.result_id is not None:
@@ -11,6 +11,10 @@ def output_instruction(stream, module, instr, indent='  '):
     line = line + instr.name
     if instr.type is not None:
         line = line + ' ' + module.type_id_to_name[instr.type]
+
+    if not is_raw_mode:
+        line = line + format_decorations_for_instr(module, instr)
+
     if instr.operands:
         line = line + ' '
         for operand in instr.operands:
@@ -72,6 +76,14 @@ def format_decoration(decoration_instr):
     return res
 
 
+def format_decorations_for_instr(module, instr):
+    line = ''
+    decorations = get_decorations(module, instr.result_id)
+    for decoration in decorations:
+        line = line + ' ' + format_decoration(decoration)
+    return line
+
+
 def output_global_variable(stream, module, instr):
     """Output one global variable."""
     assert instr.name == 'OpVariable'
@@ -81,9 +93,7 @@ def output_global_variable(stream, module, instr):
     symbol_name = get_symbol_name(module, instr.result_id)
     line = symbol_name + ' = ' + instr.operands[0] + ' ' + variable_type
 
-    decorations = get_decorations(module, instr.result_id)
-    for decoration in decorations:
-        line = line + ' ' + format_decoration(decoration)
+    line = line + format_decorations_for_instr(module, instr)
 
     stream.write(line + '\n')
 
@@ -102,38 +112,38 @@ def output_global_instructions_raw(stream, module):
     for target in output_order:
         for instr in module.initial_instructions:
             if instr.name == target:
-                output_instruction(stream, module, instr, indent='')
+                output_instruction(stream, module, instr, True, indent='')
 
     if module.initial_instructions:
         stream.write('\n')
         for instr in module.initial_instructions:
             if instr.name not in output_order:
-                output_instruction(stream, module, instr, indent='')
+                output_instruction(stream, module, instr, True, indent='')
 
     if module.debug_instructions:
         stream.write('\n')
         for instr in module.debug_instructions:
-            output_instruction(stream, module, instr, indent='')
+            output_instruction(stream, module, instr, True, indent='')
 
     if module.decoration_instructions:
         stream.write('\n')
         for instr in module.decoration_instructions:
-            output_instruction(stream, module, instr, indent='')
+            output_instruction(stream, module, instr, True, indent='')
 
     if module.type_declaration_instructions:
         stream.write('\n')
         for instr in module.type_declaration_instructions:
-            output_instruction(stream, module, instr, indent='')
+            output_instruction(stream, module, instr, True, indent='')
 
     if module.constant_instructions:
         stream.write('\n')
         for instr in module.constant_instructions:
-            output_instruction(stream, module, instr, indent='')
+            output_instruction(stream, module, instr, True, indent='')
 
     if module.global_variable_instructions:
         stream.write('\n')
         for instr in module.global_variable_instructions:
-            output_instruction(stream, module, instr, indent='')
+            output_instruction(stream, module, instr, True, indent='')
 
 
 def add_type_if_needed(module, instr, needed_types):
@@ -182,25 +192,25 @@ def output_global_instructions(stream, module):
     for target in output_order:
         for instr in module.initial_instructions:
             if instr.name == target:
-                output_instruction(stream, module, instr, indent='')
+                output_instruction(stream, module, instr, False, indent='')
 
     if module.initial_instructions:
         stream.write('\n')
         for instr in module.initial_instructions:
             if instr.name not in output_order:
-                output_instruction(stream, module, instr, indent='')
+                output_instruction(stream, module, instr, False, indent='')
 
     if module.type_declaration_instructions:
         stream.write('\n')
         needed_types = get_needed_types(module)
         for instr in module.type_declaration_instructions:
             if instr.result_id in needed_types:
-                output_instruction(stream, module, instr, indent='')
+                output_instruction(stream, module, instr, False, indent='')
 
     if module.constant_instructions:
         stream.write('\n')
         for instr in module.constant_instructions:
-            output_instruction(stream, module, instr, indent='')
+            output_instruction(stream, module, instr, False, indent='')
 
     if module.global_variable_instructions:
         stream.write('\n')
@@ -216,7 +226,7 @@ def output_basic_block(stream, module, basic_block, is_raw_mode):
         stream.write(basic_block.name + ':\n')
 
     for instr in basic_block.instrs:
-        output_instruction(stream, module, instr)
+        output_instruction(stream, module, instr, is_raw_mode)
 
 
 def output_function_raw(stream, module, func):
@@ -226,7 +236,7 @@ def output_function_raw(stream, module, func):
                  + func.function_control + ', ' + func.function_type_id + '\n')
     for arg in func.arguments:
         instr = module.id_to_instruction[arg]
-        output_instruction(stream, module, instr, '')
+        output_instruction(stream, module, instr, True, '')
 
     for basic_block in func.basic_blocks:
         output_basic_block(stream, module, basic_block, True)

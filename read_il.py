@@ -260,6 +260,8 @@ def parse_instruction(lexer, module):
         op_type = None
     operands = []
 
+    parse_decorations(lexer, module, op_result)
+
     for kind in opcode['operands']:
         operands = operands + parse_operand(lexer, module, kind)
         comma = lexer.get_next_token(',', accept_eol=True)
@@ -278,11 +280,12 @@ def parse_decorations(lexer, module, variable_name):
     while True:
         token = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
-            lexer.done_with_line()
+            return
+        elif token not in spirv.DECORATIONS:
             return
 
         decoration = lexer.get_next_token()
-        if not decoration in spirv.CONSTANTS['Decoration']:
+        if not decoration in spirv.DECORATIONS:
             raise ParseError('Unknown decoration ' + decoration)
         token = lexer.get_next_token(peek=True, accept_eol=True)
         operands = [variable_name, decoration]
@@ -319,6 +322,7 @@ def parse_global_variable(lexer, module):
     module.add_global_instruction(instr)
 
     parse_decorations(lexer, module, new_id)
+    lexer.done_with_line()
 
 
 def parse_instructions(lexer, module):
