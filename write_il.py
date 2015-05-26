@@ -232,7 +232,8 @@ def output_basic_block(stream, module, basic_block, is_raw_mode):
 def output_function_raw(stream, module, func):
     """Output one function (raw mode)."""
     stream.write('\n')
-    stream.write(func.name + ' = OpFunction ' + func.return_type + ' '
+    stream.write(func.name + ' = OpFunction '
+                 + module.type_id_to_name[func.return_type] + ' '
                  + func.function_control + ', ' + func.function_type_id + '\n')
     for arg in func.arguments:
         instr = module.id_to_instruction[arg]
