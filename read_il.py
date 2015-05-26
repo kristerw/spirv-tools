@@ -99,10 +99,12 @@ class Lexer(object):
         self.line = None
 
 
-def parse_id(lexer, module):
+def parse_id(lexer, module, accept_eol=False):
     """parse one Id."""
-    token = lexer.get_next_token()
-    if token[0] == '%':
+    token = lexer.get_next_token(accept_eol=accept_eol)
+    if accept_eol and token == '':
+        return ''
+    elif token[0] == '%':
         return token
     elif token in module.type_name_to_id:
         return module.type_name_to_id[token]
@@ -111,7 +113,7 @@ def parse_id(lexer, module):
     elif token[0] == '@':
         new_id = module.get_new_id()
         module.symbol_name_to_id[token] = new_id
-        name = '"' + token[1:] + '"' 
+        name = '"' + token[1:] + '"'
         instr = ir.Instruction('OpName', None, None, [new_id, name])
         module.add_global_instruction(instr)
         return new_id
@@ -214,18 +216,21 @@ def parse_operand(lexer, module, kind):
     """Parse one instruction operand."""
     if kind == 'Id':
         return [parse_id(lexer, module)]
-    elif kind in ['FunctionControlMask',
-                  'LiteralNumber',
+    elif kind in spirv.MASKS:
+        return [lexer.get_next_token()]
+    elif kind in ['LiteralNumber',
                   'LiteralString',
                   'VariableLiterals']:
         return [lexer.get_next_token()]
     elif kind == 'VariableIds' or kind == 'OptionalId':
         operands = []
         while True:
-            token = lexer.get_next_token(accept_eol=True)
-            if token == '':
+            operand_id = parse_id(lexer, module, accept_eol=True)
+            if operand_id == '':
                 return operands
-            operands.append(token)
+            operands.append(operand_id)
+            if lexer.get_next_token(peek=True, accept_eol=True) == ',':
+                lexer.get_next_token()
     elif kind in spirv.CONSTANTS:
         value = lexer.get_next_token()
         if value not in spirv.CONSTANTS[kind]:
