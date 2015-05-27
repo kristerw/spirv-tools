@@ -155,17 +155,17 @@ def parse_global_instructions(binary, module):
         module.add_global_instruction(instr)
 
 
-def parse_basic_block(binary):
+def parse_basic_block(binary, function):
     """Parse one basic block."""
     opcode = binary.get_next_opcode()
     basic_block_id = str(parse_id(binary))
     binary.expect_eol()
-    basic_block = ir.BasicBlock(basic_block_id)
+    basic_block = ir.BasicBlock(function, basic_block_id)
 
     while True:
         opcode = binary.get_next_opcode(peek=True)
         instr = parse_instruction(binary)
-        basic_block.instrs.append(instr)
+        basic_block.add_instruction(instr)
 
         if opcode['name'] in spirv.TERMINATING_INSTRUCTIONS:
             return basic_block
@@ -182,8 +182,7 @@ def parse_function(binary, module):
     while True:
         opcode = binary.get_next_opcode(peek=True)
         if opcode['name'] == 'OpLabel':
-            basic_block = parse_basic_block(binary)
-            function.add_basic_block(basic_block)
+            basic_block = parse_basic_block(binary, function)
         elif opcode['name'] == 'OpFunctionEnd':
             binary.discard_instr()
             return function

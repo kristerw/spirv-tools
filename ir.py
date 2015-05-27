@@ -189,6 +189,7 @@ class GlobalVariable(object):
 class Function(object):
     def __init__(self, module, name, function_control, function_type_id):
         function_type_instr = module.id_to_instruction[function_type_id]
+        self.module = module
         self.function_type_id = function_type_id
         self.name = name
         self.return_type = function_type_instr.operands[0]
@@ -197,14 +198,27 @@ class Function(object):
         self.arguments = []
         self.basic_blocks = []
 
+    def add_argument(self, instr):
+        self.module.id_to_instruction[instr.result_id] = instr
+        self.arguments.append(instr.result_id)
+
     def add_basic_block(self, basic_block):
         self.basic_blocks.append(basic_block)
 
 
 class BasicBlock(object):
-    def __init__(self, name):
+    def __init__(self, function, name):
+        self.function = function
         self.name = name
         self.instrs = []
+        self.module = function.module
+
+        function.add_basic_block(self)
+
+    def add_instruction(self, instr):
+        self.instrs.append(instr)
+        if instr.result_id is not None:
+            self.module.id_to_instruction[instr.result_id] = instr
 
 
 class Instruction(object):

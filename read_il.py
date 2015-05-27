@@ -358,26 +358,26 @@ def parse_basic_block_body(lexer, module, basic_block):
             raise ParseError('Label without terminating previous basic block')
         else:
             instr = parse_instruction(lexer, module)
-            basic_block.instrs.append(instr)
+            basic_block.add_instruction(instr)
             if token in spirv.TERMINATING_INSTRUCTIONS:
                 return
 
 
-def parse_basic_block(lexer, module, initial_instrs):
+def parse_basic_block(lexer, module, function, initial_instrs):
     """Parse one basic block."""
     token = lexer.get_next_token()
     lexer.done_with_line()
-    basic_block = ir.BasicBlock(token[:-1])
+    basic_block = ir.BasicBlock(function, token[:-1])
 
     for instr in initial_instrs:
-        basic_block.instrs.append(instr)
+        basic_block.add_instruction(instr)
 
     parse_basic_block_body(lexer, module, basic_block)
 
     return basic_block
 
 
-def parse_function_raw(lexer, module, instr):
+def parse_function_raw(lexer, module, function, instr):
     """Parse one function staring with the 'OpFunction' instruction."""
     function = ir.Function(module,
                            instr.result_id,
@@ -392,14 +392,12 @@ def parse_function_raw(lexer, module, instr):
         instr = parse_instruction(lexer, module)
 
         if instr.name == 'OpLabel':
-            basic_block = ir.BasicBlock(instr.result_id)
+            basic_block = ir.BasicBlock(function, instr.result_id)
             parse_basic_block_body(lexer, module, basic_block)
-            function.add_basic_block(basic_block)
         elif instr.name == 'OpFunctionEnd':
             return function
         elif instr.name == 'OpFunctionParameter':
-            function.arguments.append(instr.result_id)
-            module.id_to_instruction[instr.result_id] = instr
+            function.add_argument(instr)
         else:
             raise ParseError('Syntax error')
 
@@ -435,8 +433,7 @@ def parse_function_definition(lexer, module):
     param_loads = []
     for (arg_type, arg_id) in arguments:
         arg_instr = ir.Instruction('OpFunctionParameter', arg_id, arg_type, [])
-        module.id_to_instruction[arg_id] = arg_instr
-        function.arguments.append(arg_id)
+        function.add_argument(arg_instr)
 
     return function, param_loads
 
@@ -455,9 +452,8 @@ def parse_function(lexer, module):
             lexer.done_with_line()
             return func
         elif token[-1] == ':':
-            basic_block = parse_basic_block(lexer, module, param_loads)
+            basic_block = parse_basic_block(lexer, module, func, param_loads)
             param_loads = []
-            func.add_basic_block(basic_block)
         else:
             raise ParseError('Syntax error')
 
