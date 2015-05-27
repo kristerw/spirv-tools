@@ -76,39 +76,10 @@ def output_header(stream, module):
     words.tofile(stream)
 
 
-def output_global_instructions(stream, module):
-    """Output all instructions up to the first function."""
-    output_order = ['OpSource',
-                    'OpSourceExtension',
-                    'OpCompileFlag',
-                    'OpExtension',
-                    'OpMemoryModel',
-                    'OpEntryPoint',
-                    'OpExecutionMode']
-
-    for target in output_order:
-        for instr in module.initial_instructions:
-            if instr.name == target:
-                output_instruction(stream, instr)
-
-    for instr in module.initial_instructions:
-        if instr.name not in output_order:
+def output_global_instructions(stream, module, names):
+    for instr in module.instructions:
+        if instr.name in names:
             output_instruction(stream, instr)
-
-    for instr in module.debug_instructions:
-        output_instruction(stream, instr)
-
-    for instr in module.decoration_instructions:
-        output_instruction(stream, instr)
-
-    for instr in module.type_declaration_instructions:
-        output_instruction(stream, instr)
-
-    for instr in module.constant_instructions:
-        output_instruction(stream, instr)
-
-    for instr in module.global_variable_instructions:
-        output_instruction(stream, instr)
 
 
 def output_basic_block(stream, basic_block):
@@ -142,5 +113,19 @@ def output_functions(stream, module):
 
 def write_module(stream, module):
     output_header(stream, module)
-    output_global_instructions(stream, module)
+
+    for name in spirv.INITIAL_INSTRUCTIONS:
+        output_global_instructions(stream, module, [name])
+
+    output_global_instructions(stream, module,
+                               spirv.DEBUG_INSTRUCTIONS)
+    output_global_instructions(stream, module,
+                               spirv.DECORATION_INSTRUCTIONS)
+    output_global_instructions(stream, module,
+                               spirv.TYPE_DECLARATION_INSTRUCTIONS)
+    output_global_instructions(stream, module,
+                               spirv.CONSTANT_INSTRUCTIONS)
+    output_global_instructions(stream, module,
+                               spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+
     output_functions(stream, module)

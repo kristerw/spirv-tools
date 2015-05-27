@@ -30,7 +30,7 @@ def output_instruction(stream, module, instr, is_raw_mode, indent='  '):
 
 def get_decorations(module, instr_id):
     decorations = []
-    for instr in module.decoration_instructions:
+    for instr in module.instructions:
         if instr.name == 'OpDecorate' and instr.operands[0] == instr_id:
             decorations.append(instr)
     return decorations
@@ -40,7 +40,7 @@ def get_symbol_name(module, symbol_id):
     if symbol_id in module.id_to_alias:
         return module.id_to_alias[symbol_id]
 
-    for instr in module.debug_instructions:
+    for instr in module.instructions:
         if instr.name == 'OpName' and instr.operands[0] == symbol_id:
             name = instr.operands[1]
             name = name[1:-1]
@@ -98,54 +98,6 @@ def output_global_variable(stream, module, instr):
     stream.write(line + '\n')
 
 
-def output_global_instructions_raw(stream, module):
-    """Output all instructions up to the first function (raw mode)."""
-
-    output_order = ['OpSource',
-                    'OpSourceExtension',
-                    'OpCompileFlag',
-                    'OpExtension',
-                    'OpMemoryModel',
-                    'OpEntryPoint',
-                    'OpExecutionMode']
-
-    for target in output_order:
-        for instr in module.initial_instructions:
-            if instr.name == target:
-                output_instruction(stream, module, instr, True, indent='')
-
-    if module.initial_instructions:
-        stream.write('\n')
-        for instr in module.initial_instructions:
-            if instr.name not in output_order:
-                output_instruction(stream, module, instr, True, indent='')
-
-    if module.debug_instructions:
-        stream.write('\n')
-        for instr in module.debug_instructions:
-            output_instruction(stream, module, instr, True, indent='')
-
-    if module.decoration_instructions:
-        stream.write('\n')
-        for instr in module.decoration_instructions:
-            output_instruction(stream, module, instr, True, indent='')
-
-    if module.type_declaration_instructions:
-        stream.write('\n')
-        for instr in module.type_declaration_instructions:
-            output_instruction(stream, module, instr, True, indent='')
-
-    if module.constant_instructions:
-        stream.write('\n')
-        for instr in module.constant_instructions:
-            output_instruction(stream, module, instr, True, indent='')
-
-    if module.global_variable_instructions:
-        stream.write('\n')
-        for instr in module.global_variable_instructions:
-            output_instruction(stream, module, instr, True, indent='')
-
-
 def add_type_if_needed(module, instr, needed_types):
     if instr.name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         if instr.name != 'OpTypeFunction':
@@ -179,43 +131,13 @@ def get_needed_types(module):
     return needed_types
 
 
-def output_global_instructions(stream, module):
-    """Output all instructions up to the first function."""
-    output_order = ['OpSource',
-                    'OpSourceExtension',
-                    'OpCompileFlag',
-                    'OpExtension',
-                    'OpMemoryModel',
-                    'OpEntryPoint',
-                    'OpExecutionMode']
-
-    for target in output_order:
-        for instr in module.initial_instructions:
-            if instr.name == target:
-                output_instruction(stream, module, instr, False, indent='')
-
-    if module.initial_instructions:
-        stream.write('\n')
-        for instr in module.initial_instructions:
-            if instr.name not in output_order:
-                output_instruction(stream, module, instr, False, indent='')
-
-    if module.type_declaration_instructions:
-        stream.write('\n')
-        needed_types = get_needed_types(module)
-        for instr in module.type_declaration_instructions:
-            if instr.result_id in needed_types:
-                output_instruction(stream, module, instr, False, indent='')
-
-    if module.constant_instructions:
-        stream.write('\n')
-        for instr in module.constant_instructions:
-            output_instruction(stream, module, instr, False, indent='')
-
-    if module.global_variable_instructions:
-        stream.write('\n')
-        for instr in module.global_variable_instructions:
-            output_global_variable(stream, module, instr)
+def output_global_instructions(stream, module, is_raw_mode, names, newline=True):
+    for instr in module.instructions:
+        if instr.name in names:
+            if newline:
+                stream.write('\n')
+                newline = False
+            output_instruction(stream, module, instr, is_raw_mode, indent='')
 
 
 def output_basic_block(stream, module, basic_block, is_raw_mode):
@@ -283,9 +205,47 @@ def generate_function_symbols(module):
 
 
 def write_module(stream, module, is_raw_mode):
-    if is_raw_mode:
-        output_global_instructions_raw(stream, module)
-    else:
+    output_order = ['OpSource',
+                    'OpSourceExtension',
+                    'OpCompileFlag',
+                    'OpExtension',
+                    'OpMemoryModel',
+                    'OpEntryPoint',
+                    'OpExecutionMode']
+
+    if not is_raw_mode:
         generate_function_symbols(module)
-        output_global_instructions(stream, module)
+
+    for name in output_order:
+        output_global_instructions(stream, module, is_raw_mode, [name],
+                                   newline=False)
+    output_global_instructions(stream, module, is_raw_mode,
+                               ['OpExtInstImport'])
+
+    if is_raw_mode:
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.DEBUG_INSTRUCTIONS)
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.DECORATION_INSTRUCTIONS)
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.TYPE_DECLARATION_INSTRUCTIONS)
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.CONSTANT_INSTRUCTIONS)
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+    else:
+        if module.type_declaration_instructions:
+            stream.write('\n')
+            needed_types = get_needed_types(module)
+            for instr in module.type_declaration_instructions:
+                if instr.result_id in needed_types:
+                    output_instruction(stream, module, instr, is_raw_mode,
+                                       indent='')
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.CONSTANT_INSTRUCTIONS)
+        if module.global_variable_instructions:
+            stream.write('\n')
+            for instr in module.global_variable_instructions:
+                output_global_variable(stream, module, instr)
+
     output_functions(stream, module, is_raw_mode)

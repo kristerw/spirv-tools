@@ -374,10 +374,8 @@ def parse_basic_block(lexer, module, function, initial_instrs):
 
     parse_basic_block_body(lexer, module, basic_block)
 
-    return basic_block
 
-
-def parse_function_raw(lexer, module, function, instr):
+def parse_function_raw(lexer, module, instr):
     """Parse one function staring with the 'OpFunction' instruction."""
     function = ir.Function(module,
                            instr.result_id,
@@ -452,7 +450,7 @@ def parse_function(lexer, module):
             lexer.done_with_line()
             return func
         elif token[-1] == ':':
-            basic_block = parse_basic_block(lexer, module, func, param_loads)
+            parse_basic_block(lexer, module, func, param_loads)
             param_loads = []
         else:
             raise ParseError('Syntax error')
@@ -466,4 +464,6 @@ def read_module(stream):
         module.finalize()
         return module
     except ParseError as err:
+        raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
+    except ir.IRError as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.value)

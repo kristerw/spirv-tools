@@ -1,16 +1,20 @@
 import spirv
 
+class IRError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
 class Module(object):
     def __init__(self):
         self.bound = None
 
         self.id_to_instruction = {}
 
-        self.initial_instructions = []
-        self.debug_instructions = []
-        self.decoration_instructions = []
         self.type_declaration_instructions = []
-        self.constant_instructions = []
         self.global_variable_instructions = []
 
         self.type_name_to_id = {}
@@ -33,25 +37,18 @@ class Module(object):
         return '%.' + str(self.internal_id_counter)
 
     def add_global_instruction(self, instr):
+        if instr.name not in spirv.GLOBAL_INSTRUCTIONS:
+            raise IRError(instr.name + ' is not a valid global instruction')
+
         self.instructions.append(instr)
         if instr.result_id is not None:
             self.id_to_instruction[instr.result_id] = instr
 
-        if instr.name in spirv.INITIAL_INSTRUCTIONS:
-            self.initial_instructions.append(instr)
-        elif instr.name in spirv.DEBUG_INSTRUCTIONS:
-            self.debug_instructions.append(instr)
-        elif instr.name in spirv.DECORATION_INSTRUCTIONS:
-            self.decoration_instructions.append(instr)
-        elif instr.name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        if instr.name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
             self.add_type_name(instr)
             self.type_declaration_instructions.append(instr)
-        elif instr.name in spirv.CONSTANT_INSTRUCTIONS:
-            self.constant_instructions.append(instr)
         elif instr.name in spirv.GLOBAL_VARIABLE_INSTRUCTIONS:
             self.global_variable_instructions.append(instr)
-        else:
-            raise Exception("Unknown global instruction: " + instr.name)
 
     def add_type_name(self, instr):
         if instr.name == 'OpTypeVoid':
@@ -63,24 +60,24 @@ class Module(object):
             signedness = instr.operands[1]
 
             if width not in ['8', '16', '32', '64']:
-                raise Exception("Invalid OpTypeInt width " + width)
+                raise IRError("Invalid OpTypeInt width " + width)
             if not signedness in ['0', '1']:
                 error = "Invalid OpTypeInt signedness " + str(signedness)
-                raise Exception(error)
+                raise IRError(error)
 
             type_name = 's' if signedness else 'u'
             type_name = type_name + width
         elif instr.name == 'OpTypeFloat':
             width = instr.operands[0]
             if width not in ['16', '32', '64']:
-                raise Exception("Invalid OpTypeFloat width " + width)
+                raise IRError("Invalid OpTypeFloat width " + width)
             type_name = 'f' + width
         elif instr.name == 'OpTypeVector':
             component_type = self.type_id_to_name[instr.operands[0]]
             count = instr.operands[1]
             if int(count) not in range(2, 16):
                 error = "Invalid OpTypeVector component count " + str(count)
-                raise Exception(error)
+                raise IRError(error)
             type_name = '<' + str(count) + ' x ' + component_type + '>'
         else:
             type_name = instr.result_id
@@ -120,6 +117,7 @@ class Module(object):
         for instr in self.instructions:
             self.calculate_bound_helper(instr, named_ids)
         for arg in function.arguments:
+            instr = self.id_to_instruction[arg]
             self.calculate_bound_helper(instr, named_ids)
         self.bound += 1
         return named_ids

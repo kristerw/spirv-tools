@@ -168,7 +168,7 @@ def parse_basic_block(binary, function):
         basic_block.add_instruction(instr)
 
         if opcode['name'] in spirv.TERMINATING_INSTRUCTIONS:
-            return basic_block
+            return
 
 
 def parse_function(binary, module):
@@ -182,7 +182,7 @@ def parse_function(binary, module):
     while True:
         opcode = binary.get_next_opcode(peek=True)
         if opcode['name'] == 'OpLabel':
-            basic_block = parse_basic_block(binary, function)
+            parse_basic_block(binary, function)
         elif opcode['name'] == 'OpFunctionEnd':
             binary.discard_instr()
             return function

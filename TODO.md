@@ -16,7 +16,6 @@ Known bugs and limitations include:
 * `FunctionControl` is not handled in pretty-printed functions
 * Debug information is not used for naming local variables/function arguments
 * The CFG is not updated
-* Disassembling with the `-r` option and assembling the result may give a binary that differs from the original (as e.g. debug instructions may be output in a different order)
 * The `OptionalId` of `OpVariable` is not handled in pretty-printed mode
 
 But there are surely more bugs and limitations – much of the code is untested...
