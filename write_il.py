@@ -30,7 +30,7 @@ def output_instruction(stream, module, instr, is_raw_mode, indent='  '):
 
 def get_decorations(module, instr_id):
     decorations = []
-    for instr in module.instructions:
+    for instr in module.global_instructions:
         if instr.name == 'OpDecorate' and instr.operands[0] == instr_id:
             decorations.append(instr)
     return decorations
@@ -40,7 +40,7 @@ def get_symbol_name(module, symbol_id):
     if symbol_id in module.id_to_alias:
         return module.id_to_alias[symbol_id]
 
-    for instr in module.instructions:
+    for instr in module.global_instructions:
         if instr.name == 'OpName' and instr.operands[0] == symbol_id:
             name = instr.operands[1]
             name = name[1:-1]
@@ -114,14 +114,8 @@ def add_type_if_needed(module, instr, needed_types):
 
 def get_needed_types(module):
     needed_types = set()
-    for function in module.functions:
-        for basic_block in function.basic_blocks:
-            for instr in basic_block.instrs:
-                add_type_if_needed(module, instr, needed_types)
-        for arg in function.arguments:
-            add_type_if_needed(module, module.id_to_instruction[arg], needed_types)
-    for instr in module.instructions:
-        if instr.name == 'OpVariable':
+    for instr in module.instructions():
+        if instr.name == 'OpVariable' and instr in module.global_instructions:
             type_instr = module.id_to_instruction[instr.type]
             assert type_instr.name == 'OpTypePointer'
             ptr_type_instr = module.id_to_instruction[type_instr.operands[1]]
@@ -132,7 +126,7 @@ def get_needed_types(module):
 
 
 def output_global_instructions(stream, module, is_raw_mode, names, newline=True):
-    for instr in module.instructions:
+    for instr in module.global_instructions:
         if instr.name in names:
             if newline:
                 stream.write('\n')
@@ -140,31 +134,25 @@ def output_global_instructions(stream, module, is_raw_mode, names, newline=True)
             output_instruction(stream, module, instr, is_raw_mode, indent='')
 
 
-def output_basic_block(stream, module, basic_block, is_raw_mode):
+def output_basic_block(stream, module, basic_block):
     """Output one basic block."""
-    if is_raw_mode:
-        stream.write(basic_block.name + ' = OpLabel\n')
-    else:
-        stream.write(basic_block.name + ':\n')
+    stream.write(basic_block.name + ':\n')
 
     for instr in basic_block.instrs:
-        output_instruction(stream, module, instr, is_raw_mode)
+        output_instruction(stream, module, instr, False)
 
 
 def output_function_raw(stream, module, func):
     """Output one function (raw mode)."""
     stream.write('\n')
-    stream.write(func.name + ' = OpFunction '
-                 + module.type_id_to_name[func.return_type] + ' '
-                 + func.function_control + ', ' + func.function_type_id + '\n')
-    for arg in func.arguments:
-        instr = module.id_to_instruction[arg]
-        output_instruction(stream, module, instr, True, '')
-
-    for basic_block in func.basic_blocks:
-        output_basic_block(stream, module, basic_block, True)
-
-    stream.write('OpFunctionEnd\n')
+    noindent_names = ['OpFunction', 'OpLabel', 'OpFunctionParameter',
+                      'OpFunctionEnd']
+    for instr in func.instructions():
+        if instr.name in noindent_names:
+            indent = ''
+        else:
+            indent = '  '
+        output_instruction(stream, module, instr, True, indent=indent)
 
 
 def output_function(stream, module, func):
@@ -184,7 +172,7 @@ def output_function(stream, module, func):
     for basic_block in func.basic_blocks:
         if basic_block != func.basic_blocks[0]:
             stream.write('\n')
-        output_basic_block(stream, module, basic_block, False)
+        output_basic_block(stream, module, basic_block)
 
     stream.write('}\n')
 

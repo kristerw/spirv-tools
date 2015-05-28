@@ -1,20 +1,6 @@
 import array
 
-import ir
 import spirv
-
-
-def output_opfunction_instruction(stream, func):
-    """Output one OpFunction instruction."""
-    opcode = spirv.OPNAME_TABLE['OpFunction']
-    instr_data = [0]
-    instr_data.append(int(func.return_type[1:]))
-    instr_data.append(int(func.name[1:]))
-    instr_data.append(int(func.function_control))
-    instr_data.append(int(func.function_type_id[1:]))
-    instr_data[0] = (len(instr_data) << 16) + opcode['opcode']
-    words = array.array('L', instr_data)
-    words.tofile(stream)
 
 
 def output_instruction(stream, instr):
@@ -77,38 +63,9 @@ def output_header(stream, module):
 
 
 def output_global_instructions(stream, module, names):
-    for instr in module.instructions:
+    for instr in module.global_instructions:
         if instr.name in names:
             output_instruction(stream, instr)
-
-
-def output_basic_block(stream, basic_block):
-    """Output one basic block."""
-    instr = ir.Instruction('OpLabel', basic_block.name, None, [])
-    output_instruction(stream, instr)
-
-    for instr in basic_block.instrs:
-        output_instruction(stream, instr)
-
-
-def output_function(stream, module, func):
-    """Output one function."""
-    output_opfunction_instruction(stream, func)
-    for arg in func.arguments:
-        instr = module.id_to_instruction[arg]
-        output_instruction(stream, instr)
-
-    for basic_block in func.basic_blocks:
-        output_basic_block(stream, basic_block)
-
-    instr = ir.Instruction('OpFunctionEnd', None, None, [])
-    output_instruction(stream, instr)
-
-
-def output_functions(stream, module):
-    """Output all functions."""
-    for func in module.functions:
-        output_function(stream, module, func)
 
 
 def write_module(stream, module):
@@ -128,4 +85,6 @@ def write_module(stream, module):
     output_global_instructions(stream, module,
                                spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
 
-    output_functions(stream, module)
+    for func in module.functions:
+        for instr in func.instructions():
+            output_instruction(stream, instr)

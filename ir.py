@@ -22,7 +22,7 @@ class Module(object):
         self.symbol_name_to_id = {}
 
         self.functions = []
-        self.instructions = []
+        self.global_instructions = []
 
         self.internal_id_counter = 0
 
@@ -32,6 +32,14 @@ class Module(object):
         self.id_to_alias = {}
         self.alias_to_id = {}
 
+    def instructions(self):
+        """Iterate through all instructions in the module."""
+        for instr in self.global_instructions:
+            yield instr
+        for function in self.functions:
+            for instr in function.instructions():
+                yield instr
+
     def get_new_id(self):
         self.internal_id_counter += 1
         return '%.' + str(self.internal_id_counter)
@@ -40,7 +48,7 @@ class Module(object):
         if instr.name not in spirv.GLOBAL_INSTRUCTIONS:
             raise IRError(instr.name + ' is not a valid global instruction')
 
-        self.instructions.append(instr)
+        self.global_instructions.append(instr)
         if instr.result_id is not None:
             self.id_to_instruction[instr.result_id] = instr
 
@@ -99,43 +107,35 @@ class Module(object):
         for i in range(len(instr.operands)):
             instr.operands[i] = self.rename_id(instr.operands[i], rename)
 
-    def calculate_bound_helper(self, instr, named_ids):
-        if instr.result_id is not None:
-            if instr.result_id[1].isdigit():
-                self.bound = max(self.bound, int(instr.result_id[1:]))
-            else:
-                if not instr.result_id in named_ids:
-                    named_ids.append(instr.result_id)
-
     def calculate_bound(self):
-        named_ids = []
         self.bound = 0
-        for function in self.functions:
-            for basic_block in function.basic_blocks:
-                for instr in basic_block.instrs:
-                    self.calculate_bound_helper(instr, named_ids)
-        for instr in self.instructions:
-            self.calculate_bound_helper(instr, named_ids)
-        for arg in function.arguments:
-            instr = self.id_to_instruction[arg]
-            self.calculate_bound_helper(instr, named_ids)
+        for instr in self.instructions():
+            if instr.result_id is not None:
+                if instr.result_id[1].isdigit():
+                    self.bound = max(self.bound, int(instr.result_id[1:]))
         self.bound += 1
+
+    def find_named_ids(self):
+        named_ids = []
+        for instr in self.instructions():
+            if instr.result_id is not None:
+                if not instr.result_id[1].isdigit():
+                    if not instr.result_id in named_ids:
+                        named_ids.append(instr.result_id)
         return named_ids
 
     def finalize(self):
         all_instructions = []
         for id in self.id_to_instruction:
             all_instructions.append(self.id_to_instruction[id])
-        for instr in self.instructions:
+        for instr in self.global_instructions:
             if not instr in all_instructions:
                 all_instructions.append(instr)
 
         # Determine ID bound, and collcet named IDs that need to be changed
         # to numeric names.
-        named_ids = self.calculate_bound()
-        for function in self.functions:
-            if not function.name[1].isdigit():
-                named_ids.append(function.name)
+        self.calculate_bound()
+        named_ids = self.find_named_ids()
 
         # Create new numric ID name for the named IDs.
         id_rename = {}
@@ -196,6 +196,17 @@ class Function(object):
         self.arguments = []
         self.basic_blocks = []
 
+    def instructions(self):
+        """Iterate through all instructions in the function."""
+        yield Instruction('OpFunction', self.name, self.return_type,
+                          [self.function_control, self.function_type_id])
+        for arg in self.arguments:
+            yield self.module.id_to_instruction[arg]
+        for basic_block in self.basic_blocks:
+            for instr in basic_block.instructions():
+                yield instr
+        yield Instruction('OpFunctionEnd', None, None, [])
+
     def add_argument(self, instr):
         self.module.id_to_instruction[instr.result_id] = instr
         self.arguments.append(instr.result_id)
@@ -212,6 +223,12 @@ class BasicBlock(object):
         self.module = function.module
 
         function.add_basic_block(self)
+
+    def instructions(self):
+        """Iterate through all instructions in the basic block."""
+        yield Instruction('OpLabel', self.name, None, [])
+        for instr in self.instrs:
+            yield instr
 
     def add_instruction(self, instr):
         self.instrs.append(instr)
