@@ -8,7 +8,7 @@ def output_instruction(stream, module, instr, is_raw_mode, indent='  '):
     line = indent
     if instr.result_id is not None:
         line = line + instr.result_id + ' = '
-    line = line + instr.name
+    line = line + instr.op_name
     if instr.type is not None:
         line = line + ' ' + module.type_id_to_name[instr.type]
 
@@ -31,7 +31,7 @@ def output_instruction(stream, module, instr, is_raw_mode, indent='  '):
 def get_decorations(module, instr_id):
     decorations = []
     for instr in module.global_instructions:
-        if instr.name == 'OpDecorate' and instr.operands[0] == instr_id:
+        if instr.op_name == 'OpDecorate' and instr.operands[0] == instr_id:
             decorations.append(instr)
     return decorations
 
@@ -41,7 +41,7 @@ def get_symbol_name(module, symbol_id):
         return module.id_to_alias[symbol_id]
 
     for instr in module.global_instructions:
-        if instr.name == 'OpName' and instr.operands[0] == symbol_id:
+        if instr.op_name == 'OpName' and instr.operands[0] == symbol_id:
             name = instr.operands[1]
             name = name[1:-1]
 
@@ -86,7 +86,7 @@ def format_decorations_for_instr(module, instr):
 
 def output_global_variable(stream, module, instr):
     """Output one global variable."""
-    assert instr.name == 'OpVariable'
+    assert instr.op_name == 'OpVariable'
     ptr_instr = module.id_to_instruction[instr.type]
     assert ptr_instr.operands[0] == instr.operands[0]  # Verify storage class
     variable_type = module.type_id_to_name[ptr_instr.operands[1]]
@@ -99,8 +99,8 @@ def output_global_variable(stream, module, instr):
 
 
 def add_type_if_needed(module, instr, needed_types):
-    if instr.name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
-        if instr.name != 'OpTypeFunction':
+    if instr.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        if instr.op_name != 'OpTypeFunction':
             if module.type_id_to_name[instr.result_id] == instr.result_id:
                 needed_types.add(instr.result_id)
         for operand in instr.operands:
@@ -115,19 +115,19 @@ def add_type_if_needed(module, instr, needed_types):
 def get_needed_types(module):
     needed_types = set()
     for instr in module.instructions():
-        if instr.name == 'OpVariable' and instr in module.global_instructions:
+        if instr.op_name == 'OpVariable' and instr in module.global_instructions:
             type_instr = module.id_to_instruction[instr.type]
-            assert type_instr.name == 'OpTypePointer'
+            assert type_instr.op_name == 'OpTypePointer'
             ptr_type_instr = module.id_to_instruction[type_instr.operands[1]]
             add_type_if_needed(module, ptr_type_instr, needed_types)
-        elif instr.name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        elif instr.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_if_needed(module, instr, needed_types)
     return needed_types
 
 
 def output_global_instructions(stream, module, is_raw_mode, names, newline=True):
     for instr in module.global_instructions:
-        if instr.name in names:
+        if instr.op_name in names:
             if newline:
                 stream.write('\n')
                 newline = False
@@ -136,10 +136,11 @@ def output_global_instructions(stream, module, is_raw_mode, names, newline=True)
 
 def output_basic_block(stream, module, basic_block):
     """Output one basic block."""
-    stream.write(basic_block.name + ':\n')
-
-    for instr in basic_block.instrs:
-        output_instruction(stream, module, instr, False)
+    for instr in basic_block.instructions():
+        if instr.op_name == 'OpLabel':
+            stream.write(instr.result_id + ':\n')
+        else:
+            output_instruction(stream, module, instr, False)
 
 
 def output_function_raw(stream, module, func):
@@ -148,7 +149,7 @@ def output_function_raw(stream, module, func):
     noindent_names = ['OpFunction', 'OpLabel', 'OpFunctionParameter',
                       'OpFunctionEnd']
     for instr in func.instructions():
-        if instr.name in noindent_names:
+        if instr.op_name in noindent_names:
             indent = ''
         else:
             indent = '  '
@@ -158,15 +159,15 @@ def output_function_raw(stream, module, func):
 def output_function(stream, module, func):
     """Output one function (pretty-printed mode)."""
     stream.write('\n')
-    symbol_name = get_symbol_name(module, func.name)
-    line = "define " + module.type_id_to_name[func.return_type] + " "
-    line = line + symbol_name + "("
-    if func.argument_types:
-        for arg_name, arg_type in zip(func.arguments, func.argument_types):
-            line = line + module.type_id_to_name[arg_type]
-            line = line + " " + arg_name + ", "
+    symbol_name = get_symbol_name(module, func.get_id())
+    line = 'define ' + module.type_id_to_name[func.get_return_type()] + ' '
+    line = line + symbol_name + '('
+    for instr in func.arguments:
+        line = line + module.type_id_to_name[instr.type]
+        line = line + ' ' + instr.result_id + ', '
+    if line[-2:] == ', ':
         line = line[:-2]
-    line = line + ") {\n"
+    line = line + ') {\n'
     stream.write(line)
 
     for basic_block in func.basic_blocks:
@@ -189,7 +190,7 @@ def output_functions(stream, module, is_raw_mode):
 def generate_function_symbols(module):
     """Add all function names to the symbol table."""
     for func in module.functions:
-        get_symbol_name(module, func.name)
+        get_symbol_name(module, func.get_id())
 
 
 def write_module(stream, module, is_raw_mode):

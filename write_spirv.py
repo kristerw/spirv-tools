@@ -6,7 +6,7 @@ import spirv
 def output_instruction(stream, instr):
     """Output one instruction."""
     instr_data = [0]
-    opcode = spirv.OPNAME_TABLE[instr.name]
+    opcode = spirv.OPNAME_TABLE[instr.op_name]
 
     if opcode['type']:
         instr_data.append(int(instr.type[1:]))
@@ -55,7 +55,7 @@ def output_instruction(stream, instr):
 
 
 def output_header(stream, module):
-    """Output the five word SPIR-V header."""
+    """Output the SPIR-V header."""
     header = [spirv.MAGIC, spirv.VERSION, spirv.GENERATOR_MAGIC,
               module.bound, 0]
     words = array.array('L', header)
@@ -64,7 +64,7 @@ def output_header(stream, module):
 
 def output_global_instructions(stream, module, names):
     for instr in module.global_instructions:
-        if instr.name in names:
+        if instr.op_name in names:
             output_instruction(stream, instr)
 
 

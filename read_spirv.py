@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import array
 
 import spirv
@@ -125,7 +123,7 @@ def parse_operand(binary, kind):
     raise ParseError('Unknown kind "' + kind + '"')
 
 
-def parse_instruction(binary):
+def parse_instruction(binary, module):
     """Parse one instruction."""
     opcode = binary.get_next_opcode()
     operands = []
@@ -139,7 +137,7 @@ def parse_instruction(binary):
         operands = operands + parse_operand(binary, kind)
     binary.expect_eol()
 
-    return ir.Instruction(opcode['name'], result, instr_type, operands)
+    return ir.Instruction(module, opcode['name'], result, instr_type, operands)
 
 
 def parse_global_instructions(binary, module):
@@ -151,11 +149,11 @@ def parse_global_instructions(binary, module):
         if opcode['name'] == 'OpFunction':
             return
 
-        instr = parse_instruction(binary)
+        instr = parse_instruction(binary, module)
         module.add_global_instruction(instr)
 
 
-def parse_basic_block(binary, function):
+def parse_basic_block(binary, module, function):
     """Parse one basic block."""
     opcode = binary.get_next_opcode()
     basic_block_id = str(parse_id(binary))
@@ -164,8 +162,8 @@ def parse_basic_block(binary, function):
 
     while True:
         opcode = binary.get_next_opcode(peek=True)
-        instr = parse_instruction(binary)
-        basic_block.add_instruction(instr)
+        instr = parse_instruction(binary, module)
+        basic_block.append(instr)
 
         if opcode['name'] in spirv.TERMINATING_INSTRUCTIONS:
             return
@@ -173,7 +171,7 @@ def parse_basic_block(binary, function):
 
 def parse_function(binary, module):
     """Parse one function."""
-    function_instr = parse_instruction(binary)
+    function_instr = parse_instruction(binary, module)
     function = ir.Function(module,
                            function_instr.result_id,
                            function_instr.operands[0],
@@ -182,14 +180,13 @@ def parse_function(binary, module):
     while True:
         opcode = binary.get_next_opcode(peek=True)
         if opcode['name'] == 'OpLabel':
-            parse_basic_block(binary, function)
+            parse_basic_block(binary, module, function)
         elif opcode['name'] == 'OpFunctionEnd':
             binary.discard_instr()
             return function
         elif opcode['name'] == 'OpFunctionParameter':
-            instr = parse_instruction(binary)
-            function.arguments.append(instr.result_id)
-            module.id_to_instruction[instr.result_id] = instr
+            instr = parse_instruction(binary, module)
+            function.add_argument(instr)
         else:
             raise ParseError('Invalid opcode ' + opcode['name'])
 

@@ -33,7 +33,7 @@ class Module(object):
         self.alias_to_id = {}
 
     def instructions(self):
-        """Iterate through all instructions in the module."""
+        """Iterate over all instructions in the module."""
         for instr in self.global_instructions:
             yield instr
         for function in self.functions:
@@ -45,25 +45,23 @@ class Module(object):
         return '%.' + str(self.internal_id_counter)
 
     def add_global_instruction(self, instr):
-        if instr.name not in spirv.GLOBAL_INSTRUCTIONS:
-            raise IRError(instr.name + ' is not a valid global instruction')
+        if instr.op_name not in spirv.GLOBAL_INSTRUCTIONS:
+            raise IRError(instr.op_name + ' is not a valid global instruction')
 
         self.global_instructions.append(instr)
-        if instr.result_id is not None:
-            self.id_to_instruction[instr.result_id] = instr
 
-        if instr.name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        if instr.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
             self.add_type_name(instr)
             self.type_declaration_instructions.append(instr)
-        elif instr.name in spirv.GLOBAL_VARIABLE_INSTRUCTIONS:
+        elif instr.op_name in spirv.GLOBAL_VARIABLE_INSTRUCTIONS:
             self.global_variable_instructions.append(instr)
 
     def add_type_name(self, instr):
-        if instr.name == 'OpTypeVoid':
+        if instr.op_name == 'OpTypeVoid':
             type_name = 'void'
-        elif instr.name == 'OpTypeBool':
+        elif instr.op_name == 'OpTypeBool':
             type_name = 'bool'
-        elif instr.name == 'OpTypeInt':
+        elif instr.op_name == 'OpTypeInt':
             width = instr.operands[0]
             signedness = instr.operands[1]
 
@@ -75,12 +73,12 @@ class Module(object):
 
             type_name = 's' if signedness else 'u'
             type_name = type_name + width
-        elif instr.name == 'OpTypeFloat':
+        elif instr.op_name == 'OpTypeFloat':
             width = instr.operands[0]
             if width not in ['16', '32', '64']:
                 raise IRError("Invalid OpTypeFloat width " + width)
             type_name = 'f' + width
-        elif instr.name == 'OpTypeVector':
+        elif instr.op_name == 'OpTypeVector':
             component_type = self.type_id_to_name[instr.operands[0]]
             count = instr.operands[1]
             if int(count) not in range(2, 16):
@@ -125,48 +123,29 @@ class Module(object):
         return named_ids
 
     def finalize(self):
-        all_instructions = []
-        for id in self.id_to_instruction:
-            all_instructions.append(self.id_to_instruction[id])
-        for instr in self.global_instructions:
-            if not instr in all_instructions:
-                all_instructions.append(instr)
-
-        # Determine ID bound, and collcet named IDs that need to be changed
-        # to numeric names.
+        # Determine ID bound.
         self.calculate_bound()
-        named_ids = self.find_named_ids()
 
-        # Create new numric ID name for the named IDs.
+        # Create new numeric ID for the named IDs.
+        named_ids = self.find_named_ids()
         id_rename = {}
         for id in named_ids:
             id_rename[id] = '%' + str(self.bound)
             self.bound += 1
 
-        # Update all usage to use new numeric ID name
-        for instr in all_instructions:
+        # Update all usage to use new numeric ID.
+        for instr in self.instructions():
             self.rename_ids(instr, id_rename)
-        for function in self.functions:
-            function.name = self.rename_id(function.name, id_rename)
-            function.return_type = self.rename_id(function.return_type, id_rename)
-            function.function_type_id = self.rename_id(function.function_type_id, id_rename)
-            for i in range(len(function.arguments)):
-                function.arguments[i] = self.rename_id(function.arguments[i],
-                                                       id_rename)
-            for basic_block in function.basic_blocks:
-                for instr in basic_block.instrs:
-                    self.rename_ids(instr, id_rename)
 
-        # Delete old names.
-        for id in id_rename:
-            if id in self.type_id_to_name:
-                name = self.type_id_to_name[id]
-                self.type_id_to_name[id_rename[id]] = name
-                self.type_name_to_id[name] = id_rename[id]
-
-            if id in self.id_to_instruction:
-                self.id_to_instruction[id_rename[id]] = self.id_to_instruction[id]
-                del self.id_to_instruction[id]
+        # Rebuild mapping tables to get rid of obsolete entries.
+        self.id_to_instruction = {}
+        for instr in self.instructions():
+            self.id_to_instruction[instr.result_id] = instr
+        self.type_id_to_name = {}
+        self.type_name_to_id = {}
+        for instr in self.global_instructions:
+            if instr.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+                self.add_type_name(instr)
 
 
 class GlobalVariable(object):
@@ -185,60 +164,96 @@ class GlobalVariable(object):
 
 
 class Function(object):
-    def __init__(self, module, name, function_control, function_type_id):
+    def __init__(self, module, id, function_control, function_type_id):
         function_type_instr = module.id_to_instruction[function_type_id]
         self.module = module
         self.function_type_id = function_type_id
-        self.name = name
-        self.return_type = function_type_instr.operands[0]
         self.argument_types = function_type_instr.operands[1:]
         self.function_control = function_control
         self.arguments = []
         self.basic_blocks = []
+        self._def_instr = Instruction(self.module, 'OpFunction',
+                                      id, function_type_instr.operands[0],
+                                      [self.function_control,
+                                       self.function_type_id])
+        self._end_instr = Instruction(self.module, 'OpFunctionEnd',
+                                      None, None, [])
+
+    def get_id(self):
+        return self._def_instr.result_id
+
+    def get_return_type(self):
+        return self._def_instr.type
 
     def instructions(self):
-        """Iterate through all instructions in the function."""
-        yield Instruction('OpFunction', self.name, self.return_type,
-                          [self.function_control, self.function_type_id])
-        for arg in self.arguments:
-            yield self.module.id_to_instruction[arg]
+        """Iterate over all instructions in the function."""
+        yield self._def_instr
+        for instr in self.arguments:
+            yield instr
         for basic_block in self.basic_blocks:
             for instr in basic_block.instructions():
                 yield instr
-        yield Instruction('OpFunctionEnd', None, None, [])
+        yield self._end_instr
 
     def add_argument(self, instr):
-        self.module.id_to_instruction[instr.result_id] = instr
-        self.arguments.append(instr.result_id)
+        self.arguments.append(instr)
 
     def add_basic_block(self, basic_block):
         self.basic_blocks.append(basic_block)
 
 
 class BasicBlock(object):
-    def __init__(self, function, name):
+    def __init__(self, function, id):
         self.function = function
-        self.name = name
-        self.instrs = []
         self.module = function.module
-
+        self._instr = Instruction(self.module, 'OpLabel', id, None, [])
+        self._instrs = []
         function.add_basic_block(self)
 
+    def get_id(self):
+        """Return basic block ID."""
+        return self._instr.result_id
+
     def instructions(self):
-        """Iterate through all instructions in the basic block."""
-        yield Instruction('OpLabel', self.name, None, [])
-        for instr in self.instrs:
+        """Iterate over all instructions in the basic block."""
+        yield self._instr
+        for instr in self._instrs:
             yield instr
 
-    def add_instruction(self, instr):
-        self.instrs.append(instr)
-        if instr.result_id is not None:
-            self.module.id_to_instruction[instr.result_id] = instr
+    def append(self, instr):
+        """Add instruction at the end of the basic block."""
+        instr.basic_block = self
+        self._instrs.append(instr)
+
+    def prepend(self, instr):
+        """Add instruction at the top of the basic block."""
+        instr.basic_block = self
+        self._instrs = [instr] + self._instrs
+
+    def insert_after(self, instr, existing_instr):
+        """Add instruction after an existing instruction."""
+        if not existing_instr in self._instrs:
+            raise IRError('Instruction is not in basic block ' + self.get_id())
+        idx = self._instrs.index(existing_instr)
+        instr.basic_block = self
+        self._instrs.insert(idx + 1, instr)
+
+    def insert_before(self, instr, existing_instr):
+        """Add instruction before an existing instruction."""
+        if not existing_instr in self._instrs:
+            raise IRError('Instruction is not in basic block ' + self.get_id())
+        idx = self._instrs.index(existing_instr)
+        instr.basic_block = self
+        self._instrs.insert(idx, instr)
 
 
 class Instruction(object):
-    def __init__(self, name, result_id, type, operands):
-        self.name = name
+    def __init__(self, module, op_name, result_id, type, operands):
+        self.module = module
+        self.op_name = op_name
         self.result_id = result_id
         self.type = type
         self.operands = operands
+        self.basic_block = None
+        if result_id is not None:
+            self.module.id_to_instruction[self.result_id] = self
