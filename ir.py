@@ -1,5 +1,6 @@
 import spirv
 
+
 class IRError(Exception):
     def __init__(self, value):
         self.value = value
@@ -34,9 +35,9 @@ class Module(object):
 
     def instructions(self):
         """Iterate over all instructions in the module."""
-        for instr in self.global_instructions:
+        for instr in self.global_instructions[:]:
             yield instr
-        for function in self.functions:
+        for function in self.functions[:]:
             for instr in function.instructions():
                 yield instr
 
@@ -167,33 +168,25 @@ class Function(object):
     def __init__(self, module, id, function_control, function_type_id):
         function_type_instr = module.id_to_instruction[function_type_id]
         self.module = module
-        self.function_type_id = function_type_id
-        self.argument_types = function_type_instr.operands[1:]
-        self.function_control = function_control
         self.arguments = []
         self.basic_blocks = []
-        self._def_instr = Instruction(self.module, 'OpFunction',
-                                      id, function_type_instr.operands[0],
-                                      [self.function_control,
-                                       self.function_type_id])
-        self._end_instr = Instruction(self.module, 'OpFunctionEnd',
-                                      None, None, [])
-
-    def get_id(self):
-        return self._def_instr.result_id
-
-    def get_return_type(self):
-        return self._def_instr.type
+        self.instr = Instruction(self.module, 'OpFunction',
+                                 id, function_type_instr.operands[0],
+                                 [function_control,
+                                  function_type_id])
+        self.end_instr = Instruction(self.module, 'OpFunctionEnd',
+                                     None, None, [])
 
     def instructions(self):
         """Iterate over all instructions in the function."""
-        yield self._def_instr
-        for instr in self.arguments:
+        yield self.instr
+        for instr in self.arguments[:]:
             yield instr
-        for basic_block in self.basic_blocks:
-            for instr in basic_block.instructions():
+        for basic_block in self.basic_blocks[:]:
+            yield basic_block.instr
+            for instr in basic_block.instrs[:]:
                 yield instr
-        yield self._end_instr
+        yield self.end_instr
 
     def add_argument(self, instr):
         self.arguments.append(instr)
@@ -206,45 +199,35 @@ class BasicBlock(object):
     def __init__(self, function, id):
         self.function = function
         self.module = function.module
-        self._instr = Instruction(self.module, 'OpLabel', id, None, [])
-        self._instrs = []
+        self.instr = Instruction(self.module, 'OpLabel', id, None, [])
+        self.instrs = []
         function.add_basic_block(self)
-
-    def get_id(self):
-        """Return basic block ID."""
-        return self._instr.result_id
-
-    def instructions(self):
-        """Iterate over all instructions in the basic block."""
-        yield self._instr
-        for instr in self._instrs:
-            yield instr
 
     def append(self, instr):
         """Add instruction at the end of the basic block."""
         instr.basic_block = self
-        self._instrs.append(instr)
+        self.instrs.append(instr)
 
     def prepend(self, instr):
         """Add instruction at the top of the basic block."""
         instr.basic_block = self
-        self._instrs = [instr] + self._instrs
+        self.instrs = [instr] + self._instrs
 
     def insert_after(self, instr, existing_instr):
         """Add instruction after an existing instruction."""
-        if not existing_instr in self._instrs:
-            raise IRError('Instruction is not in basic block ' + self.get_id())
-        idx = self._instrs.index(existing_instr)
+        if not existing_instr in self.instrs:
+            raise IRError('Instruction is not in basic block')
+        idx = self.instrs.index(existing_instr)
         instr.basic_block = self
-        self._instrs.insert(idx + 1, instr)
+        self.instrs.insert(idx + 1, instr)
 
     def insert_before(self, instr, existing_instr):
         """Add instruction before an existing instruction."""
-        if not existing_instr in self._instrs:
-            raise IRError('Instruction is not in basic block ' + self.get_id())
-        idx = self._instrs.index(existing_instr)
+        if not existing_instr in self.instrs:
+            raise IRError('Instruction is not in basic block')
+        idx = self.instrs.index(existing_instr)
         instr.basic_block = self
-        self._instrs.insert(idx, instr)
+        self.instrs.insert(idx, instr)
 
 
 class Instruction(object):

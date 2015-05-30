@@ -136,11 +136,9 @@ def output_global_instructions(stream, module, is_raw_mode, names, newline=True)
 
 def output_basic_block(stream, module, basic_block):
     """Output one basic block."""
-    for instr in basic_block.instructions():
-        if instr.op_name == 'OpLabel':
-            stream.write(instr.result_id + ':\n')
-        else:
-            output_instruction(stream, module, instr, False)
+    stream.write(basic_block.instr.result_id + ':\n')
+    for instr in basic_block.instrs:
+        output_instruction(stream, module, instr, False)
 
 
 def output_function_raw(stream, module, func):
@@ -159,8 +157,8 @@ def output_function_raw(stream, module, func):
 def output_function(stream, module, func):
     """Output one function (pretty-printed mode)."""
     stream.write('\n')
-    symbol_name = get_symbol_name(module, func.get_id())
-    line = 'define ' + module.type_id_to_name[func.get_return_type()] + ' '
+    symbol_name = get_symbol_name(module, func.instr.result_id)
+    line = 'define ' + module.type_id_to_name[func.instr.type] + ' '
     line = line + symbol_name + '('
     for instr in func.arguments:
         line = line + module.type_id_to_name[instr.type]
@@ -190,7 +188,7 @@ def output_functions(stream, module, is_raw_mode):
 def generate_function_symbols(module):
     """Add all function names to the symbol table."""
     for func in module.functions:
-        get_symbol_name(module, func.get_id())
+        get_symbol_name(module, func.instr.result_id)
 
 
 def write_module(stream, module, is_raw_mode):
