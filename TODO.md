@@ -9,6 +9,7 @@ The work package here is to
 
 ##Bugs and Limitations
 Known bugs and limitations include:
+* `OpConstant` does only handle 32-bit constants correctly.
 * Bitmasks are always written as a number
 * Structure/arrays/matrices/etc. are not pretty-printed
 * Constants are written as separate instructions
