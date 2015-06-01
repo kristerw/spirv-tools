@@ -16,11 +16,9 @@ class Module(object):
         self.id_to_instruction = {}
 
         self.type_declaration_instructions = []
-        self.global_variable_instructions = []
 
         self.type_name_to_id = {}
         self.type_id_to_name = {}
-        self.symbol_name_to_id = {}
 
         self.functions = []
         self.global_instructions = []
@@ -29,9 +27,11 @@ class Module(object):
 
         self.id_to_name = {}
 
-        # Only in output_id
+        # Only in output_il
         self.id_to_alias = {}
-        self.alias_to_id = {}
+
+        # Should move to where used
+        self.symbol_name_to_id = {}
 
     def instructions(self):
         """Iterate over all instructions in the module."""
@@ -54,8 +54,6 @@ class Module(object):
         if instr.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
             self.add_type_name(instr)
             self.type_declaration_instructions.append(instr)
-        elif instr.op_name in spirv.GLOBAL_VARIABLE_INSTRUCTIONS:
-            self.global_variable_instructions.append(instr)
 
     def add_type_name(self, instr):
         if instr.op_name == 'OpTypeVoid':

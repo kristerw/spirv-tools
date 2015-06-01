@@ -23,7 +23,6 @@ But there are surely more bugs and limitations – much of the code is untested.
 
 ##Syntax
 Some things are missing or should be changed
-* `@` should not be used for function names – `%` works just fine
 * Hex/binary constants should be supported
 * Negative constants should be supported
 
@@ -31,4 +30,3 @@ There are open questions about the best formatting of some constructs. For examp
 * Should the operation names be changed to be shorter? E.g. most instructions in ESSL shaders have a `PrecisionMedium` decoration, and it would be nice to have a short name for it. (But I still think that SPIR-V [should change how the ESSL precision modifiers are handled](http://kristerw.blogspot.se/2015/04/precision-qualifiers-in-spir-v.html)...) 
 * Pointers are important for OpenCL. How to pretty-print them in a compact form without losing address space information?
 * Should `OpLoopMerge` be written as modifier to `OpBranchConditional` (and similar for the other “merge” instructions)?
-* Should `@` be used for global symbols? It is not really needed, but parsing is slightly more annoying without it. And the `@` makes the global variables more visible.

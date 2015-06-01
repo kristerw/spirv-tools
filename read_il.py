@@ -49,7 +49,6 @@ class Lexer(object):
             r'%[a-zA-Z0-9]*:',
             r'%[0-9]+',
             r'%[a-zA-Z][a-zA-Z0-9_]*',
-            r'@[a-zA-Z][a-zA-Z0-9_]*',
             r'<[1-9]+ x [a-zA-Z0-9]*>',
             r'".+"',
             r'define',
@@ -102,19 +101,20 @@ def parse_id(lexer, module, accept_eol=False):
     token = lexer.get_next_token(accept_eol=accept_eol)
     if accept_eol and token == '':
         return ''
+    elif token in module.symbol_name_to_id:
+        return module.symbol_name_to_id[token]
     elif token[0] == '%':
+        if not token[1].isdigit():
+            new_id = module.get_new_id()
+            module.symbol_name_to_id[token] = new_id
+            name = '"' + token[1:] + '"'
+            instr = ir.Instruction(module, 'OpName', None, None,
+                                   [new_id, name])
+            module.add_global_instruction(instr)
+            return new_id
         return token
     elif token in module.type_name_to_id:
         return module.type_name_to_id[token]
-    elif token in module.symbol_name_to_id:
-        return module.symbol_name_to_id[token]
-    elif token[0] == '@':
-        new_id = module.get_new_id()
-        module.symbol_name_to_id[token] = new_id
-        name = '"' + token[1:] + '"'
-        instr = ir.Instruction(module, 'OpName', None, None, [new_id, name])
-        module.add_global_instruction(instr)
-        return new_id
     else:
         return get_or_create_type(module, token)
 
@@ -199,20 +199,6 @@ def get_or_create_function_type(module, return_type, arguments):
     return new_id
 
 
-def get_or_create_pointer_type(module, base_type_id, storage_class):
-    for type_id in module.type_id_to_name:
-        instr = module.id_to_instruction[type_id]
-        if instr.op_name == 'OpTypePointer':
-            operands = instr.operands
-            if operands[0] == storage_class and operands[1] == base_type_id:
-                return type_id
-    operands = [storage_class, base_type_id]
-    new_id = module.get_new_id()
-    instr = ir.Instruction(module, 'OpTypePointer', new_id, None, operands)
-    module.add_global_instruction(instr)
-    return new_id
-
-
 def parse_operand(lexer, module, kind):
     """Parse one instruction operand."""
     if kind == 'Id':
@@ -244,12 +230,14 @@ def parse_operand(lexer, module, kind):
 
 def parse_instruction(lexer, module):
     """Parse one instruction."""
-    token = lexer.get_next_token()
+    token = lexer.get_next_token(peek=True)
     if token[0] == '%':
+        token = parse_id(lexer, module)
         op_result = token
         lexer.get_next_token('=')
         op_name = lexer.get_next_token()
     else:
+        token = lexer.get_next_token()
         op_name = token
         op_result = None
     if op_name not in spirv.OPNAME_TABLE:
@@ -304,29 +292,6 @@ def parse_decorations(lexer, module, variable_name):
         module.add_global_instruction(instr)
 
 
-def parse_global_variable(lexer, module):
-    """Parse one pretty-printed global variable."""
-    variable_name = lexer.get_next_token()
-    assert variable_name[0] == '@'
-    lexer.get_next_token('=')
-    storage_class = lexer.get_next_token()
-    variable_type = parse_type(lexer, module)
-    # XXX Handle OptionalId
-
-    ptr_type = get_or_create_pointer_type(module, variable_type, storage_class)
-    new_id = module.get_new_id()
-    instr = ir.Instruction(module, 'OpVariable', new_id, ptr_type,
-                           [storage_class])
-    module.add_global_instruction(instr)
-    module.symbol_name_to_id[variable_name] = new_id
-    tmp_name = '"' + variable_name[1:] + '"'
-    instr = ir.Instruction(module, 'OpName', None, None, [new_id, tmp_name])
-    module.add_global_instruction(instr)
-
-    parse_decorations(lexer, module, new_id)
-    lexer.done_with_line()
-
-
 def parse_instructions(lexer, module):
     """Parse all instructions."""
     while True:
@@ -338,8 +303,6 @@ def parse_instructions(lexer, module):
             module.add_function(func)
         elif token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
-        elif token[0] == '@':
-            parse_global_variable(lexer, module)
         else:
             instr = parse_instruction(lexer, module)
             if instr.op_name == 'OpFunction':
