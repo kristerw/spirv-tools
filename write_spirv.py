@@ -62,29 +62,7 @@ def output_header(stream, module):
     words.tofile(stream)
 
 
-def output_global_instructions(stream, module, names):
-    for instr in module.global_instructions:
-        if instr.op_name in names:
-            output_instruction(stream, instr)
-
-
 def write_module(stream, module):
     output_header(stream, module)
-
-    for name in spirv.INITIAL_INSTRUCTIONS:
-        output_global_instructions(stream, module, [name])
-
-    output_global_instructions(stream, module,
-                               spirv.DEBUG_INSTRUCTIONS)
-    output_global_instructions(stream, module,
-                               spirv.DECORATION_INSTRUCTIONS)
-    output_global_instructions(stream, module,
-                               spirv.TYPE_DECLARATION_INSTRUCTIONS)
-    output_global_instructions(stream, module,
-                               spirv.CONSTANT_INSTRUCTIONS)
-    output_global_instructions(stream, module,
-                               spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
-
-    for func in module.functions:
-        for instr in func.instructions():
-            output_instruction(stream, instr)
+    for instr in module.instructions():
+        output_instruction(stream, instr)

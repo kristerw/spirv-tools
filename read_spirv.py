@@ -150,7 +150,7 @@ def parse_global_instructions(binary, module):
             return
 
         instr = parse_instruction(binary, module)
-        module.add_global_instruction(instr)
+        module.add_global_instr(instr)
 
 
 def parse_basic_block(binary, module, function):
@@ -163,7 +163,7 @@ def parse_basic_block(binary, module, function):
     while True:
         opcode = binary.get_next_opcode(peek=True)
         instr = parse_instruction(binary, module)
-        basic_block.append(instr)
+        basic_block.append_instr(instr)
 
         if opcode['name'] in spirv.TERMINATING_INSTRUCTIONS:
             return
@@ -186,7 +186,7 @@ def parse_function(binary, module):
             return function
         elif opcode['name'] == 'OpFunctionParameter':
             instr = parse_instruction(binary, module)
-            function.add_argument(instr)
+            function.append_argument(instr)
         else:
             raise ParseError('Invalid opcode ' + opcode['name'])
 

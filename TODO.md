@@ -1,5 +1,5 @@
 ##Code cleanup
-The current code is partly an explorational implementation to determine what kind of functionality I need in the IR (both for the assembler/disassembler, and for some other tools I'm working on), and partly an attempt to learn python. As such, there are many parts of the code that I know are bad. For example, the IR has 15 lists/dictionaries that contains overlapping information and are often out of synch. And the code has several functions that tries to iterate over instructions instead of using a centralized iterator.
+The current code is partly an explorational implementation to determine what kind of functionality I need in the IR (both for the assembler/disassembler, and for some other tools I'm working on), and partly an attempt to learn python. As such, there are many parts of the code that I know are bad.
 
 The work package here is to
 * Design a real representation for the IR.
