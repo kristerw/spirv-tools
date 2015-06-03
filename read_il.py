@@ -21,7 +21,7 @@ class Lexer(object):
     def get_next_token(self, expect=None, peek=False, accept_eol=False):
         """Return the next token from the file
 
-        Tha tokenizer is working one line at a time, and a new line is
+        The tokenizer is working one line at a time, and a new line is
         read after the current line is consumed. Next line is read after
         done_with_line is executed.
 
