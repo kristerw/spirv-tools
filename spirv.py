@@ -50,7 +50,7 @@ DECORATION_INSTRUCTIONS = [
     'OpDecorate',
     'OpMemberDecorate',
     'OpGroupDecorate',
-    'OpGroupMemverDecorate',
+    'OpGroupMemberDecorate',
     'OpDecorationGroup'
 ]
 
