@@ -156,6 +156,7 @@ class BasicBlock(object):
         self.function = None
         self.module = module
         self.inst = Instruction(self.module, 'OpLabel', id, None, [])
+        self.inst.basic_block = self
         self.insts = []
 
     def append_inst(self, inst):
@@ -185,11 +186,18 @@ class BasicBlock(object):
         for inst in reversed(self.insts[:]):
             uses = inst.uses()
             for tmp_inst in uses:
-                if tmp_inst.op_name != 'OpPhi':
-                    IRError('Instruction is used in other basic block')
-                IRError('Need to remove from phi node') # XXX
+                if tmp_inst.op_name == 'OpPhi':
+                    IRError('Not implemented: remove from phi node') # XXX
             inst.remove()
         self.module = None
+
+    def predecessors(self):
+        """Return this basic block's predecessors."""
+        predecessors = []
+        for inst in self.inst.uses():
+            if inst.op_name != 'OpPhi':
+                predecessors.append(inst.basic_block)
+        return predecessors
 
 
 class Instruction(object):
@@ -202,6 +210,20 @@ class Instruction(object):
         self.basic_block = None
         if result_id is not None:
             self.module.id_to_inst[self.result_id] = self
+
+    def __str__(self):
+        str = ''
+        if self.result_id is not None:
+            str = str + self.result_id + ' = '
+        str = str + self.op_name 
+        if self.type_id is not None:
+            str = str + ' ' + self.type_id
+        if self.operands:
+            str = str + ' '
+            for op in self.operands:
+                str = str + op + ', '
+            str = str[:-2]
+        return str
 
     def clone(self):
         """Create a copy of the instruction.
