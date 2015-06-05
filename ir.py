@@ -95,8 +95,8 @@ class Module(object):
         for inst in self.instructions():
             if inst.result_id in id_rename:
                 inst.result_id = id_rename[inst.result_id]
-            if inst.type in id_rename:
-                inst.type = id_rename[inst.type]
+            if inst.type_id in id_rename:
+                inst.type_id = id_rename[inst.type_id]
             for i in range(len(inst.operands)):
                 if inst.operands[i] in id_rename:
                     inst.operands[i] = id_rename[inst.operands[i]]
@@ -193,11 +193,11 @@ class BasicBlock(object):
 
 
 class Instruction(object):
-    def __init__(self, module, op_name, result_id, type, operands):
+    def __init__(self, module, op_name, result_id, type_id, operands):
         self.module = module
         self.op_name = op_name
         self.result_id = result_id
-        self.type = type
+        self.type_id = type_id
         self.operands = operands
         self.basic_block = None
         if result_id is not None:
@@ -213,7 +213,7 @@ class Instruction(object):
             new_id = self.module.new_id()
         else:
             new_id = None
-        return Instruction(self.module, self.op_name, new_id, self.type,
+        return Instruction(self.module, self.op_name, new_id, self.type_id,
                            self.operands[:])
 
     def insert_after(self, insert_pos_inst):
@@ -253,7 +253,7 @@ class Instruction(object):
             return False
         if self.op_name in spirv.DEBUG_INSTRUCTIONS:
             return False
-        if self.type == inst.result_id:
+        if self.type_id == inst.result_id:
             return True
         for operand in self.operands:
             if operand == inst.result_id:
@@ -295,8 +295,8 @@ class Instruction(object):
 
     def substitute_type_and_operands(self, old_inst, new_inst):
         """Change use of old_inst in this instruction to new_inst."""
-        if self.type == old_inst.result_id:
-            self.type = new_inst.result_id
+        if self.type_id == old_inst.result_id:
+            self.type_id = new_inst.result_id
         for idx in range(len(self.operands)):
             if self.operands[idx] == old_inst.result_id:
                 self.operands[idx] = new_inst.result_id

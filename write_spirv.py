@@ -9,7 +9,7 @@ def output_instruction(stream, inst):
     opcode = spirv.OPNAME_TABLE[inst.op_name]
 
     if opcode['type']:
-        inst_data.append(int(inst.type[1:]))
+        inst_data.append(int(inst.type_id[1:]))
     if opcode['result']:
         inst_data.append(int(inst.result_id[1:]))
 

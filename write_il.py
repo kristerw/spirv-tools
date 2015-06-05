@@ -14,8 +14,8 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
             result_id = module.id_to_symbol_name[result_id]
         line = line + result_id + ' = '
     line = line + inst.op_name
-    if inst.type is not None:
-        line = line + ' ' + module.type_id_to_name[inst.type]
+    if inst.type_id is not None:
+        line = line + ' ' + module.type_id_to_name[inst.type_id]
 
     if not is_raw_mode:
         line = line + format_decorations_for_inst(module, inst)
@@ -97,9 +97,9 @@ def add_type_if_needed(module, inst, needed_types):
             if operand[0] == '%':
                 type_inst = module.id_to_inst[operand]
                 add_type_if_needed(module, type_inst, needed_types)
-    if inst.type is not None:
-        if module.type_id_to_name[inst.type] == inst.type:
-            needed_types.add(inst.type)
+    if inst.type_id is not None:
+        if module.type_id_to_name[inst.type_id] == inst.type_id:
+            needed_types.add(inst.type_id)
 
 
 def get_needed_types(module):
@@ -143,10 +143,10 @@ def output_function(stream, module, func):
     """Output one function (pretty-printed mode)."""
     stream.write('\n')
     symbol_name = get_symbol_name(module, func.inst.result_id)
-    line = 'define ' + module.type_id_to_name[func.inst.type] + ' '
+    line = 'define ' + module.type_id_to_name[func.inst.type_id] + ' '
     line = line + symbol_name + '('
     for inst in func.arguments:
-        line = line + module.type_id_to_name[inst.type]
+        line = line + module.type_id_to_name[inst.type_id]
         line = line + ' ' + inst.result_id + ', '
     if line[-2:] == ', ':
         line = line[:-2]
