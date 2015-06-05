@@ -75,7 +75,7 @@ class Module(object):
         self.bound = 0
         for inst in self.instructions():
             if (inst.result_id is not None and
-                inst.result_id[1].isdigit()):
+                    inst.result_id[1].isdigit()):
                 self.bound = max(self.bound, int(inst.result_id[1:]))
         self.bound += 1
 
@@ -83,8 +83,8 @@ class Module(object):
         named_ids = []
         for inst in self.instructions():
             if (inst.result_id is not None and
-                not inst.result_id[1].isdigit() and
-                not inst.result_id in named_ids):
+                    not inst.result_id[1].isdigit() and
+                    not inst.result_id in named_ids):
                 named_ids.append(inst.result_id)
         id_rename = {}
         for named_id in named_ids:
@@ -271,12 +271,12 @@ class Instruction(object):
                 uses.append(inst)
         return uses
 
-    def replace_uses_with(module, new_inst):
+    def replace_uses_with(self, new_inst):
         """Replace all uses of this instruction with new_inst.
 
         Decoration and debug instructions are not updated, as they are
         considered being a part of the instruction they reference."""
-        for inst in module.instructions():
+        for inst in self.module.instructions():
             if inst.op_name in spirv.DECORATION_INSTRUCTIONS:
                 continue
             if inst.op_name in spirv.DEBUG_INSTRUCTIONS:
@@ -316,8 +316,8 @@ class Instruction(object):
         """Copy the decorations from src_inst to this instruction."""
         for inst in self.module.instructions():
             if (inst.op_name in spirv.DECORATION_INSTRUCTIONS and
-                inst.op_name != 'OpDecorationGroup' and
-                inst.operamds[0] == src_inst.result_id):
+                    inst.op_name != 'OpDecorationGroup' and
+                    inst.operamds[0] == src_inst.result_id):
                 new_operands = inst.operands[:]
                 new_operands[0] = self.result_id
                 new_inst = Instruction(self.module, inst.op_name,
