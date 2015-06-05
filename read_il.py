@@ -105,9 +105,9 @@ def create_id(module, token):
             new_id = module.new_id()
             module.symbol_name_to_id[token] = new_id
             name = '"' + token[1:] + '"'
-            instr = ir.Instruction(module, 'OpName', None, None,
-                                   [new_id, name])
-            module.add_global_instr(instr)
+            inst = ir.Instruction(module, 'OpName', None, None,
+                                  [new_id, name])
+            module.add_global_inst(inst)
             return new_id
         return token
     elif token in module.type_name_to_id:
@@ -141,45 +141,45 @@ def add_vector_type(module, token):
 
     base_type_id = get_or_create_type(module, base_type)
     new_id = module.new_id()
-    instr = ir.Instruction(module, 'OpTypeVector', new_id, None,
-                           [base_type_id, nof_elem])
-    module.add_global_instr(instr)
-    return instr
+    inst = ir.Instruction(module, 'OpTypeVector', new_id, None,
+                          [base_type_id, nof_elem])
+    module.add_global_inst(inst)
+    return inst
 
 
 def get_or_create_type(module, token):
     if not token in module.type_name_to_id:
         if token == 'void':
             new_id = module.new_id()
-            instr = ir.Instruction(module, 'OpTypeVoid', new_id, None, [])
-            module.add_global_instr(instr)
+            inst = ir.Instruction(module, 'OpTypeVoid', new_id, None, [])
+            module.add_global_inst(inst)
         elif token == 'bool':
             new_id = module.new_id()
-            instr = ir.Instruction(module, 'OpTypeBool', new_id, None, [])
-            module.add_global_instr(instr)
+            inst = ir.Instruction(module, 'OpTypeBool', new_id, None, [])
+            module.add_global_inst(inst)
         elif token in ['s8', 's16', 's32', 's64']:
             new_id = module.new_id()
             width = token[1:]
-            instr = ir.Instruction(module, 'OpTypeInt', new_id, None,
-                                   [width, '1'])
-            module.add_global_instr(instr)
+            inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
+                                  [width, '1'])
+            module.add_global_inst(inst)
         elif token in ['u8', 'u16', 'u32', 'u64']:
             new_id = module.new_id()
             width = token[1:]
-            instr = ir.Instruction(module, 'OpTypeInt', new_id, None,
-                                   [width, '0'])
-            module.add_global_instr(instr)
+            inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
+                                  [width, '0'])
+            module.add_global_inst(inst)
         elif token in ['f16', 'f32', 'f64']:
             new_id = module.new_id()
             width = token[1:]
-            instr = ir.Instruction(module, 'OpTypeFloat', new_id, None,
-                                   [width])
-            module.add_global_instr(instr)
+            inst = ir.Instruction(module, 'OpTypeFloat', new_id, None,
+                                  [width])
+            module.add_global_inst(inst)
         elif token[0] == '<':
-            instr = add_vector_type(module, token)
+            inst = add_vector_type(module, token)
         else:
             raise ParseError('Not a valid type: ' + token)
-        module.type_name_to_id[token] = instr.result_id
+        module.type_name_to_id[token] = inst.result_id
 
     return module.type_name_to_id[token]
 
@@ -195,16 +195,16 @@ def parse_type(lexer, module):
 
 
 def get_or_create_function_type(module, return_type, arguments):
-    for instr in module.global_instrs:
-        if instr.op_name == 'OpTypeFunction':
-            if instr.operands[0] == return_type:
-                if len(arguments) == len(instr.operands[1:]):
+    for inst in module.global_insts:
+        if inst.op_name == 'OpTypeFunction':
+            if inst.operands[0] == return_type:
+                if len(arguments) == len(inst.operands[1:]):
                     # XXX check arguments
-                    return instr.result_id
+                    return inst.result_id
     operands = [return_type] + [arg[0] for arg in arguments]
     new_id = module.new_id()
-    instr = ir.Instruction(module, 'OpTypeFunction', new_id, None, operands)
-    module.add_global_instr(instr)
+    inst = ir.Instruction(module, 'OpTypeFunction', new_id, None, operands)
+    module.add_global_inst(inst)
     return new_id
 
 
@@ -297,8 +297,8 @@ def parse_decorations(lexer, module, variable_name):
                     break
                 if token != ',':
                     raise ParseError('Syntax error in decoration')
-        instr = ir.Instruction(module, 'OpDecorate', None, None, operands)
-        module.add_global_instr(instr)
+        inst = ir.Instruction(module, 'OpDecorate', None, None, operands)
+        module.add_global_inst(inst)
 
 
 def parse_instructions(lexer, module):
@@ -313,12 +313,12 @@ def parse_instructions(lexer, module):
         elif token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
         else:
-            instr = parse_instruction(lexer, module)
-            if instr.op_name == 'OpFunction':
-                func = parse_function_raw(lexer, module, instr)
+            inst = parse_instruction(lexer, module)
+            if inst.op_name == 'OpFunction':
+                func = parse_function_raw(lexer, module, inst)
                 module.add_function(func)
             else:
-                module.add_global_instr(instr)
+                module.add_global_inst(inst)
 
 
 def parse_basic_block_body(lexer, module, basic_block):
@@ -331,48 +331,48 @@ def parse_basic_block_body(lexer, module, basic_block):
         elif token[-1] == ':':
             raise ParseError('Label without terminating previous basic block')
         else:
-            instr = parse_instruction(lexer, module)
-            basic_block.append_instr(instr)
+            inst = parse_instruction(lexer, module)
+            basic_block.append_inst(inst)
             if token in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
                 return
 
 
-def parse_basic_block(lexer, module, function, initial_instrs):
+def parse_basic_block(lexer, module, function, initial_insts):
     """Parse one basic block."""
     token = lexer.get_next_token()
     lexer.done_with_line()
     basic_block_id = create_id(module, token[:-1])
     basic_block = ir.BasicBlock(module, basic_block_id)
 
-    for instr in initial_instrs:
-        basic_block.append_instr(instr)
+    for inst in initial_insts:
+        basic_block.append_inst(inst)
 
     parse_basic_block_body(lexer, module, basic_block)
     function.append_basic_block(basic_block)
 
 
-def parse_function_raw(lexer, module, instr):
+def parse_function_raw(lexer, module, inst):
     """Parse one function staring with the 'OpFunction' instruction."""
     function = ir.Function(module,
-                           instr.result_id,
-                           instr.operands[0],
-                           instr.operands[1])
+                           inst.result_id,
+                           inst.operands[0],
+                           inst.operands[1])
 
     while True:
         token = lexer.get_next_token(peek=True)
         if token == '':
             break  # This is an empty line -- nothing to do.
 
-        instr = parse_instruction(lexer, module)
+        inst = parse_instruction(lexer, module)
 
-        if instr.op_name == 'OpLabel':
-            basic_block = ir.BasicBlock(module, instr.result_id)
+        if inst.op_name == 'OpLabel':
+            basic_block = ir.BasicBlock(module, inst.result_id)
             parse_basic_block_body(lexer, module, basic_block)
             function.append_basic_block(basic_block)
-        elif instr.op_name == 'OpFunctionEnd':
+        elif inst.op_name == 'OpFunctionEnd':
             return function
-        elif instr.op_name == 'OpFunctionParameter':
-            function.append_argument(instr)
+        elif inst.op_name == 'OpFunctionParameter':
+            function.append_argument(inst)
         else:
             raise ParseError('Syntax error')
 
@@ -407,9 +407,9 @@ def parse_function_definition(lexer, module):
     function = ir.Function(module, name, '0', function_type) # XXX
     param_loads = []
     for (arg_type, arg_id) in arguments:
-        arg_instr = ir.Instruction(module, 'OpFunctionParameter', arg_id,
-                                   arg_type, [])
-        function.append_argument(arg_instr)
+        arg_inst = ir.Instruction(module, 'OpFunctionParameter', arg_id,
+                                  arg_type, [])
+        function.append_argument(arg_inst)
 
     return function, param_loads
 
