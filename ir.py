@@ -26,7 +26,7 @@ class Module(object):
                 yield instr
 
     def instructions_reversed(self):
-        """Iterate in reversed order over all instructions in the module."""
+        """Iterate in reverse order over all instructions in the module."""
         for function in reversed(self.functions[:]):
             for instr in function.instructions_reversed():
                 yield instr
@@ -38,25 +38,25 @@ class Module(object):
         self._tmp_id_counter += 1
         return '%.' + str(self._tmp_id_counter)
 
-    def copy_global_instrs(self, output_array, names):
+    def _copy_global_instrs(self, output_array, names):
         for instr in self.global_instrs:
             if instr.op_name in names:
                 output_array.append(instr)
 
-    def sort_global_instrs(self):
+    def _sort_global_instrs(self):
         sorted_instrs = []
         for name in spirv.INITIAL_INSTRUCTIONS:
-            self.copy_global_instrs(sorted_instrs, [name])
-        self.copy_global_instrs(sorted_instrs,
-                                spirv.DEBUG_INSTRUCTIONS)
-        self.copy_global_instrs(sorted_instrs,
-                                spirv.DECORATION_INSTRUCTIONS)
-        self.copy_global_instrs(sorted_instrs,
-                                spirv.TYPE_DECLARATION_INSTRUCTIONS)
-        self.copy_global_instrs(sorted_instrs,
-                                spirv.CONSTANT_INSTRUCTIONS)
-        self.copy_global_instrs(sorted_instrs,
-                                spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+            self._copy_global_instrs(sorted_instrs, [name])
+        self._copy_global_instrs(sorted_instrs,
+                                 spirv.DEBUG_INSTRUCTIONS)
+        self._copy_global_instrs(sorted_instrs,
+                                 spirv.DECORATION_INSTRUCTIONS)
+        self._copy_global_instrs(sorted_instrs,
+                                 spirv.TYPE_DECLARATION_INSTRUCTIONS)
+        self._copy_global_instrs(sorted_instrs,
+                                 spirv.CONSTANT_INSTRUCTIONS)
+        self._copy_global_instrs(sorted_instrs,
+                                 spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
         self.global_instrs = sorted_instrs
 
     def add_global_instr(self, instr):
@@ -64,7 +64,7 @@ class Module(object):
         if instr.op_name not in spirv.GLOBAL_INSTRUCTIONS:
             raise IRError(instr.op_name + ' is not a valid global instruction')
         self.global_instrs.append(instr)
-        self.sort_global_instrs()
+        self._sort_global_instrs()
 
     def add_function(self, function):
         """Add function to the module."""
@@ -74,24 +74,24 @@ class Module(object):
         # Determine ID bound.
         self.bound = 0
         for instr in self.instructions():
-            if instr.result_id is not None:
-                if instr.result_id[1].isdigit():
-                    self.bound = max(self.bound, int(instr.result_id[1:]))
+            if (instr.result_id is not None and
+                instr.result_id[1].isdigit()):
+                self.bound = max(self.bound, int(instr.result_id[1:]))
         self.bound += 1
 
         # Create new numeric IDs for the named IDs.
         named_ids = []
         for instr in self.instructions():
-            if instr.result_id is not None:
-                if not instr.result_id[1].isdigit():
-                    if not instr.result_id in named_ids:
-                        named_ids.append(instr.result_id)
+            if (instr.result_id is not None and
+                not instr.result_id[1].isdigit() and
+                not instr.result_id in named_ids):
+                named_ids.append(instr.result_id)
         id_rename = {}
         for named_id in named_ids:
             id_rename[named_id] = '%' + str(self.bound)
             self.bound += 1
 
-        # Update all usage of named IDs to use the new numeric IDs.
+        # Update all uses of named IDs to use the new numeric IDs.
         for instr in self.instructions():
             if instr.result_id in id_rename:
                 instr.result_id = id_rename[instr.result_id]
@@ -115,8 +115,7 @@ class Function(object):
         self.basic_blocks = []
         self.instr = Instruction(self.module, 'OpFunction',
                                  id, function_type_instr.operands[0],
-                                 [function_control,
-                                  function_type_id])
+                                 [function_control, function_type_id])
         self.end_instr = Instruction(self.module, 'OpFunctionEnd',
                                      None, None, [])
 
@@ -133,7 +132,7 @@ class Function(object):
         yield self.end_instr
 
     def instructions_reversed(self):
-        """Iterate in reversed order over all instructions in the function."""
+        """Iterate in reverse order over all instructions in the function."""
         yield self.end_instr
         for basic_block in reversed(self.basic_blocks[:]):
             if basic_block.function is not None:
@@ -147,17 +146,17 @@ class Function(object):
     def append_argument(self, instr):
         self.arguments.append(instr)
 
-    def add_basic_block(self, basic_block):
+    def append_basic_block(self, basic_block):
         self.basic_blocks.append(basic_block)
+        basic_block.function = self
 
 
 class BasicBlock(object):
-    def __init__(self, function, id):
-        self.function = function
-        self.module = function.module
+    def __init__(self, module, id):
+        self.function = None
+        self.module = module
         self.instr = Instruction(self.module, 'OpLabel', id, None, [])
         self.instrs = []
-        function.add_basic_block(self)
 
     def append_instr(self, instr):
         """Add instruction at the end of the basic block."""
@@ -173,18 +172,22 @@ class BasicBlock(object):
         """Remove basic block from function."""
         if self.function is None:
             raise IRError('Basic block is not in function')
-        self.function.basic_block.remove(self)
+        self.function.basic_blocks.remove(self)
+        self.function = None
 
     def destroy(self):
         """Destroy the basic block.
 
-        This removes all instructions from the basic block, removes the
-        basic block from the function if it is attached to a function.
-        And clears all other internal data so that it cannot be used
-        accidentally. The basic block must not be used after it is
-        destroyed."""
+        This removes all instructions from the basic block, and removes the
+        basic block from the function (if it is attached to a function).
+        The basic block must not be used after it is destroyed."""
         self.remove()
-        for instr in self.instrs[:]:
+        for instr in reversed(self.instrs[:]):
+            uses = instr.uses()
+            for tmp_instr in uses:
+                if tmp_instr.op_name != 'OpPhi':
+                    IRError('Instruction is used in other basic block')
+                IRError('Need to remove from phi node') # XXX
             instr.remove()
         self.module = None
 
@@ -203,7 +206,7 @@ class Instruction(object):
     def clone(self):
         """Create a copy of the instruction.
 
-        The new instruction is identical to this instruction, execept that
+        The new instruction is identical to this instruction, except that
         it has a new result_id (if the instruction type has a result_id),
         and it is not bound to any basic block."""
         if self.result_id is not None:
@@ -232,9 +235,12 @@ class Instruction(object):
         basic_block.instrs.insert(idx, self)
 
     def remove(self):
-        """Remove instruction from basic block."""
+        """Remove instruction from basic block or global instruction list."""
         if self.basic_block is None:
-            raise IRError('Instruction is not in basic block')
+            if self not in self.module.global_instrs:
+                raise IRError('Instruction is not in basic block or module')
+            self.module.global_instrs.remove(self)
+            return
         self.basic_block.instrs.remove(self)
         self.basic_block = None
 
@@ -254,53 +260,67 @@ class Instruction(object):
                 return True
         return False
 
-    def users(self):
+    def uses(self):
         """Return all instructions using this instructions.
 
         Debug and decoration instructions are not considered using
         any instruction."""
-        users = []
+        uses = []
         for instr in self.module.instructions():
             if instr.is_using(self):
-                users.append(instr)
-        return users
+                uses.append(instr)
+        return uses
+
+    def replace_uses_with(module, new_instr):
+        """Replace all uses of this instruction with new_instr.
+
+        Decoration and debug instructions are not updated, as they are
+        considered being a part of the instruction they reference."""
+        for instr in module.instructions():
+            if instr.op_name in spirv.DECORATION_INSTRUCTIONS:
+                continue
+            if instr.op_name in spirv.DEBUG_INSTRUCTIONS:
+                continue
+            instr.substitute_type_and_operands(self, new_instr)
 
     def replace_with(self, new_instr):
         """Replace this instruction with new_instr.
-        
-        The new_instr is inserted in the location of this instruction,
+
+        All uses of this instruction is replaced by new_instr, the
+        new_instr is inserted in the location of this instruction,
         and this instruction is removed."""
         new_instr.insert_after(self)
-        update_use(self.module, self, new_instr)
+        self.replace_uses_with(new_instr)
         self.remove()
 
     def substitute_type_and_operands(self, old_instr, new_instr):
-        """Change use instr to new_instr."""
+        """Change use of old_instr in this instruction to new_instr."""
         if self.type == old_instr.result_id:
             self.type = new_instr.result_id
         for idx in range(len(self.operands)):
             if self.operands[idx] == old_instr.result_id:
                 self.operands[idx] = new_instr.result_id
 
-    def has_sideeffect(self):
-        """True if it instruction has sideeffects."""
-        # XXX Document semantics of sideeffects.
-        # XXX need to handle OpExtInst
+    def has_side_effect(self):
+        """True if the instruction may be removed if unused."""
+        # XXX Need to handle OpExtInst correctly (it is convervative now)
+        # XXX Global instructions are a bit special, so they are always
+        #     considered having side effects for now.
         if self.op_name in spirv.GLOBAL_INSTRUCTIONS:
             return True
         if self.result_id is None:
             return True
-        return self.op_name in spirv.HAS_SIDEEFFECT
+        return self.op_name in spirv.HAS_SIDE_EFFECT
 
-
-def update_use(module, old_instr, new_instr):
-    """Change all use of old_instr to new_instr.
-
-    Decoration and debug instructions are not updated, as they are
-    considered being a part of the instruction they reference."""
-    for instr in module.instructions():
-        if instr.op_name in spirv.DECORATION_INSTRUCTIONS:
-            continue
-        if instr.op_name in spirv.DEBUG_INSTRUCTIONS:
-            continue
-        instr.substitute_type_and_operands(old_instr, new_instr)
+    def copy_decorations(self, src_instr):
+        """Copy the decorations from src_instr to this instruction."""
+        for instr in self.module.instructions():
+            if (instr.op_name in spirv.DECORATION_INSTRUCTIONS and
+                instr.op_name != 'OpDecorationGroup' and
+                instr.operamds[0] == src_instr.result_id):
+                new_operands = instr.operands[:]
+                new_operands[0] = self.result_id
+                new_instr = Instruction(self.module, instr.op_name,
+                                        None, None,
+                                        new_operands)
+                self.module.add_global_instr(new_instr)

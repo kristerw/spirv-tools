@@ -96,12 +96,9 @@ class Lexer(object):
         self.line = None
 
 
-def parse_id(lexer, module, accept_eol=False):
-    """parse one Id."""
-    token = lexer.get_next_token(accept_eol=accept_eol)
-    if accept_eol and token == '':
-        return ''
-    elif token in module.symbol_name_to_id:
+def create_id(module, token):
+    """Create the 'real' ID from an ID token."""
+    if token in module.symbol_name_to_id:
         return module.symbol_name_to_id[token]
     elif token[0] == '%':
         if not token[1].isdigit():
@@ -117,6 +114,15 @@ def parse_id(lexer, module, accept_eol=False):
         return module.type_name_to_id[token]
     else:
         return get_or_create_type(module, token)
+
+
+def parse_id(lexer, module, accept_eol=False):
+    """parse one Id."""
+    token = lexer.get_next_token(accept_eol=accept_eol)
+    if accept_eol and token == '':
+        return ''
+    else:
+        return create_id(module, token)
 
 
 def add_vector_type(module, token):
@@ -180,7 +186,9 @@ def get_or_create_type(module, token):
 
 def parse_type(lexer, module):
     token = lexer.get_next_token()
-    if token[0] == '%':
+    if token in module.symbol_name_to_id:
+        return module.symbol_name_to_id[token]
+    elif token[0] == '%':
         return token
     else:
         return get_or_create_type(module, token)
@@ -325,7 +333,7 @@ def parse_basic_block_body(lexer, module, basic_block):
         else:
             instr = parse_instruction(lexer, module)
             basic_block.append_instr(instr)
-            if token in spirv.TERMINATING_INSTRUCTIONS:
+            if token in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
                 return
 
 
@@ -333,12 +341,14 @@ def parse_basic_block(lexer, module, function, initial_instrs):
     """Parse one basic block."""
     token = lexer.get_next_token()
     lexer.done_with_line()
-    basic_block = ir.BasicBlock(function, token[:-1])
+    basic_block_id = create_id(module, token[:-1])
+    basic_block = ir.BasicBlock(module, basic_block_id)
 
     for instr in initial_instrs:
         basic_block.append_instr(instr)
 
     parse_basic_block_body(lexer, module, basic_block)
+    function.append_basic_block(basic_block)
 
 
 def parse_function_raw(lexer, module, instr):
@@ -356,8 +366,9 @@ def parse_function_raw(lexer, module, instr):
         instr = parse_instruction(lexer, module)
 
         if instr.op_name == 'OpLabel':
-            basic_block = ir.BasicBlock(function, instr.result_id)
+            basic_block = ir.BasicBlock(module, instr.result_id)
             parse_basic_block_body(lexer, module, basic_block)
+            function.append_basic_block(basic_block)
         elif instr.op_name == 'OpFunctionEnd':
             return function
         elif instr.op_name == 'OpFunctionParameter':

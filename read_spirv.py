@@ -158,14 +158,14 @@ def parse_basic_block(binary, module, function):
     opcode = binary.get_next_opcode()
     basic_block_id = str(parse_id(binary))
     binary.expect_eol()
-    basic_block = ir.BasicBlock(function, basic_block_id)
+    basic_block = ir.BasicBlock(module, basic_block_id)
 
     while True:
         opcode = binary.get_next_opcode(peek=True)
         instr = parse_instruction(binary, module)
         basic_block.append_instr(instr)
-
-        if opcode['name'] in spirv.TERMINATING_INSTRUCTIONS:
+        if opcode['name'] in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
+            function.append_basic_block(basic_block)
             return
 
 
