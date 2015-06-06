@@ -348,7 +348,7 @@ def parse_basic_block(lexer, module, function, initial_insts):
         basic_block.append_inst(inst)
 
     parse_basic_block_body(lexer, module, basic_block)
-    function.append_basic_block(basic_block)
+    function.add_basic_block(basic_block)
 
 
 def parse_function_raw(lexer, module, inst):
@@ -368,7 +368,7 @@ def parse_function_raw(lexer, module, inst):
         if inst.op_name == 'OpLabel':
             basic_block = ir.BasicBlock(module, inst.result_id)
             parse_basic_block_body(lexer, module, basic_block)
-            function.append_basic_block(basic_block)
+            function.add_basic_block(basic_block)
         elif inst.op_name == 'OpFunctionEnd':
             return function
         elif inst.op_name == 'OpFunctionParameter':

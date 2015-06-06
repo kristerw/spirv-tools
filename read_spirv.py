@@ -165,7 +165,7 @@ def parse_basic_block(binary, module, function):
         inst = parse_instruction(binary, module)
         basic_block.append_inst(inst)
         if opcode['name'] in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
-            function.append_basic_block(basic_block)
+            function.add_basic_block(basic_block)
             return
 
 

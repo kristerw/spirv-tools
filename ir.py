@@ -108,13 +108,13 @@ class Module(object):
 
 
 class Function(object):
-    def __init__(self, module, id, function_control, function_type_id):
+    def __init__(self, module, function_id, function_control, function_type_id):
         function_type_inst = module.id_to_inst[function_type_id]
         self.module = module
         self.arguments = []
         self.basic_blocks = []
         self.inst = Instruction(self.module, 'OpFunction',
-                                id, function_type_inst.operands[0],
+                                function_id, function_type_inst.operands[0],
                                 [function_control, function_type_id])
         self.end_inst = Instruction(self.module, 'OpFunctionEnd',
                                     None, None, [])
@@ -144,18 +144,20 @@ class Function(object):
         yield self.inst
 
     def append_argument(self, inst):
+        """Append argument to the arguments list."""
         self.arguments.append(inst)
 
-    def append_basic_block(self, basic_block):
+    def add_basic_block(self, basic_block):
+        """Add one basic block to the function."""
         self.basic_blocks.append(basic_block)
         basic_block.function = self
 
 
 class BasicBlock(object):
-    def __init__(self, module, id):
+    def __init__(self, module, label_id):
         self.function = None
         self.module = module
-        self.inst = Instruction(self.module, 'OpLabel', id, None, [])
+        self.inst = Instruction(self.module, 'OpLabel', label_id, None, [])
         self.inst.basic_block = self
         self.insts = []
 
