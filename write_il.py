@@ -218,7 +218,7 @@ def add_type_names(module):
             add_type_name(module, inst)
 
 
-def write_module(stream, module, is_raw_mode):
+def write_module(stream, module, is_raw_mode=False):
     module.id_to_symbol_name = {}
     module.type_id_to_name = {}
 
