@@ -4,6 +4,8 @@ import argparse
 import os
 import sys
 
+import dead_code_elim
+import simplify_cfg
 import read_spirv
 import write_il
 
@@ -13,6 +15,7 @@ def main():
     parser.add_argument('filename', help='intput file name')
     parser.add_argument('-o', help='output file name', metavar='filename')
     parser.add_argument('-r', help='output raw IL', action='store_true')
+    parser.add_argument('-O', help='optimize', action='store_true')
 
     args = parser.parse_args()
     is_raw_mode = False
@@ -34,6 +37,10 @@ def main():
     except read_spirv.ParseError as err:
         sys.stderr.write('error: ' + err.value + '\n')
         sys.exit(1)
+
+    if args.O:
+        simplify_cfg.optimize(module)
+        dead_code_elim.optimize(module)
 
     with open(output_file_name, 'w') as stream:
         write_il.write_module(stream, module, is_raw_mode)
