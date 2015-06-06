@@ -365,7 +365,7 @@ class Instruction(object):
         for inst in self.module.instructions():
             if (inst.op_name in spirv.DECORATION_INSTRUCTIONS and
                     inst.op_name != 'OpDecorationGroup' and
-                    inst.operamds[0] == src_inst.result_id):
+                    inst.operands[0] == src_inst.result_id):
                 new_operands = inst.operands[:]
                 new_operands[0] = self.result_id
                 new_inst = Instruction(self.module, inst.op_name,
