@@ -70,6 +70,45 @@ class Module(object):
         """Add function to the module."""
         self.functions.append(function)
 
+    def get_constant(self, type_id, value):
+        """Get a constant with the provided value and type.
+
+        The constant is created if not already existing.
+        For vector types, the value need to be a list of the same length
+        as the vector size, or a scalar, in which case the value is
+        replicated for all elements."""
+        type_inst = self.id_to_inst[type_id]
+        if (type_inst.op_name == 'OpTypeInt' or
+                type_inst.op_name == 'OpTypeFloat'):
+            for inst in self.global_insts:
+                if (inst.op_name == 'OpConstant' and
+                        inst.type_id == type_inst.result_id and
+                        inst.operands[0] == str(value)):
+                    return inst
+            inst = Instruction(self, 'OpConstant', self.new_id(),
+                               type_inst.result_id, [str(value)])
+            self.add_global_inst(inst)
+            return inst
+        elif type_inst.op_name == 'OpTypeVector':
+            nof_elements = int(type_inst.operands[1])
+            if not isinstance(value, list):
+                value = [value] * nof_elements
+            operands = []
+            for elem in value:
+                instr = self.get_constant(type_inst.operands[0], elem)
+                operands.append(instr.result_id)
+            for inst in self.global_insts:
+                if (inst.op_name == 'OpConstantComposite' and
+                        inst.type_id == type_inst.result_id and
+                        lists_are_identical(inst.operands, operands)):
+                    return inst
+            inst = Instruction(self, 'OpConstantComposite', self.new_id(),
+                               type_inst.result_id, operands)
+            self.add_global_inst(inst)
+            return inst
+        else:
+            raise IRError('Invalid type for constant')
+
     def finalize(self):
         # Determine ID bound.
         self.bound = 0
@@ -262,7 +301,7 @@ class Instruction(object):
         """Remove instruction from basic block or global instruction list.
 
         The instruction's debug and decoration instructions are unaffected,
-        so that it is possible to re-insert the instucion again."""
+        so that it is possible to re-insert the instruction again."""
         if self.basic_block is None:
             if self not in self.module.global_insts:
                 raise IRError('Instruction is not in basic block or module')
@@ -355,7 +394,7 @@ class Instruction(object):
 
     def has_side_effect(self):
         """True if the instruction may be removed if unused."""
-        # XXX Need to handle OpExtInst correctly (it is convervative now)
+        # XXX Need to handle OpExtInst correctly (it is conservative now)
         if self.result_id is None:
             return True
         return self.op_name in spirv.HAS_SIDE_EFFECT
@@ -371,3 +410,13 @@ class Instruction(object):
                 new_inst = Instruction(self.module, inst.op_name,
                                        None, None, new_operands)
                 self.module.add_global_inst(new_inst)
+
+
+def lists_are_identical(list1, list2):
+    """Return True if the lists are identical."""
+    if len(list1) != len(list2):
+        return False
+    for elem1, elem2 in zip(list1, list2):
+        if elem1 != elem2:
+            return False
+    return True
