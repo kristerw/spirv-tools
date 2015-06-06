@@ -188,7 +188,7 @@ class BasicBlock(object):
             for tmp_inst in uses:
                 if tmp_inst.op_name == 'OpPhi':
                     IRError('Not implemented: remove from phi node') # XXX
-            inst.remove()
+            inst.destroy()
         self.module = None
 
     def predecessors(self):
@@ -212,18 +212,18 @@ class Instruction(object):
             self.module.id_to_inst[self.result_id] = self
 
     def __str__(self):
-        str = ''
+        res = ''
         if self.result_id is not None:
-            str = str + self.result_id + ' = '
-        str = str + self.op_name 
+            res = res + self.result_id + ' = '
+        res = res + self.op_name
         if self.type_id is not None:
-            str = str + ' ' + self.type_id
+            res = res + ' ' + self.type_id
         if self.operands:
-            str = str + ' '
-            for op in self.operands:
-                str = str + op + ', '
-            str = str[:-2]
-        return str
+            res = res + ' '
+            for operand in self.operands:
+                res = res + operand + ', '
+            res = res[:-2]
+        return res
 
     def clone(self):
         """Create a copy of the instruction.
@@ -257,7 +257,10 @@ class Instruction(object):
         basic_block.insts.insert(idx, self)
 
     def remove(self):
-        """Remove instruction from basic block or global instruction list."""
+        """Remove instruction from basic block or global instruction list.
+
+        The instruction's debug and decoration instructions are unaffected,
+        so that it is possible to re-insert the instucion again."""
         if self.basic_block is None:
             if self not in self.module.global_insts:
                 raise IRError('Instruction is not in basic block or module')
@@ -265,6 +268,31 @@ class Instruction(object):
             return
         self.basic_block.insts.remove(self)
         self.basic_block = None
+
+    def destroy(self):
+        """Destroy instruction.
+
+        This removes the instruction, together with its debug and decoration
+        instructions, from the module. The instruction must not be used
+        after it is destroyed."""
+        for inst in self.module.global_insts[:]:
+            if (inst.op_name in spirv.DECORATION_INSTRUCTIONS or
+                    inst.op_name in spirv.DEBUG_INSTRUCTIONS):
+                if self.result_id in inst.operands:
+                    inst.destroy()
+        if self.basic_block is None:
+            if self not in self.module.global_insts:
+                raise IRError('Instruction is not in basic block or module')
+            self.module.global_insts.remove(self)
+            return
+        self.basic_block.insts.remove(self)
+        if self.result_id is not None:
+            del self.module.id_to_inst[self.result_id]
+        self.basic_block = None
+        self.op_name = None
+        self.result_id = None
+        self.type_id = None
+        self.operands = None
 
     def is_using(self, inst):
         """Return True if this instruction is using the instruction.
@@ -310,10 +338,10 @@ class Instruction(object):
 
         All uses of this instruction is replaced by new_inst, the
         new_inst is inserted in the location of this instruction,
-        and this instruction is removed."""
+        and this instruction is destroyed."""
         new_inst.insert_after(self)
         self.replace_uses_with(new_inst)
-        self.remove()
+        self.destroy()
 
     def substitute_type_and_operands(self, old_inst, new_inst):
         """Change use of old_inst in this instruction to new_inst."""
@@ -326,10 +354,6 @@ class Instruction(object):
     def has_side_effect(self):
         """True if the instruction may be removed if unused."""
         # XXX Need to handle OpExtInst correctly (it is convervative now)
-        # XXX Global instructions are a bit special, so they are always
-        #     considered having side effects for now.
-        if self.op_name in spirv.GLOBAL_INSTRUCTIONS:
-            return True
         if self.result_id is None:
             return True
         return self.op_name in spirv.HAS_SIDE_EFFECT
