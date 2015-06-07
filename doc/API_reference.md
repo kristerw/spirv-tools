@@ -91,6 +91,20 @@ It is possible to iterate
 over all instructions in the module by `module.instructions()`. The
 instructions are retrieved in the same order as in the binary. It is
 allowed to modify the IR while iterating over the instructions, but
-removed/added instructions may/may not be seen. Removed/destroyed
-basic blocks are guaranteed to not be seen when iterating, but 
-added basic blocks may/may not be seen, depending on the implementation.
+instruction added to the current basic block will not be seen by the
+iterator. Instructions that are moved (i.e. removed and re-inserted)
+in the current basic block may be returned as if it was in its old
+position.
+
+TBD - Decorations, debug instructions etc.
+
+TBD - Global instructions
+
+## IR
+TBD
+
+## Input/Output
+TBD
+
+## Optimizations
+TBD
