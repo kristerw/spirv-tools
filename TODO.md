@@ -1,14 +1,5 @@
-##Code cleanup
-The current code is partly an explorational implementation to determine what kind of functionality I need in the IR (both for the assembler/disassembler, and for some other tools I'm working on), and partly an attempt to learn python. As such, there are many parts of the code that I know are bad.
-
-The work package here is to
-* Design a real representation for the IR.
-* Implement functionality for iterating over, and manipulating, the IR.
-* Update the implementation to use the new infrastructure.
-* Add tests for everything before each functionality is implemented.
-
 ##Bugs and Limitations
-Known bugs and limitations include:
+Known bugs and limitations in the assembler/disassembler include:
 * `OpConstant` does only handle 32-bit constants correctly.
 * Bitmasks are always written as a number
 * Structure/arrays/matrices/etc. are not pretty-printed
@@ -19,9 +10,7 @@ Known bugs and limitations include:
 * The CFG is not updated
 * The `OptionalId` of `OpVariable` is not handled in pretty-printed mode
 
-But there are surely more bugs and limitations – much of the code is untested...
-
-##Syntax
+##Assembler syntax
 Some things are missing or should be changed
 * Hex/binary constants should be supported
 * Negative constants should be supported
