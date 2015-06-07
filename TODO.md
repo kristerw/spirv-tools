@@ -1,5 +1,15 @@
 ##Bugs and Limitations
+Known bugs and limitations in the API include:
+* The CFG is not updated when adding basic blocks
+* Phi-nodes are not handled correctly
+* Need a `mem2reg` pass
+* Representation of literals need to change (they are currently represented as strings)
+* `Module.get_constant()` need to handle more types. At least Booleans, NULL pointers, etc. But probably "all" constants.
+* Need an API similar to 'Module.get_constant()' for creating types
+* The implementation is _very_ inefficient. Need to be able to get instruction uses etc. without iterating over the module
+
 Known bugs and limitations in the assembler/disassembler include:
+* The assembler syntax is mostly undocumented
 * `OpConstant` does only handle 32-bit constants correctly.
 * Bitmasks are always written as a number
 * Structure/arrays/matrices/etc. are not pretty-printed
