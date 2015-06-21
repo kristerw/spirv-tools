@@ -91,7 +91,7 @@ class Module(object):
             return inst
         elif type_inst.op_name == 'OpTypeVector':
             nof_elements = int(type_inst.operands[1])
-            if not isinstance(value, list):
+            if not isinstance(value, (list, tuple)):
                 value = [value] * nof_elements
             operands = []
             for elem in value:
