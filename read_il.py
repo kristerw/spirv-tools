@@ -442,10 +442,11 @@ def read_module(stream):
     try:
         parse_instructions(lexer, module)
         module.finalize()
-        del module.symbol_name_to_id
-        del module.type_name_to_id
         return module
     except ParseError as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
     except ir.IRError as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
+    finally:
+        del module.symbol_name_to_id
+        del module.type_name_to_id

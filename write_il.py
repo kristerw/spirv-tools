@@ -221,41 +221,41 @@ def add_type_names(module):
 def write_module(stream, module, is_raw_mode=False):
     module.id_to_symbol_name = {}
     module.type_id_to_name = {}
+    try:
+        module.finalize()
 
-    module.finalize()
+        add_type_names(module)
+        if not is_raw_mode:
+            generate_global_symbols(module)
 
-    add_type_names(module)
-    if not is_raw_mode:
-        generate_global_symbols(module)
-
-    for name in spirv.INITIAL_INSTRUCTIONS:
-        if name != 'OpExtInstImport':
-            output_global_instructions(stream, module, is_raw_mode, [name],
-                                       newline=False)
-    output_global_instructions(stream, module, is_raw_mode,
-                               ['OpExtInstImport'])
-
-    if is_raw_mode:
+        for name in spirv.INITIAL_INSTRUCTIONS:
+            if name != 'OpExtInstImport':
+                output_global_instructions(stream, module, is_raw_mode, [name],
+                                           newline=False)
         output_global_instructions(stream, module, is_raw_mode,
-                                   spirv.DEBUG_INSTRUCTIONS)
-        output_global_instructions(stream, module, is_raw_mode,
-                                   spirv.DECORATION_INSTRUCTIONS)
-        output_global_instructions(stream, module, is_raw_mode,
-                                   spirv.TYPE_DECLARATION_INSTRUCTIONS)
-    else:
-        needed_types = get_needed_types(module)
-        if needed_types:
-            stream.write('\n')
-            for inst in module.global_insts:
-                if inst.result_id in needed_types:
-                    output_instruction(stream, module, inst, is_raw_mode,
-                                       indent='')
+                                   ['OpExtInstImport'])
 
-    output_global_instructions(stream, module, is_raw_mode,
-                               spirv.CONSTANT_INSTRUCTIONS)
-    output_global_instructions(stream, module, is_raw_mode,
-                               spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
-    output_functions(stream, module, is_raw_mode)
+        if is_raw_mode:
+            output_global_instructions(stream, module, is_raw_mode,
+                                       spirv.DEBUG_INSTRUCTIONS)
+            output_global_instructions(stream, module, is_raw_mode,
+                                       spirv.DECORATION_INSTRUCTIONS)
+            output_global_instructions(stream, module, is_raw_mode,
+                                       spirv.TYPE_DECLARATION_INSTRUCTIONS)
+        else:
+            needed_types = get_needed_types(module)
+            if needed_types:
+                stream.write('\n')
+                for inst in module.global_insts:
+                    if inst.result_id in needed_types:
+                        output_instruction(stream, module, inst, is_raw_mode,
+                                           indent='')
 
-    del module.type_id_to_name
-    del module.id_to_symbol_name
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.CONSTANT_INSTRUCTIONS)
+        output_global_instructions(stream, module, is_raw_mode,
+                                   spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+        output_functions(stream, module, is_raw_mode)
+    finally:
+        del module.type_id_to_name
+        del module.id_to_symbol_name
