@@ -261,13 +261,20 @@ def parse_instruction(lexer, module):
 
     parse_decorations(lexer, module, op_result)
 
-    for kind in opcode['operands']:
+    kinds = opcode['operands'][:]
+    while kinds:
+        kind = kinds.pop(0)
         operands = operands + parse_operand(lexer, module, kind)
         comma = lexer.get_next_token(',', accept_eol=True)
         if comma == '':
             break
-    # XXX Check that we have got the correct number of operands
-    # when things like 'VariableLiterals' may be absent
+
+    # There are no more operands in the input.  This is OK if all the
+    # remaining instruction operands are optional.
+    while kinds:
+        kind = kinds.pop(0)
+        if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals']:
+            raise ParseError('Missing operands')
 
     lexer.done_with_line()
 
