@@ -198,8 +198,7 @@ def get_or_create_function_type(module, return_type, arguments):
     for inst in module.global_insts:
         if inst.op_name == 'OpTypeFunction':
             if inst.operands[0] == return_type:
-                if len(arguments) == len(inst.operands[1:]):
-                    # XXX check arguments
+                if [arg[0] for arg in arguments] == inst.operands[1:]:
                     return inst.result_id
     operands = [return_type] + [arg[0] for arg in arguments]
     new_id = module.new_id()
