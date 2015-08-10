@@ -7,6 +7,15 @@
             "NSZ": 4, 
             "AllowRecip": 8
         }, 
+        "ImageOperands": {
+            "Lod": 2, 
+            "ConstOffset": 8, 
+            "Sample": 64, 
+            "Bias": 1, 
+            "Offset": 16, 
+            "Grad": 4, 
+            "ConstOffsets": 32
+        }, 
         "KernelProfilingInfo": {
             "CmdExecTime": 1
         }, 
@@ -42,154 +51,87 @@
         }
     }, 
     "constants": {
-        "Dim": {
-            "Cube": 3, 
-            "Buffer": 5, 
-            "2D": 1, 
-            "1D": 0, 
-            "Rect": 4, 
-            "3D": 2
-        }, 
         "SamplerFilterMode": {
             "Nearest": 0, 
             "Linear": 1
         }, 
         "FunctionParameterAttribute": {
-            "NoWrite": 7, 
-            "SVM": 6, 
+            "NoWrite": 6, 
             "NoCapture": 5, 
             "ByVal": 2, 
             "Sext": 1, 
-            "NoReadWrite": 8, 
+            "NoReadWrite": 7, 
             "NoAlias": 4, 
             "Zext": 0, 
             "Sret": 3
         }, 
-        "SourceLanguage": {
-            "GLSL": 2, 
-            "Unknown": 0, 
-            "OpenCL": 3, 
-            "ESSL": 1
-        }, 
-        "AddressingModel": {
-            "Physical32": 1, 
-            "Logical": 0, 
-            "Physical64": 2
-        }, 
-        "FPRoundingMode": {
-            "RTE": 0, 
-            "RTN": 3, 
-            "RTP": 2, 
-            "RTZ": 1
+        "ImageChannelOrder": {
+            "A": 1, 
+            "sRGBx": 16, 
+            "Depth": 13, 
+            "Luminance": 9, 
+            "BGRA": 6, 
+            "sBGRA": 18, 
+            "RGx": 11, 
+            "Rx": 10, 
+            "Intensity": 8, 
+            "RGBx": 12, 
+            "RGB": 4, 
+            "RG": 2, 
+            "sRGB": 15, 
+            "RA": 3, 
+            "RGBA": 5, 
+            "sRGBA": 17, 
+            "R": 0, 
+            "ARGB": 7, 
+            "DepthStencil": 14
         }, 
         "KernelEnqueueFlags": {
             "WaitWorkGroup": 2, 
             "NoWait": 0, 
             "WaitKernel": 1
         }, 
-        "Decoration": {
-            "Index": 32, 
-            "GLSLPacked": 10, 
-            "Nonwritable": 23, 
-            "FPRoundingMode": 41, 
-            "BufferBlock": 4, 
-            "Uniform": 25, 
-            "CPacked": 27, 
-            "Volatile": 20, 
-            "Location": 30, 
-            "PrecisionLow": 0, 
-            "GLSLShared": 7, 
-            "Invariant": 17, 
-            "PrecisionHigh": 2, 
-            "PrecisionMedium": 1, 
-            "Flat": 13, 
-            "RowMajor": 5, 
-            "SpecId": 44, 
-            "Component": 31, 
-            "FuncParamAttr": 40, 
-            "Coherent": 22, 
-            "NoStaticUse": 26, 
-            "SaturatedConversion": 28, 
-            "Sample": 16, 
-            "Offset": 35, 
-            "Smooth": 11, 
-            "ColMajor": 6, 
-            "Patch": 14, 
-            "Stride": 38, 
-            "Nonreadable": 24, 
-            "Block": 3, 
-            "DescriptorSet": 34, 
-            "GLSLStd430": 9, 
-            "LinkageAttributes": 43, 
-            "Constant": 21, 
-            "FPFastMathMode": 42, 
-            "Stream": 29, 
-            "Aliased": 19, 
-            "GLSLStd140": 8, 
-            "Binding": 33, 
-            "Restrict": 18, 
-            "BuiltIn": 39, 
-            "Centroid": 15, 
-            "Noperspective": 12, 
-            "Alignment": 36, 
-            "XfbBuffer": 37
-        }, 
-        "ExecutionScope": {
-            "Device": 1, 
-            "Subgroup": 3, 
-            "CrossDevice": 0, 
-            "Workgroup": 2
-        }, 
-        "ExecutionMode": {
-            "DepthReplacing": 11, 
-            "InputIsolines": 24, 
-            "LocalSizeHint": 17, 
-            "InputLinesAdjacency": 20, 
-            "VertexOrderCcw": 5, 
-            "OutputLineStrip": 27, 
-            "SpacingFractionalOdd": 3, 
-            "Xfb": 10, 
-            "OutputVertices": 25, 
-            "DepthGreater": 13, 
-            "OutputTriangleStrip": 28, 
-            "ContractionOff": 30, 
-            "PixelCenterInteger": 6, 
-            "InputTriangles": 21, 
-            "InputLines": 19, 
-            "InputPoints": 18, 
-            "OutputPoints": 26, 
-            "Invocations": 0, 
-            "SpacingFractionalEven": 2, 
-            "VertexOrderCw": 4, 
-            "DepthAny": 12, 
-            "EarlyFragmentTests": 8, 
-            "DepthLess": 14, 
-            "InputQuads": 23, 
-            "VecTypeHint": 29, 
-            "PointMode": 9, 
-            "LocalSize": 16, 
-            "InputTrianglesAdjacency": 22, 
-            "DepthUnchanged": 15, 
-            "OriginUpperLeft": 7, 
-            "SpacingEqual": 1
-        }, 
         "StorageClass": {
             "Function": 7, 
             "AtomicCounter": 10, 
             "Generic": 8, 
+            "Image": 11, 
             "UniformConstant": 0, 
             "PrivateGlobal": 6, 
-            "Private": 9, 
             "Uniform": 2, 
             "WorkgroupGlobal": 5, 
             "Output": 3, 
             "Input": 1, 
             "WorkgroupLocal": 4
         }, 
-        "AccessQualifier": {
-            "ReadWrite": 2, 
-            "ReadOnly": 0, 
-            "WriteOnly": 1
+        "Scope": {
+            "Device": 1, 
+            "Invocation": 4, 
+            "Subgroup": 3, 
+            "CrossDevice": 0, 
+            "Workgroup": 2
+        }, 
+        "LinkageType": {
+            "Import": 1, 
+            "Export": 0
+        }, 
+        "ImageChannelDataType": {
+            "UnormShort565": 4, 
+            "UnormInt101010": 6, 
+            "Float": 14, 
+            "SnormInt8": 0, 
+            "UnsignedInt32": 12, 
+            "UnormInt24": 15, 
+            "UnsignedInt16": 11, 
+            "SignedInt32": 9, 
+            "HalfFloat": 13, 
+            "UnormShort555": 5, 
+            "SnormInt16": 1, 
+            "UnsignedInt8": 10, 
+            "SignedInt16": 8, 
+            "UnormInt8": 2, 
+            "UnormInt16": 3, 
+            "SignedInt8": 7
         }, 
         "BuiltIn": {
             "VertexId": 5, 
@@ -211,7 +153,6 @@
             "PrimitiveId": 7, 
             "LocalInvocationIndex": 29, 
             "SampleMask": 20, 
-            "ClipVertex": 2, 
             "TessLevelInner": 12, 
             "FrontFacing": 17, 
             "SubgroupId": 40, 
@@ -235,23 +176,62 @@
             "GlobalOffset": 33, 
             "TessCoord": 13
         }, 
-        "LinkageType": {
-            "Import": 1, 
-            "Export": 0
+        "Dim": {
+            "Cube": 3, 
+            "Buffer": 5, 
+            "2D": 1, 
+            "1D": 0, 
+            "Rect": 4, 
+            "3D": 2
         }, 
-        "MemoryModel": {
-            "Simple": 0, 
-            "GLSL450": 1, 
-            "OpenCL12": 2, 
-            "OpenCL21": 4, 
-            "OpenCL20": 3
+        "AddressingModel": {
+            "Physical32": 1, 
+            "Logical": 0, 
+            "Physical64": 2
         }, 
-        "SamplerAddressingMode": {
-            "Clamp": 2, 
-            "RepeatMirrored": 4, 
-            "None": 0, 
-            "Repeat": 3, 
-            "ClampToEdge": 1
+        "FPRoundingMode": {
+            "RTE": 0, 
+            "RTN": 3, 
+            "RTP": 2, 
+            "RTZ": 1
+        }, 
+        "Capability": {
+            "Float16": 9, 
+            "Matrix": 0, 
+            "Pipes": 17, 
+            "DeviceEnqueue": 19, 
+            "ImageReadWrite": 14, 
+            "Vector16": 7, 
+            "SampleRateShading": 35, 
+            "Int16": 22, 
+            "StorageImageArrayDynamicIndexing": 31, 
+            "AtomicStorage": 21, 
+            "StorageImageExtendedFormats": 26, 
+            "ImageBasic": 13, 
+            "StorageBufferArrayDynamicIndexing": 30, 
+            "SampledImageArrayDynamicIndexing": 29, 
+            "ImageSRGBWrite": 16, 
+            "ImageMipmap": 15, 
+            "Groups": 18, 
+            "Int64Atomics": 12, 
+            "Linkage": 5, 
+            "Float16Buffer": 8, 
+            "ImageGatherExtended": 25, 
+            "Tessellation": 3, 
+            "Geometry": 2, 
+            "Shader": 1, 
+            "LiteralSampler": 20, 
+            "Int64": 11, 
+            "ImageCubeArray": 34, 
+            "UniformBufferArrayDynamicIndexing": 28, 
+            "Kernel": 6, 
+            "Float64": 10, 
+            "ClipDistance": 32, 
+            "Addresses": 4, 
+            "CullDistance": 33, 
+            "TessellationPointSize": 23, 
+            "StorageImageMultisample": 27, 
+            "GeometryPointSize": 24
         }, 
         "GroupOperation": {
             "InclusiveScan": 1, 
@@ -266,6 +246,149 @@
             "Fragment": 4, 
             "GLCompute": 5, 
             "TessellationControl": 1
+        }, 
+        "AccessQualifier": {
+            "ReadWrite": 2, 
+            "ReadOnly": 0, 
+            "WriteOnly": 1
+        }, 
+        "SourceLanguage": {
+            "GLSL": 2, 
+            "Unknown": 0, 
+            "OpenCL": 3, 
+            "ESSL": 1
+        }, 
+        "Decoration": {
+            "Index": 32, 
+            "GLSLPacked": 9, 
+            "Nonwritable": 24, 
+            "ArrayStride": 6, 
+            "FPRoundingMode": 39, 
+            "BufferBlock": 3, 
+            "Uniform": 26, 
+            "CPacked": 10, 
+            "Centroid": 16, 
+            "Location": 30, 
+            "GLSLShared": 8, 
+            "Invariant": 18, 
+            "Flat": 14, 
+            "RowMajor": 4, 
+            "SpecId": 1, 
+            "XfbStride": 37, 
+            "Component": 31, 
+            "FuncParamAttr": 38, 
+            "Coherent": 23, 
+            "Volatile": 21, 
+            "NoStaticUse": 27, 
+            "SaturatedConversion": 28, 
+            "RelaxedPrecision": 0, 
+            "Offset": 35, 
+            "Smooth": 12, 
+            "ColMajor": 5, 
+            "Patch": 15, 
+            "MatrixStride": 7, 
+            "Nonreadable": 25, 
+            "Block": 2, 
+            "DescriptorSet": 34, 
+            "LinkageAttributes": 41, 
+            "Constant": 22, 
+            "FPFastMathMode": 40, 
+            "Stream": 29, 
+            "Aliased": 20, 
+            "Binding": 33, 
+            "Sample": 17, 
+            "BuiltIn": 11, 
+            "Restrict": 19, 
+            "Noperspective": 13, 
+            "XfbBuffer": 36
+        }, 
+        "ExecutionMode": {
+            "DepthReplacing": 12, 
+            "InputIsolines": 25, 
+            "LocalSizeHint": 18, 
+            "InputLinesAdjacency": 21, 
+            "OriginLowerLeft": 8, 
+            "OutputLineStrip": 28, 
+            "SpacingFractionalOdd": 3, 
+            "Xfb": 11, 
+            "OutputVertices": 26, 
+            "DepthGreater": 14, 
+            "OutputTriangleStrip": 29, 
+            "ContractionOff": 31, 
+            "PixelCenterInteger": 6, 
+            "InputTriangles": 22, 
+            "InputLines": 20, 
+            "InputPoints": 19, 
+            "OutputPoints": 27, 
+            "VertexOrderCcw": 5, 
+            "Invocations": 0, 
+            "SpacingFractionalEven": 2, 
+            "VertexOrderCw": 4, 
+            "DepthAny": 13, 
+            "EarlyFragmentTests": 9, 
+            "DepthLess": 15, 
+            "InputQuads": 24, 
+            "VecTypeHint": 30, 
+            "PointMode": 10, 
+            "LocalSize": 17, 
+            "InputTrianglesAdjacency": 23, 
+            "DepthUnchanged": 16, 
+            "OriginUpperLeft": 7, 
+            "SpacingEqual": 1
+        }, 
+        "MemoryModel": {
+            "Simple": 0, 
+            "GLSL450": 1, 
+            "OpenCL": 2
+        }, 
+        "SamplerAddressingMode": {
+            "Clamp": 2, 
+            "RepeatMirrored": 4, 
+            "None": 0, 
+            "Repeat": 3, 
+            "ClampToEdge": 1
+        }, 
+        "ImageFormat": {
+            "R8i": 29, 
+            "Rgba16i": 22, 
+            "Rgba16f": 2, 
+            "Unknown": 0, 
+            "Rgba8": 4, 
+            "Rg8Snorm": 18, 
+            "Rgba8Snorm": 5, 
+            "R32f": 3, 
+            "R32i": 24, 
+            "Rgba16Snorm": 16, 
+            "Rgb10A2": 11, 
+            "R16": 14, 
+            "Rg8ui": 37, 
+            "Rgba32ui": 30, 
+            "Rgb10a2ui": 34, 
+            "Rg16f": 7, 
+            "Rg32f": 6, 
+            "Rg32i": 25, 
+            "Rg16i": 26, 
+            "Rgba8ui": 32, 
+            "Rgba16ui": 31, 
+            "Rg16ui": 36, 
+            "R16i": 28, 
+            "Rgba8i": 23, 
+            "Rg32ui": 35, 
+            "Rg8": 13, 
+            "Rg8i": 27, 
+            "R16f": 9, 
+            "R8": 15, 
+            "Rgba32f": 1, 
+            "R16Snorm": 19, 
+            "Rgba32i": 21, 
+            "R8Snorm": 20, 
+            "Rg16Snorm": 17, 
+            "Rgba16": 10, 
+            "R32ui": 33, 
+            "R8ui": 39, 
+            "R11fG11fB10f": 8, 
+            "Rg16": 12, 
+            "R16ui": 38
         }
     }, 
     "instructions": [
@@ -277,8 +400,15 @@
             "name": "OpNop"
         }, 
         {
-            "type": false, 
+            "type": true, 
             "opcode": 1, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpUndef"
+        }, 
+        {
+            "type": false, 
+            "opcode": 3, 
             "result": false, 
             "operands": [
                 "SourceLanguage", 
@@ -288,7 +418,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 2, 
+            "opcode": 4, 
             "result": false, 
             "operands": [
                 "LiteralString"
@@ -297,7 +427,49 @@
         }, 
         {
             "type": false, 
-            "opcode": 3, 
+            "opcode": 5, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "LiteralString"
+            ], 
+            "name": "OpName"
+        }, 
+        {
+            "type": false, 
+            "opcode": 6, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "LiteralNumber", 
+                "LiteralString"
+            ], 
+            "name": "OpMemberName"
+        }, 
+        {
+            "type": false, 
+            "opcode": 7, 
+            "result": true, 
+            "operands": [
+                "LiteralString"
+            ], 
+            "name": "OpString"
+        }, 
+        {
+            "type": false, 
+            "opcode": 8, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "LiteralNumber", 
+                "LiteralNumber"
+            ], 
+            "name": "OpLine"
+        }, 
+        {
+            "type": false, 
+            "opcode": 10, 
             "result": false, 
             "operands": [
                 "LiteralString"
@@ -306,7 +478,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 4, 
+            "opcode": 11, 
             "result": true, 
             "operands": [
                 "LiteralString"
@@ -314,352 +486,8 @@
             "name": "OpExtInstImport"
         }, 
         {
-            "type": false, 
-            "opcode": 5, 
-            "result": false, 
-            "operands": [
-                "AddressingModel", 
-                "MemoryModel"
-            ], 
-            "name": "OpMemoryModel"
-        }, 
-        {
-            "type": false, 
-            "opcode": 6, 
-            "result": false, 
-            "operands": [
-                "ExecutionModel", 
-                "Id"
-            ], 
-            "name": "OpEntryPoint"
-        }, 
-        {
-            "type": false, 
-            "opcode": 7, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "ExecutionMode", 
-                "VariableLiterals"
-            ], 
-            "name": "OpExecutionMode"
-        }, 
-        {
-            "type": false, 
-            "opcode": 8, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeVoid"
-        }, 
-        {
-            "type": false, 
-            "opcode": 9, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeBool"
-        }, 
-        {
-            "type": false, 
-            "opcode": 10, 
-            "result": true, 
-            "operands": [
-                "LiteralNumber", 
-                "LiteralNumber"
-            ], 
-            "name": "OpTypeInt"
-        }, 
-        {
-            "type": false, 
-            "opcode": 11, 
-            "result": true, 
-            "operands": [
-                "LiteralNumber"
-            ], 
-            "name": "OpTypeFloat"
-        }, 
-        {
-            "type": false, 
+            "type": true, 
             "opcode": 12, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "LiteralNumber"
-            ], 
-            "name": "OpTypeVector"
-        }, 
-        {
-            "type": false, 
-            "opcode": 13, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "LiteralNumber"
-            ], 
-            "name": "OpTypeMatrix"
-        }, 
-        {
-            "type": false, 
-            "opcode": 14, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Dim", 
-                "LiteralNumber", 
-                "LiteralNumber", 
-                "LiteralNumber", 
-                "LiteralNumber", 
-                "OptionalId"
-            ], 
-            "name": "OpTypeSampler"
-        }, 
-        {
-            "type": false, 
-            "opcode": 15, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeFilter"
-        }, 
-        {
-            "type": false, 
-            "opcode": 16, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTypeArray"
-        }, 
-        {
-            "type": false, 
-            "opcode": 17, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpTypeRuntimeArray"
-        }, 
-        {
-            "type": false, 
-            "opcode": 18, 
-            "result": true, 
-            "operands": [
-                "VariableIds"
-            ], 
-            "name": "OpTypeStruct"
-        }, 
-        {
-            "type": false, 
-            "opcode": 19, 
-            "result": true, 
-            "operands": [
-                "LiteralString"
-            ], 
-            "name": "OpTypeOpaque"
-        }, 
-        {
-            "type": false, 
-            "opcode": 20, 
-            "result": true, 
-            "operands": [
-                "StorageClass", 
-                "Id"
-            ], 
-            "name": "OpTypePointer"
-        }, 
-        {
-            "type": false, 
-            "opcode": 21, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "VariableIds"
-            ], 
-            "name": "OpTypeFunction"
-        }, 
-        {
-            "type": false, 
-            "opcode": 22, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeEvent"
-        }, 
-        {
-            "type": false, 
-            "opcode": 23, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeDeviceEvent"
-        }, 
-        {
-            "type": false, 
-            "opcode": 24, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeReserveId"
-        }, 
-        {
-            "type": false, 
-            "opcode": 25, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpTypeQueue"
-        }, 
-        {
-            "type": false, 
-            "opcode": 26, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "AccessQualifier"
-            ], 
-            "name": "OpTypePipe"
-        }, 
-        {
-            "type": true, 
-            "opcode": 27, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpConstantTrue"
-        }, 
-        {
-            "type": true, 
-            "opcode": 28, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpConstantFalse"
-        }, 
-        {
-            "type": true, 
-            "opcode": 29, 
-            "result": true, 
-            "operands": [
-                "VariableLiterals"
-            ], 
-            "name": "OpConstant"
-        }, 
-        {
-            "type": true, 
-            "opcode": 30, 
-            "result": true, 
-            "operands": [
-                "VariableIds"
-            ], 
-            "name": "OpConstantComposite"
-        }, 
-        {
-            "type": true, 
-            "opcode": 31, 
-            "result": true, 
-            "operands": [
-                "LiteralNumber", 
-                "LiteralNumber", 
-                "LiteralNumber"
-            ], 
-            "name": "OpConstantSampler"
-        }, 
-        {
-            "type": true, 
-            "opcode": 32, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpConstantNullPointer"
-        }, 
-        {
-            "type": true, 
-            "opcode": 33, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpConstantNullObject"
-        }, 
-        {
-            "type": true, 
-            "opcode": 34, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpSpecConstantTrue"
-        }, 
-        {
-            "type": true, 
-            "opcode": 35, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpSpecConstantFalse"
-        }, 
-        {
-            "type": true, 
-            "opcode": 36, 
-            "result": true, 
-            "operands": [
-                "VariableLiterals"
-            ], 
-            "name": "OpSpecConstant"
-        }, 
-        {
-            "type": true, 
-            "opcode": 37, 
-            "result": true, 
-            "operands": [
-                "VariableIds"
-            ], 
-            "name": "OpSpecConstantComposite"
-        }, 
-        {
-            "type": true, 
-            "opcode": 38, 
-            "result": true, 
-            "operands": [
-                "StorageClass", 
-                "OptionalId"
-            ], 
-            "name": "OpVariable"
-        }, 
-        {
-            "type": true, 
-            "opcode": 39, 
-            "result": true, 
-            "operands": [
-                "StorageClass", 
-                "Id"
-            ], 
-            "name": "OpVariableArray"
-        }, 
-        {
-            "type": true, 
-            "opcode": 40, 
-            "result": true, 
-            "operands": [
-                "FunctionControl", 
-                "Id"
-            ], 
-            "name": "OpFunction"
-        }, 
-        {
-            "type": true, 
-            "opcode": 41, 
-            "result": true, 
-            "operands": [], 
-            "name": "OpFunctionParameter"
-        }, 
-        {
-            "type": false, 
-            "opcode": 42, 
-            "result": false, 
-            "operands": [], 
-            "name": "OpFunctionEnd"
-        }, 
-        {
-            "type": true, 
-            "opcode": 43, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "VariableIds"
-            ], 
-            "name": "OpFunctionCall"
-        }, 
-        {
-            "type": true, 
-            "opcode": 44, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -669,52 +497,470 @@
             "name": "OpExtInst"
         }, 
         {
+            "type": false, 
+            "opcode": 14, 
+            "result": false, 
+            "operands": [
+                "AddressingModel", 
+                "MemoryModel"
+            ], 
+            "name": "OpMemoryModel"
+        }, 
+        {
+            "type": false, 
+            "opcode": 15, 
+            "result": false, 
+            "operands": [
+                "ExecutionModel", 
+                "Id", 
+                "LiteralString"
+            ], 
+            "name": "OpEntryPoint"
+        }, 
+        {
+            "type": false, 
+            "opcode": 16, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "ExecutionMode", 
+                "OptionalLiteral"
+            ], 
+            "name": "OpExecutionMode"
+        }, 
+        {
+            "type": false, 
+            "opcode": 17, 
+            "result": false, 
+            "operands": [
+                "Capability"
+            ], 
+            "name": "OpCapability"
+        }, 
+        {
+            "type": false, 
+            "opcode": 19, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeVoid"
+        }, 
+        {
+            "type": false, 
+            "opcode": 20, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeBool"
+        }, 
+        {
+            "type": false, 
+            "opcode": 21, 
+            "result": true, 
+            "operands": [
+                "LiteralNumber", 
+                "LiteralNumber"
+            ], 
+            "name": "OpTypeInt"
+        }, 
+        {
+            "type": false, 
+            "opcode": 22, 
+            "result": true, 
+            "operands": [
+                "LiteralNumber"
+            ], 
+            "name": "OpTypeFloat"
+        }, 
+        {
+            "type": false, 
+            "opcode": 23, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "LiteralNumber"
+            ], 
+            "name": "OpTypeVector"
+        }, 
+        {
+            "type": false, 
+            "opcode": 24, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "LiteralNumber"
+            ], 
+            "name": "OpTypeMatrix"
+        }, 
+        {
+            "type": false, 
+            "opcode": 25, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Dim", 
+                "LiteralNumber", 
+                "LiteralNumber", 
+                "LiteralNumber", 
+                "LiteralNumber", 
+                "SamplerImageFormat", 
+                "OptionalLiteral"
+            ], 
+            "name": "OpTypeImage"
+        }, 
+        {
+            "type": false, 
+            "opcode": 26, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeSampler"
+        }, 
+        {
+            "type": false, 
+            "opcode": 27, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpTypeSampledImage"
+        }, 
+        {
+            "type": false, 
+            "opcode": 28, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpTypeArray"
+        }, 
+        {
+            "type": false, 
+            "opcode": 29, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpTypeRuntimeArray"
+        }, 
+        {
+            "type": false, 
+            "opcode": 30, 
+            "result": true, 
+            "operands": [
+                "VariableIds"
+            ], 
+            "name": "OpTypeStruct"
+        }, 
+        {
+            "type": false, 
+            "opcode": 31, 
+            "result": true, 
+            "operands": [
+                "LiteralString"
+            ], 
+            "name": "OpTypeOpaque"
+        }, 
+        {
+            "type": false, 
+            "opcode": 32, 
+            "result": true, 
+            "operands": [
+                "StorageClass", 
+                "Id"
+            ], 
+            "name": "OpTypePointer"
+        }, 
+        {
+            "type": false, 
+            "opcode": 33, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "VariableIds"
+            ], 
+            "name": "OpTypeFunction"
+        }, 
+        {
+            "type": false, 
+            "opcode": 34, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeEvent"
+        }, 
+        {
+            "type": false, 
+            "opcode": 35, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeDeviceEvent"
+        }, 
+        {
+            "type": false, 
+            "opcode": 36, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeReserveId"
+        }, 
+        {
+            "type": false, 
+            "opcode": 37, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpTypeQueue"
+        }, 
+        {
+            "type": false, 
+            "opcode": 38, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "AccessQualifier"
+            ], 
+            "name": "OpTypePipe"
+        }, 
+        {
+            "type": true, 
+            "opcode": 41, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpConstantTrue"
+        }, 
+        {
+            "type": true, 
+            "opcode": 42, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpConstantFalse"
+        }, 
+        {
+            "type": true, 
+            "opcode": 43, 
+            "result": true, 
+            "operands": [
+                "VariableLiterals"
+            ], 
+            "name": "OpConstant"
+        }, 
+        {
+            "type": true, 
+            "opcode": 44, 
+            "result": true, 
+            "operands": [
+                "VariableIds"
+            ], 
+            "name": "OpConstantComposite"
+        }, 
+        {
             "type": true, 
             "opcode": 45, 
             "result": true, 
-            "operands": [], 
-            "name": "OpUndef"
+            "operands": [
+                "SamplerAddressingMode", 
+                "LiteralNumber", 
+                "SamplerFilterMode"
+            ], 
+            "name": "OpConstantSampler"
         }, 
         {
             "type": true, 
             "opcode": 46, 
             "result": true, 
-            "operands": [
-                "Id", 
-                "VariableLiterals"
-            ], 
-            "name": "OpLoad"
-        }, 
-        {
-            "type": false, 
-            "opcode": 47, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "VariableLiterals"
-            ], 
-            "name": "OpStore"
+            "operands": [], 
+            "name": "OpConstantNull"
         }, 
         {
             "type": true, 
             "opcode": 48, 
             "result": true, 
-            "operands": [
-                "VariableIds"
-            ], 
-            "name": "OpPhi"
+            "operands": [], 
+            "name": "OpSpecConstantTrue"
         }, 
         {
-            "type": false, 
+            "type": true, 
             "opcode": 49, 
             "result": true, 
             "operands": [], 
-            "name": "OpDecorationGroup"
+            "name": "OpSpecConstantFalse"
+        }, 
+        {
+            "type": true, 
+            "opcode": 50, 
+            "result": true, 
+            "operands": [
+                "VariableLiterals"
+            ], 
+            "name": "OpSpecConstant"
+        }, 
+        {
+            "type": true, 
+            "opcode": 51, 
+            "result": true, 
+            "operands": [
+                "VariableIds"
+            ], 
+            "name": "OpSpecConstantComposite"
+        }, 
+        {
+            "type": true, 
+            "opcode": 52, 
+            "result": true, 
+            "operands": [
+                "LiteralNumber", 
+                "VariableIds"
+            ], 
+            "name": "OpSpecConstantOp"
+        }, 
+        {
+            "type": true, 
+            "opcode": 54, 
+            "result": true, 
+            "operands": [
+                "FunctionControl", 
+                "Id"
+            ], 
+            "name": "OpFunction"
+        }, 
+        {
+            "type": true, 
+            "opcode": 55, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpFunctionParameter"
         }, 
         {
             "type": false, 
-            "opcode": 50, 
+            "opcode": 56, 
+            "result": false, 
+            "operands": [], 
+            "name": "OpFunctionEnd"
+        }, 
+        {
+            "type": true, 
+            "opcode": 57, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "VariableIds"
+            ], 
+            "name": "OpFunctionCall"
+        }, 
+        {
+            "type": true, 
+            "opcode": 59, 
+            "result": true, 
+            "operands": [
+                "StorageClass", 
+                "OptionalId"
+            ], 
+            "name": "OpVariable"
+        }, 
+        {
+            "type": true, 
+            "opcode": 60, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpImageTexelPointer"
+        }, 
+        {
+            "type": true, 
+            "opcode": 61, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "OptionalLiteral"
+            ], 
+            "name": "OpLoad"
+        }, 
+        {
+            "type": false, 
+            "opcode": 62, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalLiteral"
+            ], 
+            "name": "OpStore"
+        }, 
+        {
+            "type": false, 
+            "opcode": 63, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalLiteral"
+            ], 
+            "name": "OpCopyMemory"
+        }, 
+        {
+            "type": false, 
+            "opcode": 64, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalLiteral"
+            ], 
+            "name": "OpCopyMemorySized"
+        }, 
+        {
+            "type": true, 
+            "opcode": 65, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "VariableIds"
+            ], 
+            "name": "OpAccessChain"
+        }, 
+        {
+            "type": true, 
+            "opcode": 66, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "VariableIds"
+            ], 
+            "name": "OpInBoundsAccessChain"
+        }, 
+        {
+            "type": true, 
+            "opcode": 67, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "VariableIds"
+            ], 
+            "name": "OpPtrAccessChain"
+        }, 
+        {
+            "type": true, 
+            "opcode": 68, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "LiteralNumber"
+            ], 
+            "name": "OpArrayLength"
+        }, 
+        {
+            "type": true, 
+            "opcode": 69, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpGenericPtrMemSemantics"
+        }, 
+        {
+            "type": false, 
+            "opcode": 71, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -725,7 +971,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 51, 
+            "opcode": 72, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -737,7 +983,14 @@
         }, 
         {
             "type": false, 
-            "opcode": 52, 
+            "opcode": 73, 
+            "result": true, 
+            "operands": [], 
+            "name": "OpDecorationGroup"
+        }, 
+        {
+            "type": false, 
+            "opcode": 74, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -747,59 +1000,17 @@
         }, 
         {
             "type": false, 
-            "opcode": 53, 
+            "opcode": 75, 
             "result": false, 
             "operands": [
                 "Id", 
-                "VariableIds"
+                "VariableIdLiteral"
             ], 
             "name": "OpGroupMemberDecorate"
         }, 
         {
-            "type": false, 
-            "opcode": 54, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "LiteralString"
-            ], 
-            "name": "OpName"
-        }, 
-        {
-            "type": false, 
-            "opcode": 55, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "LiteralNumber", 
-                "LiteralString"
-            ], 
-            "name": "OpMemberName"
-        }, 
-        {
-            "type": false, 
-            "opcode": 56, 
-            "result": true, 
-            "operands": [
-                "LiteralString"
-            ], 
-            "name": "OpString"
-        }, 
-        {
-            "type": false, 
-            "opcode": 57, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "LiteralNumber", 
-                "LiteralNumber"
-            ], 
-            "name": "OpLine"
-        }, 
-        {
             "type": true, 
-            "opcode": 58, 
+            "opcode": 77, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -809,7 +1020,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 59, 
+            "opcode": 78, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -820,7 +1031,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 60, 
+            "opcode": 79, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -831,7 +1042,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 61, 
+            "opcode": 80, 
             "result": true, 
             "operands": [
                 "VariableIds"
@@ -840,7 +1051,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 62, 
+            "opcode": 81, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -850,7 +1061,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 63, 
+            "opcode": 82, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -861,7 +1072,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 64, 
+            "opcode": 83, 
             "result": true, 
             "operands": [
                 "Id"
@@ -869,492 +1080,8 @@
             "name": "OpCopyObject"
         }, 
         {
-            "type": false, 
-            "opcode": 65, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "VariableLiterals"
-            ], 
-            "name": "OpCopyMemory"
-        }, 
-        {
-            "type": false, 
-            "opcode": 66, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "VariableLiterals"
-            ], 
-            "name": "OpCopyMemorySized"
-        }, 
-        {
-            "type": true, 
-            "opcode": 67, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpSampler"
-        }, 
-        {
-            "type": true, 
-            "opcode": 68, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "OptionalId"
-            ], 
-            "name": "OpTextureSample"
-        }, 
-        {
-            "type": true, 
-            "opcode": 69, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleDref"
-        }, 
-        {
-            "type": true, 
-            "opcode": 70, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleLod"
-        }, 
-        {
-            "type": true, 
-            "opcode": 71, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "OptionalId"
-            ], 
-            "name": "OpTextureSampleProj"
-        }, 
-        {
-            "type": true, 
-            "opcode": 72, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleGrad"
-        }, 
-        {
-            "type": true, 
-            "opcode": 73, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "OptionalId"
-            ], 
-            "name": "OpTextureSampleOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 74, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleProjLod"
-        }, 
-        {
-            "type": true, 
-            "opcode": 75, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleProjGrad"
-        }, 
-        {
-            "type": true, 
-            "opcode": 76, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleLodOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 77, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "OptionalId"
-            ], 
-            "name": "OpTextureSampleProjOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 78, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleGradOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 79, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleProjLodOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 80, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureSampleProjGradOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 81, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureFetchTexelLod"
-        }, 
-        {
-            "type": true, 
-            "opcode": 82, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureFetchTexelOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 83, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureFetchSample"
-        }, 
-        {
             "type": true, 
             "opcode": 84, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureFetchTexel"
-        }, 
-        {
-            "type": true, 
-            "opcode": 85, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureGather"
-        }, 
-        {
-            "type": true, 
-            "opcode": 86, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureGatherOffset"
-        }, 
-        {
-            "type": true, 
-            "opcode": 87, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureGatherOffsets"
-        }, 
-        {
-            "type": true, 
-            "opcode": 88, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureQuerySizeLod"
-        }, 
-        {
-            "type": true, 
-            "opcode": 89, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpTextureQuerySize"
-        }, 
-        {
-            "type": true, 
-            "opcode": 90, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpTextureQueryLod"
-        }, 
-        {
-            "type": true, 
-            "opcode": 91, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpTextureQueryLevels"
-        }, 
-        {
-            "type": true, 
-            "opcode": 92, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpTextureQuerySamples"
-        }, 
-        {
-            "type": true, 
-            "opcode": 93, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "VariableIds"
-            ], 
-            "name": "OpAccessChain"
-        }, 
-        {
-            "type": true, 
-            "opcode": 94, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "VariableIds"
-            ], 
-            "name": "OpInBoundsAccessChain"
-        }, 
-        {
-            "type": true, 
-            "opcode": 95, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpSNegate"
-        }, 
-        {
-            "type": true, 
-            "opcode": 96, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpFNegate"
-        }, 
-        {
-            "type": true, 
-            "opcode": 97, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpNot"
-        }, 
-        {
-            "type": true, 
-            "opcode": 98, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpAny"
-        }, 
-        {
-            "type": true, 
-            "opcode": 99, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpAll"
-        }, 
-        {
-            "type": true, 
-            "opcode": 100, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpConvertFToU"
-        }, 
-        {
-            "type": true, 
-            "opcode": 101, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpConvertFToS"
-        }, 
-        {
-            "type": true, 
-            "opcode": 102, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpConvertSToF"
-        }, 
-        {
-            "type": true, 
-            "opcode": 103, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpConvertUToF"
-        }, 
-        {
-            "type": true, 
-            "opcode": 104, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpUConvert"
-        }, 
-        {
-            "type": true, 
-            "opcode": 105, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpSConvert"
-        }, 
-        {
-            "type": true, 
-            "opcode": 106, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpFConvert"
-        }, 
-        {
-            "type": true, 
-            "opcode": 107, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpConvertPtrToU"
-        }, 
-        {
-            "type": true, 
-            "opcode": 108, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpConvertUToPtr"
-        }, 
-        {
-            "type": true, 
-            "opcode": 109, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpPtrCastToGeneric"
-        }, 
-        {
-            "type": true, 
-            "opcode": 110, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpGenericCastToPtr"
-        }, 
-        {
-            "type": true, 
-            "opcode": 111, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpBitcast"
-        }, 
-        {
-            "type": true, 
-            "opcode": 112, 
             "result": true, 
             "operands": [
                 "Id"
@@ -1363,12 +1090,280 @@
         }, 
         {
             "type": true, 
+            "opcode": 86, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpSampledImage"
+        }, 
+        {
+            "type": true, 
+            "opcode": 87, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleImplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 88, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleExplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 89, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleDrefImplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 90, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleDrefExplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 91, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleProjImplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 92, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleProjExplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 93, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleProjDrefImplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 94, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageSampleProjDrefExplicitLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 95, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageFetch"
+        }, 
+        {
+            "type": true, 
+            "opcode": 96, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageGather"
+        }, 
+        {
+            "type": true, 
+            "opcode": 97, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "OptionalImage"
+            ], 
+            "name": "OpImageDrefGather"
+        }, 
+        {
+            "type": true, 
+            "opcode": 98, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpImageRead"
+        }, 
+        {
+            "type": false, 
+            "opcode": 99, 
+            "result": false, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpImageWrite"
+        }, 
+        {
+            "type": true, 
+            "opcode": 100, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpImageQueryDim"
+        }, 
+        {
+            "type": true, 
+            "opcode": 101, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpImageQueryFormat"
+        }, 
+        {
+            "type": true, 
+            "opcode": 102, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpImageQueryOrder"
+        }, 
+        {
+            "type": true, 
+            "opcode": 103, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpImageQuerySizeLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 104, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpImageQuerySize"
+        }, 
+        {
+            "type": true, 
+            "opcode": 105, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpImageQueryLod"
+        }, 
+        {
+            "type": true, 
+            "opcode": 106, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpImageQueryLevels"
+        }, 
+        {
+            "type": true, 
+            "opcode": 107, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpImageQuerySamples"
+        }, 
+        {
+            "type": true, 
+            "opcode": 109, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpConvertFToU"
+        }, 
+        {
+            "type": true, 
+            "opcode": 110, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpConvertFToS"
+        }, 
+        {
+            "type": true, 
+            "opcode": 111, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpConvertSToF"
+        }, 
+        {
+            "type": true, 
+            "opcode": 112, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpConvertUToF"
+        }, 
+        {
+            "type": true, 
             "opcode": 113, 
             "result": true, 
             "operands": [
                 "Id"
             ], 
-            "name": "OpIsNan"
+            "name": "OpUConvert"
         }, 
         {
             "type": true, 
@@ -1377,7 +1372,7 @@
             "operands": [
                 "Id"
             ], 
-            "name": "OpIsInf"
+            "name": "OpSConvert"
         }, 
         {
             "type": true, 
@@ -1386,7 +1381,7 @@
             "operands": [
                 "Id"
             ], 
-            "name": "OpIsFinite"
+            "name": "OpFConvert"
         }, 
         {
             "type": true, 
@@ -1395,7 +1390,7 @@
             "operands": [
                 "Id"
             ], 
-            "name": "OpIsNormal"
+            "name": "OpQuantizeToF16"
         }, 
         {
             "type": true, 
@@ -1404,57 +1399,52 @@
             "operands": [
                 "Id"
             ], 
-            "name": "OpSignBitSet"
+            "name": "OpConvertPtrToU"
         }, 
         {
             "type": true, 
             "opcode": 118, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpLessOrGreater"
+            "name": "OpSatConvertSToU"
         }, 
         {
             "type": true, 
             "opcode": 119, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpOrdered"
+            "name": "OpSatConvertUToS"
         }, 
         {
             "type": true, 
             "opcode": 120, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpUnordered"
+            "name": "OpConvertUToPtr"
         }, 
         {
             "type": true, 
             "opcode": 121, 
             "result": true, 
             "operands": [
-                "Id", 
-                "LiteralNumber"
+                "Id"
             ], 
-            "name": "OpArrayLength"
+            "name": "OpPtrCastToGeneric"
         }, 
         {
             "type": true, 
             "opcode": 122, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpIAdd"
+            "name": "OpGenericCastToPtr"
         }, 
         {
             "type": true, 
@@ -1462,49 +1452,36 @@
             "result": true, 
             "operands": [
                 "Id", 
-                "Id"
+                "StorageClass"
             ], 
-            "name": "OpFAdd"
+            "name": "OpGenericCastToPtrExplicit"
         }, 
         {
             "type": true, 
             "opcode": 124, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpISub"
-        }, 
-        {
-            "type": true, 
-            "opcode": 125, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFSub"
+            "name": "OpBitcast"
         }, 
         {
             "type": true, 
             "opcode": 126, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpIMul"
+            "name": "OpSNegate"
         }, 
         {
             "type": true, 
             "opcode": 127, 
             "result": true, 
             "operands": [
-                "Id", 
                 "Id"
             ], 
-            "name": "OpFMul"
+            "name": "OpFNegate"
         }, 
         {
             "type": true, 
@@ -1514,7 +1491,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpUDiv"
+            "name": "OpIAdd"
         }, 
         {
             "type": true, 
@@ -1524,7 +1501,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpSDiv"
+            "name": "OpFAdd"
         }, 
         {
             "type": true, 
@@ -1534,7 +1511,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpFDiv"
+            "name": "OpISub"
         }, 
         {
             "type": true, 
@@ -1544,7 +1521,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpUMod"
+            "name": "OpFSub"
         }, 
         {
             "type": true, 
@@ -1554,7 +1531,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpSRem"
+            "name": "OpIMul"
         }, 
         {
             "type": true, 
@@ -1564,7 +1541,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpSMod"
+            "name": "OpFMul"
         }, 
         {
             "type": true, 
@@ -1574,7 +1551,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpFRem"
+            "name": "OpUDiv"
         }, 
         {
             "type": true, 
@@ -1584,7 +1561,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpFMod"
+            "name": "OpSDiv"
         }, 
         {
             "type": true, 
@@ -1594,7 +1571,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpVectorTimesScalar"
+            "name": "OpFDiv"
         }, 
         {
             "type": true, 
@@ -1604,7 +1581,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpMatrixTimesScalar"
+            "name": "OpUMod"
         }, 
         {
             "type": true, 
@@ -1614,7 +1591,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpVectorTimesMatrix"
+            "name": "OpSRem"
         }, 
         {
             "type": true, 
@@ -1624,7 +1601,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpMatrixTimesVector"
+            "name": "OpSMod"
         }, 
         {
             "type": true, 
@@ -1634,7 +1611,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpMatrixTimesMatrix"
+            "name": "OpFRem"
         }, 
         {
             "type": true, 
@@ -1644,7 +1621,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpOuterProduct"
+            "name": "OpFMod"
         }, 
         {
             "type": true, 
@@ -1654,7 +1631,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpDot"
+            "name": "OpVectorTimesScalar"
         }, 
         {
             "type": true, 
@@ -1664,7 +1641,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpShiftRightLogical"
+            "name": "OpMatrixTimesScalar"
         }, 
         {
             "type": true, 
@@ -1674,7 +1651,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpShiftRightArithmetic"
+            "name": "OpVectorTimesMatrix"
         }, 
         {
             "type": true, 
@@ -1684,7 +1661,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpShiftLeftLogical"
+            "name": "OpMatrixTimesVector"
         }, 
         {
             "type": true, 
@@ -1694,7 +1671,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpLogicalOr"
+            "name": "OpMatrixTimesMatrix"
         }, 
         {
             "type": true, 
@@ -1704,7 +1681,7 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpLogicalXor"
+            "name": "OpOuterProduct"
         }, 
         {
             "type": true, 
@@ -1714,41 +1691,174 @@
                 "Id", 
                 "Id"
             ], 
-            "name": "OpLogicalAnd"
+            "name": "OpDot"
         }, 
         {
             "type": true, 
             "opcode": 149, 
             "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpBitwiseOr"
+            "operands": [], 
+            "name": "OpIAddCarry"
         }, 
         {
             "type": true, 
             "opcode": 150, 
             "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpBitwiseXor"
+            "operands": [], 
+            "name": "OpISubBorrow"
         }, 
         {
             "type": true, 
             "opcode": 151, 
             "result": true, 
+            "operands": [], 
+            "name": "OpIMulExtended"
+        }, 
+        {
+            "type": true, 
+            "opcode": 154, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpAny"
+        }, 
+        {
+            "type": true, 
+            "opcode": 155, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpAll"
+        }, 
+        {
+            "type": true, 
+            "opcode": 156, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpIsNan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 157, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpIsInf"
+        }, 
+        {
+            "type": true, 
+            "opcode": 158, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpIsFinite"
+        }, 
+        {
+            "type": true, 
+            "opcode": 159, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpIsNormal"
+        }, 
+        {
+            "type": true, 
+            "opcode": 160, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpSignBitSet"
+        }, 
+        {
+            "type": true, 
+            "opcode": 161, 
+            "result": true, 
             "operands": [
                 "Id", 
                 "Id"
             ], 
-            "name": "OpBitwiseAnd"
+            "name": "OpLessOrGreater"
         }, 
         {
             "type": true, 
-            "opcode": 152, 
+            "opcode": 162, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpOrdered"
+        }, 
+        {
+            "type": true, 
+            "opcode": 163, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpUnordered"
+        }, 
+        {
+            "type": true, 
+            "opcode": 164, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpLogicalEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 165, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpLogicalNotEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 166, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpLogicalOr"
+        }, 
+        {
+            "type": true, 
+            "opcode": 167, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpLogicalAnd"
+        }, 
+        {
+            "type": true, 
+            "opcode": 168, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpLogicalNot"
+        }, 
+        {
+            "type": true, 
+            "opcode": 169, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1759,7 +1869,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 153, 
+            "opcode": 170, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1769,27 +1879,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 154, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFOrdEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 155, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFUnordEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 156, 
+            "opcode": 171, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1799,67 +1889,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 157, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFOrdNotEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 158, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFUnordNotEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 159, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpULessThan"
-        }, 
-        {
-            "type": true, 
-            "opcode": 160, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpSLessThan"
-        }, 
-        {
-            "type": true, 
-            "opcode": 161, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFOrdLessThan"
-        }, 
-        {
-            "type": true, 
-            "opcode": 162, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFUnordLessThan"
-        }, 
-        {
-            "type": true, 
-            "opcode": 163, 
+            "opcode": 172, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1869,7 +1899,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 164, 
+            "opcode": 173, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1879,67 +1909,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 165, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFOrdGreaterThan"
-        }, 
-        {
-            "type": true, 
-            "opcode": 166, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFUnordGreaterThan"
-        }, 
-        {
-            "type": true, 
-            "opcode": 167, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpULessThanEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 168, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpSLessThanEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 169, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFOrdLessThanEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 170, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpFUnordLessThanEqual"
-        }, 
-        {
-            "type": true, 
-            "opcode": 171, 
+            "opcode": 174, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1949,7 +1919,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 172, 
+            "opcode": 175, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1959,7 +1929,147 @@
         }, 
         {
             "type": true, 
-            "opcode": 173, 
+            "opcode": 176, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpULessThan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 177, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpSLessThan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 178, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpULessThanEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 179, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpSLessThanEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 180, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFOrdEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 181, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFUnordEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 182, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFOrdNotEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 183, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFUnordNotEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 184, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFOrdLessThan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 185, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFUnordLessThan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 186, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFOrdGreaterThan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 187, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFUnordGreaterThan"
+        }, 
+        {
+            "type": true, 
+            "opcode": 188, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFOrdLessThanEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 189, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpFUnordLessThanEqual"
+        }, 
+        {
+            "type": true, 
+            "opcode": 190, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1969,7 +2079,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 174, 
+            "opcode": 191, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -1979,7 +2089,128 @@
         }, 
         {
             "type": true, 
-            "opcode": 175, 
+            "opcode": 194, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpShiftRightLogical"
+        }, 
+        {
+            "type": true, 
+            "opcode": 195, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpShiftRightArithmetic"
+        }, 
+        {
+            "type": true, 
+            "opcode": 196, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpShiftLeftLogical"
+        }, 
+        {
+            "type": true, 
+            "opcode": 197, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpBitwiseOr"
+        }, 
+        {
+            "type": true, 
+            "opcode": 198, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpBitwiseXor"
+        }, 
+        {
+            "type": true, 
+            "opcode": 199, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpBitwiseAnd"
+        }, 
+        {
+            "type": true, 
+            "opcode": 200, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpNot"
+        }, 
+        {
+            "type": true, 
+            "opcode": 201, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpBitFieldInsert"
+        }, 
+        {
+            "type": true, 
+            "opcode": 202, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpBitFieldSExtract"
+        }, 
+        {
+            "type": true, 
+            "opcode": 203, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Id", 
+                "Id"
+            ], 
+            "name": "OpBitFieldUExtract"
+        }, 
+        {
+            "type": true, 
+            "opcode": 204, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpBitReverse"
+        }, 
+        {
+            "type": true, 
+            "opcode": 205, 
+            "result": true, 
+            "operands": [
+                "Id"
+            ], 
+            "name": "OpBitCount"
+        }, 
+        {
+            "type": true, 
+            "opcode": 207, 
             "result": true, 
             "operands": [
                 "Id"
@@ -1988,7 +2219,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 176, 
+            "opcode": 208, 
             "result": true, 
             "operands": [
                 "Id"
@@ -1997,7 +2228,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 177, 
+            "opcode": 209, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2006,7 +2237,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 178, 
+            "opcode": 210, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2015,7 +2246,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 179, 
+            "opcode": 211, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2024,7 +2255,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 180, 
+            "opcode": 212, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2033,7 +2264,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 181, 
+            "opcode": 213, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2042,7 +2273,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 182, 
+            "opcode": 214, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2051,7 +2282,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 183, 
+            "opcode": 215, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2060,21 +2291,21 @@
         }, 
         {
             "type": false, 
-            "opcode": 184, 
+            "opcode": 218, 
             "result": false, 
             "operands": [], 
             "name": "OpEmitVertex"
         }, 
         {
             "type": false, 
-            "opcode": 185, 
+            "opcode": 219, 
             "result": false, 
             "operands": [], 
             "name": "OpEndPrimitive"
         }, 
         {
             "type": false, 
-            "opcode": 186, 
+            "opcode": 220, 
             "result": false, 
             "operands": [
                 "Id"
@@ -2083,7 +2314,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 187, 
+            "opcode": 221, 
             "result": false, 
             "operands": [
                 "Id"
@@ -2092,62 +2323,43 @@
         }, 
         {
             "type": false, 
-            "opcode": 188, 
+            "opcode": 224, 
             "result": false, 
             "operands": [
-                "ExecutionScope"
+                "Scope", 
+                "Scope", 
+                "MemorySemantics"
             ], 
             "name": "OpControlBarrier"
         }, 
         {
             "type": false, 
-            "opcode": 189, 
+            "opcode": 225, 
             "result": false, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics"
             ], 
             "name": "OpMemoryBarrier"
         }, 
         {
             "type": true, 
-            "opcode": 190, 
+            "opcode": 227, 
             "result": true, 
             "operands": [
                 "Id", 
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpImagePointer"
-        }, 
-        {
-            "type": false, 
-            "opcode": 191, 
-            "result": false, 
-            "operands": [
-                "Id", 
-                "Id"
-            ], 
-            "name": "OpAtomicInit"
-        }, 
-        {
-            "type": true, 
-            "opcode": 192, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics"
             ], 
             "name": "OpAtomicLoad"
         }, 
         {
             "type": false, 
-            "opcode": 193, 
+            "opcode": 228, 
             "result": false, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2155,11 +2367,11 @@
         }, 
         {
             "type": true, 
-            "opcode": 194, 
+            "opcode": 229, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2167,11 +2379,12 @@
         }, 
         {
             "type": true, 
-            "opcode": 195, 
+            "opcode": 230, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
+                "MemorySemantics", 
                 "MemorySemantics", 
                 "Id", 
                 "Id"
@@ -2180,11 +2393,12 @@
         }, 
         {
             "type": true, 
-            "opcode": 196, 
+            "opcode": 231, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
+                "MemorySemantics", 
                 "MemorySemantics", 
                 "Id", 
                 "Id"
@@ -2193,33 +2407,33 @@
         }, 
         {
             "type": true, 
-            "opcode": 197, 
+            "opcode": 232, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics"
             ], 
             "name": "OpAtomicIIncrement"
         }, 
         {
             "type": true, 
-            "opcode": 198, 
+            "opcode": 233, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics"
             ], 
             "name": "OpAtomicIDecrement"
         }, 
         {
             "type": true, 
-            "opcode": 199, 
+            "opcode": 234, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2227,11 +2441,11 @@
         }, 
         {
             "type": true, 
-            "opcode": 200, 
+            "opcode": 235, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2239,11 +2453,23 @@
         }, 
         {
             "type": true, 
-            "opcode": 201, 
+            "opcode": 236, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
+                "MemorySemantics", 
+                "Id"
+            ], 
+            "name": "OpAtomicSMin"
+        }, 
+        {
+            "type": true, 
+            "opcode": 237, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2251,11 +2477,23 @@
         }, 
         {
             "type": true, 
-            "opcode": 202, 
+            "opcode": 238, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
+                "MemorySemantics", 
+                "Id"
+            ], 
+            "name": "OpAtomicSMax"
+        }, 
+        {
+            "type": true, 
+            "opcode": 239, 
+            "result": true, 
+            "operands": [
+                "Id", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2263,11 +2501,11 @@
         }, 
         {
             "type": true, 
-            "opcode": 203, 
+            "opcode": 240, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2275,11 +2513,11 @@
         }, 
         {
             "type": true, 
-            "opcode": 204, 
+            "opcode": 241, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
@@ -2287,19 +2525,28 @@
         }, 
         {
             "type": true, 
-            "opcode": 205, 
+            "opcode": 242, 
             "result": true, 
             "operands": [
                 "Id", 
-                "ExecutionScope", 
+                "Scope", 
                 "MemorySemantics", 
                 "Id"
             ], 
             "name": "OpAtomicXor"
         }, 
         {
+            "type": true, 
+            "opcode": 245, 
+            "result": true, 
+            "operands": [
+                "VariableIds"
+            ], 
+            "name": "OpPhi"
+        }, 
+        {
             "type": false, 
-            "opcode": 206, 
+            "opcode": 246, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2309,7 +2556,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 207, 
+            "opcode": 247, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2319,14 +2566,14 @@
         }, 
         {
             "type": false, 
-            "opcode": 208, 
+            "opcode": 248, 
             "result": true, 
             "operands": [], 
             "name": "OpLabel"
         }, 
         {
             "type": false, 
-            "opcode": 209, 
+            "opcode": 249, 
             "result": false, 
             "operands": [
                 "Id"
@@ -2335,7 +2582,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 210, 
+            "opcode": 250, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2347,7 +2594,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 211, 
+            "opcode": 251, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2358,21 +2605,21 @@
         }, 
         {
             "type": false, 
-            "opcode": 212, 
+            "opcode": 252, 
             "result": false, 
             "operands": [], 
             "name": "OpKill"
         }, 
         {
             "type": false, 
-            "opcode": 213, 
+            "opcode": 253, 
             "result": false, 
             "operands": [], 
             "name": "OpReturn"
         }, 
         {
             "type": false, 
-            "opcode": 214, 
+            "opcode": 254, 
             "result": false, 
             "operands": [
                 "Id"
@@ -2381,14 +2628,14 @@
         }, 
         {
             "type": false, 
-            "opcode": 215, 
+            "opcode": 255, 
             "result": false, 
             "operands": [], 
             "name": "OpUnreachable"
         }, 
         {
             "type": false, 
-            "opcode": 216, 
+            "opcode": 256, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2398,7 +2645,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 217, 
+            "opcode": 257, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2407,20 +2654,11 @@
             "name": "OpLifetimeStop"
         }, 
         {
-            "type": false, 
-            "opcode": 218, 
-            "result": false, 
-            "operands": [
-                "LiteralString"
-            ], 
-            "name": "OpCompileFlag"
-        }, 
-        {
             "type": true, 
-            "opcode": 219, 
+            "opcode": 259, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id", 
                 "Id", 
@@ -2430,11 +2668,11 @@
             "name": "OpAsyncGroupCopy"
         }, 
         {
-            "type": true, 
-            "opcode": 220, 
-            "result": true, 
+            "type": false, 
+            "opcode": 260, 
+            "result": false, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id"
             ], 
@@ -2442,30 +2680,30 @@
         }, 
         {
             "type": true, 
-            "opcode": 221, 
+            "opcode": 261, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id"
             ], 
             "name": "OpGroupAll"
         }, 
         {
             "type": true, 
-            "opcode": 222, 
+            "opcode": 262, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id"
             ], 
             "name": "OpGroupAny"
         }, 
         {
             "type": true, 
-            "opcode": 223, 
+            "opcode": 263, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id"
             ], 
@@ -2473,10 +2711,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 224, 
+            "opcode": 264, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2484,10 +2722,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 225, 
+            "opcode": 265, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2495,10 +2733,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 226, 
+            "opcode": 266, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2506,10 +2744,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 227, 
+            "opcode": 267, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2517,10 +2755,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 228, 
+            "opcode": 268, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2528,10 +2766,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 229, 
+            "opcode": 269, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2539,10 +2777,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 230, 
+            "opcode": 270, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2550,10 +2788,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 231, 
+            "opcode": 271, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "GroupOperation", 
                 "Id"
             ], 
@@ -2561,26 +2799,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 232, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "StorageClass"
-            ], 
-            "name": "OpGenericCastToPtrExplicit"
-        }, 
-        {
-            "type": true, 
-            "opcode": 233, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpGenericPtrMemSemantics"
-        }, 
-        {
-            "type": true, 
-            "opcode": 234, 
+            "opcode": 274, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2590,7 +2809,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 235, 
+            "opcode": 275, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2600,7 +2819,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 236, 
+            "opcode": 276, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2612,7 +2831,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 237, 
+            "opcode": 277, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2624,7 +2843,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 238, 
+            "opcode": 278, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2634,7 +2853,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 239, 
+            "opcode": 279, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2644,7 +2863,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 240, 
+            "opcode": 280, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2654,7 +2873,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 241, 
+            "opcode": 281, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2664,7 +2883,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 242, 
+            "opcode": 282, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2673,7 +2892,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 243, 
+            "opcode": 283, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2682,7 +2901,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 244, 
+            "opcode": 284, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2691,10 +2910,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 245, 
+            "opcode": 285, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id"
             ], 
@@ -2702,10 +2921,10 @@
         }, 
         {
             "type": true, 
-            "opcode": 246, 
+            "opcode": 286, 
             "result": true, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id"
             ], 
@@ -2713,10 +2932,10 @@
         }, 
         {
             "type": false, 
-            "opcode": 247, 
+            "opcode": 287, 
             "result": false, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id"
             ], 
@@ -2724,10 +2943,10 @@
         }, 
         {
             "type": false, 
-            "opcode": 248, 
+            "opcode": 288, 
             "result": false, 
             "operands": [
-                "ExecutionScope", 
+                "Scope", 
                 "Id", 
                 "Id"
             ], 
@@ -2735,7 +2954,7 @@
         }, 
         {
             "type": true, 
-            "opcode": 249, 
+            "opcode": 291, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2747,11 +2966,11 @@
         }, 
         {
             "type": true, 
-            "opcode": 250, 
+            "opcode": 292, 
             "result": true, 
             "operands": [
                 "Id", 
-                "KernelEnqueueFlags", 
+                "Id", 
                 "Id", 
                 "Id", 
                 "Id", 
@@ -2766,9 +2985,12 @@
         }, 
         {
             "type": true, 
-            "opcode": 251, 
+            "opcode": 293, 
             "result": true, 
             "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
                 "Id", 
                 "Id"
             ], 
@@ -2776,9 +2998,12 @@
         }, 
         {
             "type": true, 
-            "opcode": 252, 
+            "opcode": 294, 
             "result": true, 
             "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
                 "Id", 
                 "Id"
             ], 
@@ -2786,25 +3011,31 @@
         }, 
         {
             "type": true, 
-            "opcode": 253, 
+            "opcode": 295, 
             "result": true, 
             "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
                 "Id"
             ], 
             "name": "OpGetKernelWorkGroupSize"
         }, 
         {
             "type": true, 
-            "opcode": 254, 
+            "opcode": 296, 
             "result": true, 
             "operands": [
+                "Id", 
+                "Id", 
+                "Id", 
                 "Id"
             ], 
             "name": "OpGetKernelPreferredWorkGroupSizeMultiple"
         }, 
         {
             "type": false, 
-            "opcode": 255, 
+            "opcode": 297, 
             "result": false, 
             "operands": [
                 "Id"
@@ -2813,7 +3044,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 256, 
+            "opcode": 298, 
             "result": false, 
             "operands": [
                 "Id"
@@ -2822,14 +3053,14 @@
         }, 
         {
             "type": true, 
-            "opcode": 257, 
+            "opcode": 299, 
             "result": true, 
             "operands": [], 
             "name": "OpCreateUserEvent"
         }, 
         {
             "type": true, 
-            "opcode": 258, 
+            "opcode": 300, 
             "result": true, 
             "operands": [
                 "Id"
@@ -2838,7 +3069,7 @@
         }, 
         {
             "type": false, 
-            "opcode": 259, 
+            "opcode": 301, 
             "result": false, 
             "operands": [
                 "Id", 
@@ -2848,25 +3079,25 @@
         }, 
         {
             "type": false, 
-            "opcode": 260, 
+            "opcode": 302, 
             "result": false, 
             "operands": [
                 "Id", 
-                "KernelProfilingInfo", 
+                "Id", 
                 "Id"
             ], 
             "name": "OpCaptureEventProfilingInfo"
         }, 
         {
             "type": true, 
-            "opcode": 261, 
+            "opcode": 303, 
             "result": true, 
             "operands": [], 
             "name": "OpGetDefaultQueue"
         }, 
         {
             "type": true, 
-            "opcode": 262, 
+            "opcode": 304, 
             "result": true, 
             "operands": [
                 "Id", 
@@ -2874,48 +3105,6 @@
                 "Id"
             ], 
             "name": "OpBuildNDRange"
-        }, 
-        {
-            "type": true, 
-            "opcode": 263, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpSatConvertSToU"
-        }, 
-        {
-            "type": true, 
-            "opcode": 264, 
-            "result": true, 
-            "operands": [
-                "Id"
-            ], 
-            "name": "OpSatConvertUToS"
-        }, 
-        {
-            "type": true, 
-            "opcode": 265, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "ExecutionScope", 
-                "MemorySemantics", 
-                "Id"
-            ], 
-            "name": "OpAtomicIMin"
-        }, 
-        {
-            "type": true, 
-            "opcode": 266, 
-            "result": true, 
-            "operands": [
-                "Id", 
-                "ExecutionScope", 
-                "MemorySemantics", 
-                "Id"
-            ], 
-            "name": "OpAtomicIMax"
         }
     ]
 }

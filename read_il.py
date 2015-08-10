@@ -216,7 +216,8 @@ def parse_operand(lexer, module, kind):
         return [lexer.get_next_token()]
     elif kind in ['LiteralNumber',
                   'LiteralString',
-                  'VariableLiterals']:
+                  'VariableLiterals',
+                  'OptionalLiteral']:
         return [lexer.get_next_token()]
     elif kind == 'VariableIds' or kind == 'OptionalId':
         operands = []
