@@ -19,6 +19,7 @@ Known bugs and limitations in the assembler/disassembler include:
 * Debug information is not used for naming local variables/function arguments
 * The CFG is not updated
 * The `OptionalId` of `OpVariable` is not handled in pretty-printed mode
+* The assembler should check that the number of operands are correct for variable length operand list (e.g. `OpBranchContitional` must have 0 or 2 branch weights).
 
 ##Assembler syntax
 Some things are missing or should be changed
