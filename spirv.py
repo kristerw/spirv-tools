@@ -31,7 +31,6 @@ BASIC_BLOCK_ENDING_INSTRUCTIONS = [
 INITIAL_INSTRUCTIONS = [
     'OpSource',
     'OpSourceExtension',
-    'OpCompileFlag',
     'OpExtension',
     'OpExtInstImport',
     'OpMemoryModel',
@@ -61,7 +60,9 @@ TYPE_DECLARATION_INSTRUCTIONS = [
     'OpTypeFloat',
     'OpTypeVector',
     'OpTypeMatrix',
+    'OpTypeImage',
     'OpTypeSampler',
+    'OpTypeSampledImage',
     'OpTypeFilter',
     'OpTypeArray',
     'OpTypeRuntimeArray',
@@ -77,23 +78,22 @@ TYPE_DECLARATION_INSTRUCTIONS = [
 ]
 
 CONSTANT_INSTRUCTIONS = [
+    'OpConstantNull',
     'OpConstantTrue',
     'OpConstantFalse',
     'OpConstant',
     'OpConstantComposite',
     'OpConstantSampler',
-    'OpConstantNullPointer',
-    'OpConstantNullObject',
 
     'OpSpecConstantTrue',
     'OpSpecConstantFalse',
     'OpSpecConstant',
-    'OpSpecConstantComposite'
+    'OpSpecConstantComposite',
+    'OpSpecConstantOp'
 ]
 
 GLOBAL_VARIABLE_INSTRUCTIONS = [
-    'OpVariable',
-    'OpVariableArray'
+    'OpVariable'
 ]
 
 GLOBAL_INSTRUCTIONS = (INITIAL_INSTRUCTIONS +
@@ -115,7 +115,9 @@ HAS_SIDE_EFFECT = [
     'OpAtomicIDecrement',
     'OpAtomicIAdd',
     'OpAtomicISub',
+    'OpAtomicSMin',
     'OpAtomicUMin',
+    'OpAtomicSMax',
     'OpAtomicUMax',
     'OpAtomicAnd',
     'OpAtomicOr',
@@ -143,7 +145,5 @@ HAS_SIDE_EFFECT = [
     'OpGroupReserveWritePipePackets',
     'OpEnqueueMarker',
     'OpEnqueueKernel',
-    'OpCreateUserEvent',
-    'OpAtomicIMin',
-    'OpAtomicIMax'
+    'OpCreateUserEvent'
 ]
