@@ -26,7 +26,7 @@ side, which makes some operations very slow. For example, finding uses of an
 instruction iterates through the whole binary. This is expected to be
 fixed soon..._
 
-The instruction consists of its result ID, operation name, type ID, and
+The `Instruction` object consists of the result ID, opcode name, type ID, and
 operands. The fields are mostly represented in the same form as in the
 high level assembly language used by the `spirv-as`/`spirv-dis`; the IDs
 are represented as strings `'%123'` where the ID number is the one used
@@ -34,9 +34,9 @@ in the binary. The implementation may add temporary IDs of the form
 `'%.23'` that is allocated to real numbers at end of every transformation
 pass. An application should in general never create IDs itself; the only
 exception is when implementing an assembler. All other IDs should be
-created by calling `module.new_id()`. The operation is represented by
-the operation name. The operands for the enumerated constants (such as
-the Storage Class) are represented as stings of the values (such as
+created by calling `module.new_id()`. The opcode is represented by
+the operation name (such as `'OpFAdd'`). The operands for the enumerated constants (such as
+the Storage Class) are represented as strings of the values (such as
 `'Input'`).
 
 _**TODO**: Integers, floating point, and Boolean values are currently represented
@@ -82,7 +82,7 @@ new_inst = ir.Instruction(module, inst.op_name, module.new_id(), inst.type_id,
 tmp_inst.replace_with(new_inst)
 ```
 
-There is one exception to “immutable” – it is possible to update
+There is one exception to instructions being immutable – it is possible to update
 the type and operands IDs to use some other ID by calling the
 `substitute_type_and_operands()` method. This is usually not done
 directly, but happens in the background of the `replace_with()` above.
