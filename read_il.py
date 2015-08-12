@@ -277,7 +277,12 @@ def parse_instruction(lexer, module):
 
     lexer.done_with_line()
 
-    return ir.Instruction(module, op_name, op_result, op_type, operands)
+    if op_name == 'OpFunction':
+        return ir.Function(module, op_result, operands[0], operands[1])
+    elif op_name == 'OpLabel':
+        return ir.BasicBlock(module, op_result)
+    else:
+        return ir.Instruction(module, op_name, op_result, op_type, operands)
 
 
 def parse_decorations(lexer, module, variable_name):
@@ -321,7 +326,7 @@ def parse_instructions(lexer, module):
             lexer.done_with_line()  # This is an empty line -- nothing to do.
         else:
             inst = parse_instruction(lexer, module)
-            if inst.op_name == 'OpFunction':
+            if isinstance(inst, ir.Function):
                 func = parse_function_raw(lexer, module, inst)
                 module.add_function(func)
             else:
@@ -358,13 +363,8 @@ def parse_basic_block(lexer, module, function, initial_insts):
     function.add_basic_block(basic_block)
 
 
-def parse_function_raw(lexer, module, inst):
+def parse_function_raw(lexer, module, function):
     """Parse one function staring with the 'OpFunction' instruction."""
-    function = ir.Function(module,
-                           inst.result_id,
-                           inst.operands[0],
-                           inst.operands[1])
-
     while True:
         token = lexer.get_next_token(peek=True)
         if token == '':
@@ -372,10 +372,9 @@ def parse_function_raw(lexer, module, inst):
 
         inst = parse_instruction(lexer, module)
 
-        if inst.op_name == 'OpLabel':
-            basic_block = ir.BasicBlock(module, inst.result_id)
-            parse_basic_block_body(lexer, module, basic_block)
-            function.add_basic_block(basic_block)
+        if isinstance(inst, ir.BasicBlock):
+            parse_basic_block_body(lexer, module, inst)
+            function.add_basic_block(inst)
         elif inst.op_name == 'OpFunctionEnd':
             return function
         elif inst.op_name == 'OpFunctionParameter':

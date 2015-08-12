@@ -137,7 +137,11 @@ def parse_instruction(binary, module):
         operands = operands + parse_operand(binary, kind)
     binary.expect_eol()
 
-    return ir.Instruction(module, opcode['name'], result, inst_type, operands)
+    if opcode['name'] == 'OpFunction':
+        return ir.Function(module, result, operands[0], operands[1])
+    else:
+        return ir.Instruction(module, opcode['name'], result, inst_type,
+                              operands)
 
 
 def parse_global_instructions(binary, module):
@@ -171,11 +175,7 @@ def parse_basic_block(binary, module, function):
 
 def parse_function(binary, module):
     """Parse one function."""
-    function_inst = parse_instruction(binary, module)
-    function = ir.Function(module,
-                           function_inst.result_id,
-                           function_inst.operands[0],
-                           function_inst.operands[1])
+    function = parse_instruction(binary, module)
 
     while True:
         opcode = binary.get_next_opcode(peek=True)

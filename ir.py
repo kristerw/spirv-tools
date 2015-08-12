@@ -250,7 +250,9 @@ class Instruction(object):
         self.operands = operands
         self.basic_block = None
         if result_id is not None:
-            self.module.id_to_inst[self.result_id] = self
+            if result_id in module.id_to_inst:
+                raise IRError('ID ' + result_id + ' already defined')
+            module.id_to_inst[result_id] = self
 
     def __str__(self):
         res = ''
