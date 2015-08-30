@@ -1,3 +1,5 @@
+import sys
+
 import spirv
 
 
@@ -16,6 +18,14 @@ class Module(object):
         self.functions = []
         self.global_insts = []
         self._tmp_id_counter = 0
+
+    def dump(self, stream=sys.stdout):
+        """Write debug dump to stream."""
+        for inst in self.global_insts:
+            stream.write(str(inst) + '\n')
+        for function in self.functions:
+            stream.write('\n')
+            function.dump(stream)
 
     def instructions(self):
         """Iterate over all instructions in the module."""
@@ -158,6 +168,16 @@ class Function(object):
         self.end_inst = Instruction(self.module, 'OpFunctionEnd',
                                     None, None, [])
 
+    def __str__(self):
+        return str(self.inst)
+
+    def dump(self, stream=sys.stdout):
+        """Write debug dump to stream."""
+        stream.write(str(self.inst) + '\n')
+        for basic_block in self.basic_blocks:
+            basic_block.dump(stream)
+        stream.write(str(self.end_inst) + '\n')
+
     def instructions(self):
         """Iterate over all instructions in the function."""
         yield self.inst
@@ -199,6 +219,15 @@ class BasicBlock(object):
         self.inst = Instruction(self.module, 'OpLabel', label_id, None, [])
         self.inst.basic_block = self
         self.insts = []
+
+    def __str__(self):
+        return str(self.inst)
+
+    def dump(self, stream=sys.stdout):
+        """Write debug dump to stream."""
+        stream.write(str(self.inst) + '\n')
+        for inst in self.insts:
+            stream.write('  ' + str(inst) + '\n')
 
     def append_inst(self, inst):
         """Add instruction at the end of the basic block."""
