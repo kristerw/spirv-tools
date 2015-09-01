@@ -18,7 +18,7 @@ def output_instruction(stream, inst):
         if kind == 'Id' or kind == 'OptionalId':
             inst_data.append(int(operand[1:]))
         elif kind == 'LiteralNumber':
-            inst_data.append(int(operand))
+            inst_data.append(operand)
         elif kind in spirv.MASKS:
             inst_data.append(int(operand))
         elif kind == 'LiteralString':
@@ -43,7 +43,7 @@ def output_instruction(stream, inst):
     if kind == 'VariableLiterals':
         operands = inst.operands[(len(opcode['operands'])-1):]
         for operand in operands:
-            inst_data.append(int(operand))
+            inst_data.append(operand)
     elif kind == 'VariableIds':
         operands = inst.operands[(len(opcode['operands'])-1):]
         for operand in operands:

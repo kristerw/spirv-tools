@@ -93,14 +93,14 @@ class Module(object):
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstant' and
                         inst.type_id == type_inst.result_id and
-                        inst.operands[0] == str(value)):
+                        inst.operands[0] == value):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
                                type_inst.result_id, [str(value)])
             self.add_global_inst(inst)
             return inst
         elif type_inst.op_name == 'OpTypeVector':
-            nof_elements = int(type_inst.operands[1])
+            nof_elements = type_inst.operands[1]
             if not isinstance(value, (list, tuple)):
                 value = [value] * nof_elements
             operands = []

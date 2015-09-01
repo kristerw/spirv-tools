@@ -3,7 +3,6 @@ Known bugs and limitations in the API include:
 * The CFG is not updated when adding basic blocks
 * Phi-nodes are not handled correctly
 * Need a `mem2reg` pass
-* Representation of literals need to change (they are currently represented as strings)
 * `Module.get_constant()` need to handle more types. At least Booleans, NULL pointers, etc. But probably "all" constants.
 * Need an API similar to 'Module.get_constant()' for creating types
 * The implementation is _very_ inefficient. Need to be able to get instruction uses etc. without iterating over the module

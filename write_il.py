@@ -27,7 +27,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
                 operand = module.id_to_symbol_name[operand]
             if operand in module.type_id_to_name:
                 operand = module.type_id_to_name[operand]
-            line = line + operand + ', '
+            line = line + str(operand) + ', '
         line = line[:-2]
 
     stream.write(line + '\n')
@@ -75,7 +75,7 @@ def format_decoration(decoration_inst):
     if decoration_inst.operands[2:]:
         res = res + '('
         for param in decoration_inst.operands[2:]:
-            res = res + param + ', '
+            res = res + str(param) + ', '
         res = res[:-2] + ')'
     return res
 

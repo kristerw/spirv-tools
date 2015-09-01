@@ -101,7 +101,7 @@ def parse_operand(binary, kind):
             word = binary.get_next_word(throw_on_eol=False)
             if word is None:
                 return operands
-            operands.append(str(word))
+            operands.append(word)
     elif kind == 'VariableIds' or kind == 'OptionalId':
         operands = []
         while True:

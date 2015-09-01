@@ -132,10 +132,10 @@ def add_vector_type(module, token):
     token = token[1:-1]
     if token[-6:-3] == ' x ':
         base_type = token[-3:]
-        nof_elem = token[:-6]
+        nof_elem = int(token[:-6])
     elif token[-5:-2] == ' x ':
         base_type = token[-2:]
-        nof_elem = token[:-5]
+        nof_elem = int(token[:-5])
     else:
         raise ParseError('Not a valid type: ' + orig_token)
 
@@ -159,19 +159,19 @@ def get_or_create_type(module, token):
             module.add_global_inst(inst)
         elif token in ['s8', 's16', 's32', 's64']:
             new_id = module.new_id()
-            width = token[1:]
+            width = int(token[1:])
             inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
-                                  [width, '1'])
+                                  [width, 1])
             module.add_global_inst(inst)
         elif token in ['u8', 'u16', 'u32', 'u64']:
             new_id = module.new_id()
-            width = token[1:]
+            width = int(token[1:])
             inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
-                                  [width, '0'])
+                                  [width, 0])
             module.add_global_inst(inst)
         elif token in ['f16', 'f32', 'f64']:
             new_id = module.new_id()
-            width = token[1:]
+            width = int(token[1:])
             inst = ir.Instruction(module, 'OpTypeFloat', new_id, None,
                                   [width])
             module.add_global_inst(inst)
@@ -214,9 +214,10 @@ def parse_operand(lexer, module, kind):
     elif kind in spirv.MASKS:
         return [lexer.get_next_token()]
     elif kind in ['LiteralNumber',
-                  'LiteralString',
                   'VariableLiterals',
                   'OptionalLiteral']:
+        return [int(lexer.get_next_token())]
+    elif kind == 'LiteralString':
         return [lexer.get_next_token()]
     elif kind == 'VariableIds' or kind == 'OptionalId':
         operands = []
@@ -303,7 +304,7 @@ def parse_decorations(lexer, module, variable_name):
             lexer.get_next_token()
             while True:
                 token = lexer.get_next_token()
-                operands.append(token)
+                operands.append(int(token))
                 token = lexer.get_next_token()
                 if token == ')':
                     break
