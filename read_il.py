@@ -376,6 +376,8 @@ def parse_function_raw(lexer, module, function):
         if isinstance(inst, ir.BasicBlock):
             parse_basic_block_body(lexer, module, inst)
             function.add_basic_block(inst)
+        elif isinstance(inst, ir.Function):
+            raise ParseError('OpFunction within function')
         elif inst.op_name == 'OpFunctionEnd':
             return function
         elif inst.op_name == 'OpFunctionParameter':

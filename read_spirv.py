@@ -95,7 +95,7 @@ def parse_operand(binary, kind):
         return [binary.get_next_word()]
     elif kind == 'LiteralString':
         return ['"' + parse_literal_string(binary) + '"']
-    elif kind == 'VariableLiterals' or kind == 'OptionalLiteral' :
+    elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
         operands = []
         while True:
             word = binary.get_next_word(throw_on_eol=False)
