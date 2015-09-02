@@ -200,7 +200,10 @@ def get_or_create_function_type(module, return_type, arguments):
             if inst.operands[0] == return_type:
                 if [arg[0] for arg in arguments] == inst.operands[1:]:
                     return inst.result_id
-    operands = [return_type] + [arg[0] for arg in arguments]
+    if arguments:
+        operands = [return_type] + [arg[0] for arg in arguments]
+    else:
+        operands = [return_type] + [get_or_create_type(module, 'void')]
     new_id = module.new_id()
     inst = ir.Instruction(module, 'OpTypeFunction', new_id, None, operands)
     module.add_global_inst(inst)
@@ -390,6 +393,10 @@ def parse_arguments(lexer, module):
     """Parse the arguments of a pretty-printed function."""
     arguments = []
     lexer.get_next_token('(')
+    if lexer.get_next_token(peek=True) == 'void':
+        lexer.get_next_token('void')
+        lexer.get_next_token(')')
+        return []
     while lexer.get_next_token(peek=True) != ')':
         arg_type = parse_type(lexer, module)
         arg_id = parse_id(lexer, module)
