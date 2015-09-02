@@ -186,23 +186,23 @@ def add_type_name(module, inst):
         type_name = 'bool'
     elif inst.op_name == 'OpTypeInt':
         width = inst.operands[0]
-        if width not in ['8', '16', '32', '64']:
-            raise ir.IRError("Invalid OpTypeInt width " + width)
+        if width not in [8, 16, 32, 64]:
+            raise ir.IRError("Invalid OpTypeInt width " + str(width))
         signedness = inst.operands[1]
-        if not signedness in ['0', '1']:
+        if not signedness in [0, 1]:
             error = "Invalid OpTypeInt signedness " + str(signedness)
             raise ir.IRError(error)
         type_name = 's' if signedness else 'u'
-        type_name = type_name + width
+        type_name = type_name + str(width)
     elif inst.op_name == 'OpTypeFloat':
         width = inst.operands[0]
-        if width not in ['16', '32', '64']:
-            raise ir.IRError("Invalid OpTypeFloat width " + width)
-        type_name = 'f' + width
+        if width not in [16, 32, 64]:
+            raise ir.IRError("Invalid OpTypeFloat width " + str(width))
+        type_name = 'f' + str(width)
     elif inst.op_name == 'OpTypeVector':
         component_type = module.type_id_to_name[inst.operands[0]]
         count = inst.operands[1]
-        if int(count) not in range(2, 16):
+        if count not in range(2, 16):
             error = "Invalid OpTypeVector component count " + str(count)
             raise ir.IRError(error)
         type_name = '<' + str(count) + ' x ' + component_type + '>'

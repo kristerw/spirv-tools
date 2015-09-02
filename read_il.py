@@ -212,7 +212,7 @@ def parse_operand(lexer, module, kind):
     if kind == 'Id':
         return [parse_id(lexer, module)]
     elif kind in spirv.MASKS:
-        return [lexer.get_next_token()]
+        return [int(lexer.get_next_token())]
     elif kind in ['LiteralNumber',
                   'VariableLiterals',
                   'OptionalLiteral']:
@@ -231,7 +231,7 @@ def parse_operand(lexer, module, kind):
     elif kind in spirv.CONSTANTS:
         value = lexer.get_next_token()
         if value not in spirv.CONSTANTS[kind]:
-            error = 'Invalid value "' + value + '"' 'for "'+ kind + '"'
+            error = 'Invalid value "' + value + '"' 'for "' + kind + '"'
             raise ParseError(error)
         return [value]
 
@@ -411,7 +411,7 @@ def parse_function_definition(lexer, module):
 
     function_type = get_or_create_function_type(module, return_type, arguments)
 
-    function = ir.Function(module, name, '0', function_type) # XXX
+    function = ir.Function(module, name, 0, function_type) # XXX
     param_loads = []
     for (arg_type, arg_id) in arguments:
         arg_inst = ir.Instruction(module, 'OpFunctionParameter', arg_id,

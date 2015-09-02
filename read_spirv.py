@@ -92,7 +92,7 @@ def parse_operand(binary, kind):
     if kind == 'Id':
         return [parse_id(binary)]
     elif kind == 'LiteralNumber' or kind == 'FunctionControlMask':
-        return [str(binary.get_next_word())]
+        return [binary.get_next_word()]
     elif kind == 'LiteralString':
         return ['"' + parse_literal_string(binary) + '"']
     elif kind == 'VariableLiterals' or kind == 'OptionalLiteral' :
@@ -118,7 +118,7 @@ def parse_operand(binary, kind):
         raise ParseError('Unknown "' + kind + '" value' + str(val))
     elif kind in spirv.MASKS:
         val = binary.get_next_word()
-        return [str(val)]
+        return [val]
 
     raise ParseError('Unknown kind "' + kind + '"')
 

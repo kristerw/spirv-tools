@@ -293,7 +293,7 @@ class Instruction(object):
         if self.operands:
             res = res + ' '
             for operand in self.operands:
-                res = res + operand + ', '
+                res = res + str(operand) + ', '
             res = res[:-2]
         return res
 

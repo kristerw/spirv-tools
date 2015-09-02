@@ -20,7 +20,7 @@ def output_instruction(stream, inst):
         elif kind == 'LiteralNumber':
             inst_data.append(operand)
         elif kind in spirv.MASKS:
-            inst_data.append(int(operand))
+            inst_data.append(operand)
         elif kind == 'LiteralString':
             operand = operand[1:-1]    # Strip '"'
             operand = operand.encode('utf-8') + '\x00'
