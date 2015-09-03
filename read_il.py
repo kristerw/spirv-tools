@@ -348,6 +348,11 @@ def parse_basic_block_body(lexer, module, basic_block):
             raise ParseError('Label without terminating previous basic block')
         else:
             inst = parse_instruction(lexer, module)
+            if isinstance(inst, ir.BasicBlock):
+                raise ParseError(
+                    'Label without terminating previous basic block')
+            elif isinstance(inst, ir.Function):
+                raise ParseError('OpFunction within function')
             basic_block.append_inst(inst)
             if token in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
                 return
