@@ -96,7 +96,7 @@ class Module(object):
                         inst.operands[0] == value):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
-                               type_inst.result_id, [str(value)])
+                               type_inst.result_id, [value])
             self.add_global_inst(inst)
             return inst
         elif type_inst.op_name == 'OpTypeVector':
