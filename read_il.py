@@ -101,15 +101,27 @@ class Lexer(object):
 
 
 def get_or_create_scalar_constant(module, token, type_id):
-    if token[0:2] == '0x':
+    if token == 'true':
+        type_id = get_or_create_type(module, 'bool')
+        inst = ir.Instruction(module, 'OpConstantTrue', module.new_id(),
+                              type_id, [])
+        module.add_global_inst(inst)
+    elif token == 'false':
+        type_id = get_or_create_type(module, 'bool')
+        inst = ir.Instruction(module, 'OpConstantFalse', module.new_id(),
+                              type_id, [])
+        module.add_global_inst(inst)
+    elif token[0:2] == '0x':
         value = int(token, 16)
+        inst = module.get_constant(type_id, value)
     elif token[0:2] == '0b':
         value = int(token, 2)
+        inst = module.get_constant(type_id, value)
     elif token.isdigit():
         value = int(token)
+        inst = module.get_constant(type_id, value)
     else:
         raise ParseError('Not a valid number: ' + token)
-    inst = module.get_constant(type_id, value)
     return inst.result_id
 
 
@@ -135,7 +147,9 @@ def create_id(module, token, type_id=None):
             module.add_global_inst(inst)
             return new_id
         return token
-    elif token[0].isdigit():
+    elif (token[0].isdigit() or
+              token == 'true' or
+              token == 'false'):
         return get_or_create_scalar_constant(module, token, type_id)
     elif token in module.type_name_to_id:
         return module.type_name_to_id[token]
