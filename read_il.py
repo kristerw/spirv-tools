@@ -59,6 +59,10 @@ class Lexer(object):
             r'\(',
             r'\)',
             r'ret',
+            r'0b[0-9]+',
+            r'0x[0-9]+',
+            r'[1-9][0-9]*',
+            r'0',
             r'[a-zA-Z0-9.]+'
         ]
 
@@ -96,8 +100,29 @@ class Lexer(object):
         self.line = None
 
 
-def create_id(module, token):
-    """Create the 'real' ID from an ID token."""
+def get_or_create_scalar_constant(module, token, type_id):
+    if token[0:2] == '0x':
+        value = int(token, 16)
+    elif token[0:2] == '0b':
+        value = int(token, 2)
+    elif token.isdigit():
+        value = int(token)
+    else:
+        raise ParseError('Not a valid number: ' + token)
+    inst = module.get_constant(type_id, value)
+    return inst.result_id
+
+
+def create_id(module, token, type_id=None):
+    """Create the 'real' ID from an ID token.
+
+    The IDs are generalized; it accepts e.g. type names such as 'f32'
+    where the ID for the 'OpTypeFloat' is returned. Valid generalized
+    IDs are:
+      * types
+      * integer scalar constants (the value can be decimal, binary, or
+        hexadecimal)
+    """
     if token in module.symbol_name_to_id:
         return module.symbol_name_to_id[token]
     elif token[0] == '%':
@@ -110,19 +135,26 @@ def create_id(module, token):
             module.add_global_inst(inst)
             return new_id
         return token
+    elif token[0].isdigit():
+        return get_or_create_scalar_constant(module, token, type_id)
     elif token in module.type_name_to_id:
         return module.type_name_to_id[token]
     else:
         return get_or_create_type(module, token)
 
 
-def parse_id(lexer, module, accept_eol=False):
-    """parse one Id."""
+def parse_id(lexer, module, accept_eol=False, type_id=None):
+    """Parse one ID.
+
+    This parses generalized Id's, so it accepts e.g. type names such as 'f32'
+    where the ID for the 'OpTypeFloat' is returned.  See 'create_id' for
+    which generalizations are accepted.
+    """
     token = lexer.get_next_token(accept_eol=accept_eol)
     if accept_eol and token == '':
         return ''
     else:
-        return create_id(module, token)
+        return create_id(module, token, type_id)
 
 
 def add_vector_type(module, token):
@@ -210,10 +242,10 @@ def get_or_create_function_type(module, return_type, arguments):
     return new_id
 
 
-def parse_operand(lexer, module, kind):
+def parse_operand(lexer, module, kind, type_id):
     """Parse one instruction operand."""
     if kind == 'Id':
-        return [parse_id(lexer, module)]
+        return [parse_id(lexer, module, type_id=type_id)]
     elif kind in spirv.MASKS:
         return [int(lexer.get_next_token())]
     elif kind in ['LiteralNumber',
@@ -225,7 +257,8 @@ def parse_operand(lexer, module, kind):
     elif kind == 'VariableIds' or kind == 'OptionalId':
         operands = []
         while True:
-            operand_id = parse_id(lexer, module, accept_eol=True)
+            operand_id = parse_id(lexer, module, accept_eol=True,
+                                  type_id=type_id)
             if operand_id == '':
                 return operands
             operands.append(operand_id)
@@ -267,7 +300,7 @@ def parse_instruction(lexer, module):
     kinds = opcode['operands'][:]
     while kinds:
         kind = kinds.pop(0)
-        operands = operands + parse_operand(lexer, module, kind)
+        operands = operands + parse_operand(lexer, module, kind, op_type)
         comma = lexer.get_next_token(',', accept_eol=True)
         if comma == '':
             break
