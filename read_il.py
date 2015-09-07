@@ -232,12 +232,11 @@ def get_or_create_type(module, token):
 
 def parse_type(lexer, module):
     token = lexer.get_next_token()
-    if token in module.symbol_name_to_id:
-        return module.symbol_name_to_id[token]
-    elif token[0] == '%':
-        return token
-    else:
-        return get_or_create_type(module, token)
+    type_id = create_id(module, token)
+    type_inst = module.id_to_inst[type_id]
+    if type_inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        raise ParseError('Not a valid type: ' + token)
+    return type_id
 
 
 def get_or_create_function_type(module, return_type, arguments):
