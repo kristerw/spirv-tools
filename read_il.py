@@ -46,40 +46,42 @@ class Lexer(object):
         """
 
         token_exprs = [
-            r'%[a-zA-Z0-9]*:',
-            r'%[0-9]+',
-            r'%[a-zA-Z][a-zA-Z0-9_]*',
-            r'<[1-9]+ x [a-zA-Z0-9]*>',
-            r'".+"',
-            r'define',
-            r',',
-            r'=',
-            r'{',
-            r'}',
-            r'\(',
-            r'\)',
-            r'ret',
-            r'0b[0-9]+',
-            r'0x[0-9]+',
-            r'[1-9][0-9]*',
-            r'0',
-            r'[a-zA-Z0-9.]+'
+            (r'%[a-zA-Z_][a-zA-Z0-9_]*:', 'LABEL'),
+            (r'%[1-9][0-9]*:', 'LABEL'),
+            (r'%0:', 'LABEL'),
+            (r'%[a-zA-Z_][a-zA-Z0-9_]*', 'ID'),
+            (r'%[1-9][0-9]*', 'ID'),
+            (r'%0', 'ID'),
+            (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
+            (r'".*"', "STRING"),
+            (r',', None),
+            (r'=', None),
+            (r'{', None),
+            (r'}', None),
+            (r'\(', None),
+            (r'\)', None),
+            (r'-?0b[0-9]+', 'INT'),
+            (r'-?0x[0-9]+', 'INT'),
+            (r'-?[1-9][0-9]*', 'INT'),
+            (r'-?0', 'INT'),
+            (r'[a-zA-Z0-9.]+', 'NAME')
         ]
 
         if self.line is None:
             self.line = self.stream.readline()
             if not self.line:
-                return None
+                return None, None
             self.line_no += 1
 
         self.line = self.line.strip()
         if not self.line or self.line[0] == ';':
             if accept_eol:
-                return ''
+                return '', None
             else:
                 raise ParseError('Expected more tokens')
 
-        for pattern in token_exprs:
+        for token_expr in token_exprs:
+            pattern, tag = token_expr
             regex = re.compile(pattern)
             match = regex.match(self.line)
             if match:
@@ -88,16 +90,35 @@ class Lexer(object):
                     self.line = self.line[match.end(0):]
                 if expect is not None and token != expect:
                     raise ParseError('Expected ' + expect)
-                return token
+                return token, tag
 
         raise ParseError('Syntax error')
 
 
     def done_with_line(self):
         """Check that no tokens are remaining, and mark the line as done."""
-        if self.get_next_token(accept_eol=True) != '':
+        token, _ = self.get_next_token(accept_eol=True)
+        if  token != '':
             raise ParseError('Spurius tokens after expected end of line')
         self.line = None
+
+
+def get_type_range(module, type_id):
+    type_inst = module.id_to_inst[type_id]
+    if type_inst.op_name != 'OpTypeInt':
+        raise ParseError('Type must be OpTypeInt')
+    bitwidth = type_inst.operands[0]
+    assert bitwidth in [16, 32, 64]
+    if bitwidth == 16:
+        min_val = -0x8000
+        max_val = 0xffff
+    elif bitwidth == 32:
+        min_val = -0x80000000
+        max_val = 0xffffffff
+    else:
+        min_val = -0x8000000000000000
+        max_val = 0xffffffffffffffff
+    return min_val, max_val
 
 
 def get_or_create_scalar_constant(module, token, type_id):
@@ -111,21 +132,34 @@ def get_or_create_scalar_constant(module, token, type_id):
         inst = ir.Instruction(module, 'OpConstantFalse', module.new_id(),
                               type_id, [])
         module.add_global_inst(inst)
-    elif token[0:2] == '0x':
-        value = int(token, 16)
-        inst = module.get_constant(type_id, value)
-    elif token[0:2] == '0b':
-        value = int(token, 2)
-        inst = module.get_constant(type_id, value)
-    elif token.isdigit():
-        value = int(token)
-        inst = module.get_constant(type_id, value)
     else:
-        raise ParseError('Not a valid number: ' + token)
+        min_val, max_val = get_type_range(module, type_id)
+        is_neg = token[0] == '-'
+        if is_neg:
+            token = token[1:]
+
+        if token[0:2] == '0x':
+            value = int(token, 16)
+        elif token[0:2] == '0b':
+            value = int(token, 2)
+        else:
+            value = int(token)
+
+        if is_neg:
+            value = -value
+            if value < min_val:
+                raise ParseError('Value out of range')
+            value = value & max_val
+        else:
+            if value > max_val:
+                raise ParseError('Value out of range')
+
+        inst = module.get_constant(type_id, value)
+
     return inst.result_id
 
 
-def create_id(module, token, type_id=None):
+def create_id(module, token, tag, type_id=None):
     """Create the 'real' ID from an ID token.
 
     The IDs are generalized; it accepts e.g. type names such as 'f32'
@@ -137,7 +171,8 @@ def create_id(module, token, type_id=None):
     """
     if token in module.symbol_name_to_id:
         return module.symbol_name_to_id[token]
-    elif token[0] == '%':
+    elif tag == 'ID':
+        assert token[0] == '%'
         if not token[1].isdigit():
             new_id = module.new_id()
             module.symbol_name_to_id[token] = new_id
@@ -147,9 +182,7 @@ def create_id(module, token, type_id=None):
             module.add_global_inst(inst)
             return new_id
         return token
-    elif (token[0].isdigit() or
-              token == 'true' or
-              token == 'false'):
+    elif tag == 'INT' or token in ['true', 'false']:
         return get_or_create_scalar_constant(module, token, type_id)
     elif token in module.type_name_to_id:
         return module.type_name_to_id[token]
@@ -164,11 +197,11 @@ def parse_id(lexer, module, accept_eol=False, type_id=None):
     where the ID for the 'OpTypeFloat' is returned.  See 'create_id' for
     which generalizations are accepted.
     """
-    token = lexer.get_next_token(accept_eol=accept_eol)
+    token, tag = lexer.get_next_token(accept_eol=accept_eol)
     if accept_eol and token == '':
         return ''
     else:
-        return create_id(module, token, type_id)
+        return create_id(module, token, tag, type_id)
 
 
 def add_vector_type(module, token):
@@ -231,8 +264,8 @@ def get_or_create_type(module, token):
 
 
 def parse_type(lexer, module):
-    token = lexer.get_next_token()
-    type_id = create_id(module, token)
+    token, tag = lexer.get_next_token()
+    type_id = create_id(module, token, tag)
     type_inst = module.id_to_inst[type_id]
     if type_inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         raise ParseError('Not a valid type: ' + token)
@@ -260,13 +293,16 @@ def parse_operand(lexer, module, kind, type_id):
     if kind == 'Id':
         return [parse_id(lexer, module, type_id=type_id)]
     elif kind in spirv.MASKS:
-        return [int(lexer.get_next_token())]
+        token, tag = lexer.get_next_token()
+        return [int(token)]
     elif kind in ['LiteralNumber',
                   'VariableLiterals',
                   'OptionalLiteral']:
-        return [int(lexer.get_next_token())]
+        token, tag = lexer.get_next_token()
+        return [int(token)]
     elif kind == 'LiteralString':
-        return [lexer.get_next_token()]
+        token, tag = lexer.get_next_token()
+        return [token]
     elif kind == 'VariableIds' or kind == 'OptionalId':
         operands = []
         while True:
@@ -275,10 +311,11 @@ def parse_operand(lexer, module, kind, type_id):
             if operand_id == '':
                 return operands
             operands.append(operand_id)
-            if lexer.get_next_token(peek=True, accept_eol=True) == ',':
+            token, tag = lexer.get_next_token(peek=True, accept_eol=True)
+            if token == ',':
                 lexer.get_next_token()
     elif kind in spirv.CONSTANTS:
-        value = lexer.get_next_token()
+        value, tag = lexer.get_next_token()
         if value not in spirv.CONSTANTS[kind]:
             error = 'Invalid value "' + value + '"' 'for "' + kind + '"'
             raise ParseError(error)
@@ -289,16 +326,18 @@ def parse_operand(lexer, module, kind, type_id):
 
 def parse_instruction(lexer, module):
     """Parse one instruction."""
-    token = lexer.get_next_token(peek=True)
-    if token[0] == '%':
+    token, tag = lexer.get_next_token(peek=True)
+    if tag == 'ID':
         token = parse_id(lexer, module)
         op_result = token
         lexer.get_next_token('=')
-        op_name = lexer.get_next_token()
+        op_name, tag = lexer.get_next_token()
     else:
-        token = lexer.get_next_token()
+        token, tag = lexer.get_next_token()
         op_name = token
         op_result = None
+    if tag != 'NAME':
+        raise ParseError('Expected an operation name')
     if op_name not in spirv.OPNAME_TABLE:
         raise ParseError('Invalid operation ' + op_name)
     opcode = spirv.OPNAME_TABLE[op_name]
@@ -314,7 +353,7 @@ def parse_instruction(lexer, module):
     while kinds:
         kind = kinds.pop(0)
         operands = operands + parse_operand(lexer, module, kind, op_type)
-        comma = lexer.get_next_token(',', accept_eol=True)
+        comma, tag = lexer.get_next_token(',', accept_eol=True)
         if comma == '':
             break
 
@@ -338,23 +377,23 @@ def parse_instruction(lexer, module):
 def parse_decorations(lexer, module, variable_name):
     """Parse pretty-printed decorations."""
     while True:
-        token = lexer.get_next_token(peek=True, accept_eol=True)
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
             return
         elif token not in spirv.DECORATIONS:
             return
 
-        decoration = lexer.get_next_token()
+        decoration, _ = lexer.get_next_token()
         if not decoration in spirv.DECORATIONS:
             raise ParseError('Unknown decoration ' + decoration)
-        token = lexer.get_next_token(peek=True, accept_eol=True)
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         operands = [variable_name, decoration]
         if token == '(':
             lexer.get_next_token()
             while True:
-                token = lexer.get_next_token()
+                token, tag = lexer.get_next_token()
                 operands.append(int(token))
-                token = lexer.get_next_token()
+                token, _ = lexer.get_next_token()
                 if token == ')':
                     break
                 if token != ',':
@@ -366,7 +405,7 @@ def parse_decorations(lexer, module, variable_name):
 def parse_instructions(lexer, module):
     """Parse all instructions."""
     while True:
-        token = lexer.get_next_token(peek=True, accept_eol=True)
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token is None:
             return
         elif token == 'define':
@@ -386,7 +425,7 @@ def parse_instructions(lexer, module):
 def parse_basic_block_body(lexer, module, basic_block):
     """Parse the instructions in one basic block."""
     while True:
-        token = lexer.get_next_token(peek=True, accept_eol=True)
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
 
         if token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
@@ -406,9 +445,10 @@ def parse_basic_block_body(lexer, module, basic_block):
 
 def parse_basic_block(lexer, module, function, initial_insts):
     """Parse one basic block."""
-    token = lexer.get_next_token()
+    token, tag = lexer.get_next_token()
+    assert tag == 'LABEL' and token[-1] == ':'
     lexer.done_with_line()
-    basic_block_id = create_id(module, token[:-1])
+    basic_block_id = create_id(module, token[:-1], 'ID')
     basic_block = ir.BasicBlock(module, basic_block_id)
 
     for inst in initial_insts:
@@ -421,7 +461,7 @@ def parse_basic_block(lexer, module, function, initial_insts):
 def parse_function_raw(lexer, module, function):
     """Parse one function staring with the 'OpFunction' instruction."""
     while True:
-        token = lexer.get_next_token(peek=True)
+        token, _ = lexer.get_next_token(peek=True)
         if token == '':
             break  # This is an empty line -- nothing to do.
 
@@ -444,17 +484,18 @@ def parse_arguments(lexer, module):
     """Parse the arguments of a pretty-printed function."""
     arguments = []
     lexer.get_next_token('(')
-    if lexer.get_next_token(peek=True) == 'void':
+    token, _ = lexer.get_next_token(peek=True)
+    if token == 'void':
         lexer.get_next_token('void')
         lexer.get_next_token(')')
         return []
-    while lexer.get_next_token(peek=True) != ')':
+    while lexer.get_next_token(peek=True) != (')', None):
         arg_type = parse_type(lexer, module)
         arg_id = parse_id(lexer, module)
         arguments.append((arg_type, arg_id))
-        if lexer.get_next_token(peek=True) == ',':
+        if lexer.get_next_token(peek=True) == (',', None):
             lexer.get_next_token()
-            if lexer.get_next_token(peek=True) == ')':
+            if lexer.get_next_token(peek=True) == (')', None):
                 raise ParseError('Expected argument after ","')
     lexer.get_next_token(')')
     return arguments
@@ -486,7 +527,7 @@ def parse_function(lexer, module):
     func, param_loads = parse_function_definition(lexer, module)
 
     while True:
-        token = lexer.get_next_token(peek=True, accept_eol=True)
+        token, tag = lexer.get_next_token(peek=True, accept_eol=True)
 
         if token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
@@ -494,7 +535,7 @@ def parse_function(lexer, module):
             lexer.get_next_token()
             lexer.done_with_line()
             return func
-        elif token[-1] == ':':
+        elif tag == 'LABEL':
             parse_basic_block(lexer, module, func, param_loads)
             param_loads = []
         else:
