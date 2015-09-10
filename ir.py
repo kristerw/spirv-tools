@@ -57,8 +57,9 @@ class Module(object):
         sorted_insts = []
         for name in spirv.INITIAL_INSTRUCTIONS:
             self._copy_global_insts(sorted_insts, [name])
-        self._copy_global_insts(sorted_insts,
-                                spirv.DEBUG_INSTRUCTIONS)
+        self._copy_global_insts(sorted_insts, ['OpString'])
+        self._copy_global_insts(sorted_insts, ['OpName', 'OpMemberName'])
+        self._copy_global_insts(sorted_insts, ['OpLine'])
         self._copy_global_insts(sorted_insts,
                                 spirv.DECORATION_INSTRUCTIONS)
         self._copy_global_insts(sorted_insts,
