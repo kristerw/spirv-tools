@@ -28,9 +28,12 @@ BASIC_BLOCK_ENDING_INSTRUCTIONS = [
     'OpSwitch'
 ]
 
+# The order of the instructions in the first part of the binary (before
+# the debug and annotation instructions).
 INITIAL_INSTRUCTIONS = [
     'OpSource',
     'OpSourceExtension',
+    'OpCapability'
     'OpExtension',
     'OpExtInstImport',
     'OpMemoryModel',
@@ -63,7 +66,6 @@ TYPE_DECLARATION_INSTRUCTIONS = [
     'OpTypeImage',
     'OpTypeSampler',
     'OpTypeSampledImage',
-    'OpTypeFilter',
     'OpTypeArray',
     'OpTypeRuntimeArray',
     'OpTypeStruct',
@@ -78,12 +80,12 @@ TYPE_DECLARATION_INSTRUCTIONS = [
 ]
 
 CONSTANT_INSTRUCTIONS = [
-    'OpConstantNull',
     'OpConstantTrue',
     'OpConstantFalse',
     'OpConstant',
     'OpConstantComposite',
     'OpConstantSampler',
+    'OpConstantNull',
 
     'OpSpecConstantTrue',
     'OpSpecConstantFalse',
