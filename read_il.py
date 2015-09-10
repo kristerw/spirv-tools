@@ -48,10 +48,8 @@ class Lexer(object):
         token_exprs = [
             (r'%[a-zA-Z_][a-zA-Z0-9_]*:', 'LABEL'),
             (r'%[1-9][0-9]*:', 'LABEL'),
-            (r'%0:', 'LABEL'),
             (r'%[a-zA-Z_][a-zA-Z0-9_]*', 'ID'),
             (r'%[1-9][0-9]*', 'ID'),
-            (r'%0', 'ID'),
             (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
             (r'".*"', "STRING"),
             (r',', None),
