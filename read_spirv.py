@@ -182,6 +182,11 @@ def parse_basic_block(binary, module, function):
     while True:
         opcode = binary.get_next_opcode(peek=True)
         inst = parse_instruction(binary, module)
+        if not isinstance(inst, ir.Instruction):
+            raise ParseError('Invalid opcode ' + opcode['name'] +
+                             ' in basic block')
+        if inst.op_name == 'OpLabel':
+            raise ParseError('Invalid opcode OpLabel in basic block')
         basic_block.append_inst(inst)
         if opcode['name'] in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
             function.add_basic_block(basic_block)
