@@ -13,6 +13,8 @@ class ParseError(Exception):
 
 class SpirvBinary(object):
     def __init__(self, words):
+        if len(words) < 5:
+            raise ParseError('File length shorter than header size')
         magic = words[0]
         if magic != spirv.MAGIC:
             words.byteswap()
