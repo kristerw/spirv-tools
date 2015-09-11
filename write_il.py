@@ -237,11 +237,19 @@ def write_module(stream, module, is_raw_mode=False):
 
         if is_raw_mode:
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.DEBUG_INSTRUCTIONS)
+                                       ['OpString'])
+            output_global_instructions(stream, module, is_raw_mode,
+                                       ['OpName', 'OpMemberName'])
+            output_global_instructions(stream, module, is_raw_mode,
+                                       ['OpLine'])
+
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.DECORATION_INSTRUCTIONS)
+
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.TYPE_DECLARATION_INSTRUCTIONS)
+                                       spirv.TYPE_DECLARATION_INSTRUCTIONS +
+                                       spirv.CONSTANT_INSTRUCTIONS +
+                                       spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
         else:
             needed_types = get_needed_types(module)
             if needed_types:
@@ -251,10 +259,11 @@ def write_module(stream, module, is_raw_mode=False):
                         output_instruction(stream, module, inst, is_raw_mode,
                                            indent='')
 
-        output_global_instructions(stream, module, is_raw_mode,
-                                   spirv.CONSTANT_INSTRUCTIONS)
-        output_global_instructions(stream, module, is_raw_mode,
-                                   spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+            output_global_instructions(stream, module, is_raw_mode,
+                                       spirv.CONSTANT_INSTRUCTIONS)
+            output_global_instructions(stream, module, is_raw_mode,
+                                       spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+
         output_functions(stream, module, is_raw_mode)
     finally:
         del module.type_id_to_name
