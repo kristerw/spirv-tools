@@ -148,6 +148,8 @@ def parse_instruction(binary, module):
     result = None
     if opcode['result']:
         result = parse_id(binary)
+        if result in module.id_to_inst:
+            raise ParseError('ID ' + result + ' is already defined')
     for kind in opcode['operands']:
         operands = operands + parse_operand(binary, kind)
     binary.expect_eol()
