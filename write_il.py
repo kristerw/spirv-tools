@@ -228,13 +228,19 @@ def write_module(stream, module, is_raw_mode=False):
         if not is_raw_mode:
             generate_global_symbols(module)
 
+        # Output the global instructions.
+        #
+        # We could do it by just iterating over the instructions and print
+        # them in order.  But we want some nicer output, with different
+        # types of instructions split into sections (and with unneeded
+        # instructions eliminated for non-raw mode), so we need to do some
+        # extra work here...
         for name in spirv.INITIAL_INSTRUCTIONS:
             if name != 'OpExtInstImport':
                 output_global_instructions(stream, module, is_raw_mode, [name],
                                            newline=False)
         output_global_instructions(stream, module, is_raw_mode,
                                    ['OpExtInstImport'])
-
         if is_raw_mode:
             output_global_instructions(stream, module, is_raw_mode,
                                        ['OpString'])
@@ -242,10 +248,8 @@ def write_module(stream, module, is_raw_mode=False):
                                        ['OpName', 'OpMemberName'])
             output_global_instructions(stream, module, is_raw_mode,
                                        ['OpLine'])
-
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.DECORATION_INSTRUCTIONS)
-
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.TYPE_DECLARATION_INSTRUCTIONS +
                                        spirv.CONSTANT_INSTRUCTIONS +
@@ -258,12 +262,12 @@ def write_module(stream, module, is_raw_mode=False):
                     if inst.result_id in needed_types:
                         output_instruction(stream, module, inst, is_raw_mode,
                                            indent='')
-
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.CONSTANT_INSTRUCTIONS)
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
 
+        # Output rest of the module.
         output_functions(stream, module, is_raw_mode)
     finally:
         del module.type_id_to_name
