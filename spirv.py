@@ -18,7 +18,7 @@ CONSTANTS = TABLES['constants']
 DECORATIONS = CONSTANTS['Decoration']
 MASKS = TABLES['masks']
 
-BASIC_BLOCK_ENDING_INSTRUCTIONS = [
+BRANCH_INSTRUCTIONS = [
     'OpReturnValue',
     'OpBranch',
     'OpBranchConditional',

@@ -190,7 +190,7 @@ def parse_basic_block(binary, module, function):
         if inst.op_name == 'OpLabel':
             raise ParseError('Invalid opcode OpLabel in basic block')
         basic_block.append_inst(inst)
-        if opcode['name'] in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
+        if opcode['name'] in spirv.BRANCH_INSTRUCTIONS:
             function.add_basic_block(basic_block)
             return
 

@@ -437,7 +437,7 @@ def parse_basic_block_body(lexer, module, basic_block):
             elif isinstance(inst, ir.Function):
                 raise ParseError('OpFunction within function')
             basic_block.append_inst(inst)
-            if token in spirv.BASIC_BLOCK_ENDING_INSTRUCTIONS:
+            if token in spirv.BRANCH_INSTRUCTIONS:
                 return
 
 
