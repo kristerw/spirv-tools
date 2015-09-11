@@ -48,26 +48,26 @@ class Module(object):
         self._tmp_id_counter += 1
         return '%.' + str(self._tmp_id_counter)
 
-    def _copy_global_insts(self, output_array, names):
+    def _copy_global_insts(self, dest, names):
+        """Copy global insts with the provided operation names to dest."""
         for inst in self.global_insts:
             if inst.op_name in names:
-                output_array.append(inst)
+                dest.append(inst)
 
     def _sort_global_insts(self):
+        """Sort self.global_insts as required by the SPIR-V specification."""
         sorted_insts = []
         for name in spirv.INITIAL_INSTRUCTIONS:
             self._copy_global_insts(sorted_insts, [name])
         self._copy_global_insts(sorted_insts, ['OpString'])
         self._copy_global_insts(sorted_insts, ['OpName', 'OpMemberName'])
         self._copy_global_insts(sorted_insts, ['OpLine'])
+        self._copy_global_insts(sorted_insts, spirv.DECORATION_INSTRUCTIONS)
         self._copy_global_insts(sorted_insts,
-                                spirv.DECORATION_INSTRUCTIONS)
-        self._copy_global_insts(sorted_insts,
-                                spirv.TYPE_DECLARATION_INSTRUCTIONS)
-        self._copy_global_insts(sorted_insts,
-                                spirv.CONSTANT_INSTRUCTIONS)
-        self._copy_global_insts(sorted_insts,
+                                spirv.TYPE_DECLARATION_INSTRUCTIONS +
+                                spirv.CONSTANT_INSTRUCTIONS +
                                 spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+        assert len(self.global_insts) == len(sorted_insts)
         self.global_insts = sorted_insts
 
     def add_global_inst(self, inst):
