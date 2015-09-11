@@ -33,7 +33,7 @@ BASIC_BLOCK_ENDING_INSTRUCTIONS = [
 INITIAL_INSTRUCTIONS = [
     'OpSource',
     'OpSourceExtension',
-    'OpCapability'
+    'OpCapability',
     'OpExtension',
     'OpExtInstImport',
     'OpMemoryModel',
