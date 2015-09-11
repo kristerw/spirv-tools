@@ -32,10 +32,18 @@ class SpirvBinary(object):
 
     def discard_inst(self):
         self.idx += self.words[self.idx] >> 16
+        # Ensure we do not read past end of file (i.e. if the instruction's
+        # length field is corrupt).  It is OK for idx to point to the word
+        # after the binary (which happens if we discard the last instruction
+        # in the file).
+        if self.idx > len(self.words):
+            raise ParseError('Unexpected end of file')
 
     def get_next_opcode(self, peek=False, throw_on_eol=False):
-        if not throw_on_eol:
-            if self.idx == len(self.words):
+        if self.idx == len(self.words):
+            if throw_on_eol:
+                raise ParseError('Unexpected end of file')
+            else:
                 return None
 
         opcode = self.words[self.idx] & 0xFFFF
@@ -50,12 +58,17 @@ class SpirvBinary(object):
         return spirv.OPCODE_TABLE[opcode]
 
     def get_next_word(self, peek=False, throw_on_eol=True):
-        if not throw_on_eol:
-            if self.length == 0:
+        if self.idx == len(self.words):
+            if throw_on_eol:
+                raise ParseError('Unexpected end of file')
+            else:
                 return None
 
         if self.length == 0:
-            raise ParseError('Incorrect length')
+            if throw_on_eol:
+                raise ParseError('Incorrect instruction length')
+            else:
+                return None
 
         word = self.words[self.idx]
 
