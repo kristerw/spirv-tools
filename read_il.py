@@ -5,20 +5,22 @@ import ir
 
 
 class ParseError(Exception):
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, message):
+        super(ParseError, self).__init__(message)
+        self.message = message
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.message)
 
 
 class VerificationError(Exception):
-    def __init__(self, line_no, value):
+    def __init__(self, line_no, message):
+        super(VerificationError, self).__init__(message)
         self.line_no = line_no
-        self.value = value
+        self.message = message
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.message)
 
 
 class Lexer(object):
@@ -602,11 +604,11 @@ def read_module(stream):
         module.finalize()
         return module
     except ParseError as err:
-        raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
+        raise ParseError(str(lexer.line_no) + ': error: ' + err.message)
     except ir.IRError as err:
-        raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
+        raise ParseError(str(lexer.line_no) + ': error: ' + err.message)
     except VerificationError as err:
-        raise ParseError(str(err.line_no) + ': error: ' + err.value)
+        raise ParseError(str(err.line_no) + ': error: ' + err.message)
     finally:
         del module.inst_to_line
         del module.symbol_name_to_id

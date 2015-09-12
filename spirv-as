@@ -32,7 +32,7 @@ def main():
             module = read_il.read_module(stream)
     except read_il.ParseError as err:
         sys.stderr.write(os.path.basename(args.filename) + ":"
-                         + err.value + '\n')
+                         + err.message + '\n')
         sys.exit(1)
 
     if args.O:

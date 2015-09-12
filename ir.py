@@ -4,11 +4,12 @@ import spirv
 
 
 class IRError(Exception):
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, message):
+        super(IRError, self).__init__(message)
+        self.message = message
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.message)
 
 
 class Module(object):
