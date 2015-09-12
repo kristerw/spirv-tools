@@ -37,13 +37,20 @@ def main():
     except read_spirv.ParseError as err:
         sys.stderr.write('error: ' + err.message + '\n')
         sys.exit(1)
+    except (IOError, OSError) as err:
+        sys.stderr.write(str(err) + '\n')
+        sys.exit(1)
 
     if args.O:
         simplify_cfg.optimize(module)
         dead_code_elim.optimize(module)
 
-    with open(output_file_name, 'w') as stream:
-        write_il.write_module(stream, module, is_raw_mode)
+    try:
+        with open(output_file_name, 'w') as stream:
+            write_il.write_module(stream, module, is_raw_mode)
+    except (IOError, OSError) as err:
+        sys.stderr.write(str(err) + '\n')
+        sys.exit(1)
 
 
 if __name__ == '__main__':

@@ -34,13 +34,20 @@ def main():
         sys.stderr.write(os.path.basename(args.filename) + ":"
                          + err.message + '\n')
         sys.exit(1)
+    except (IOError, OSError) as err:
+        sys.stderr.write(str(err) + '\n')
+        sys.exit(1)
 
     if args.O:
         simplify_cfg.optimize(module)
         dead_code_elim.optimize(module)
 
-    with open(output_file_name, 'wb') as stream:
-        write_spirv.write_module(stream, module)
+    try:
+        with open(output_file_name, 'wb') as stream:
+            write_spirv.write_module(stream, module)
+    except (IOError, OSError) as err:
+        sys.stderr.write(str(err) + '\n')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
