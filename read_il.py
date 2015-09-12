@@ -12,6 +12,15 @@ class ParseError(Exception):
         return repr(self.value)
 
 
+class VerificationError(Exception):
+    def __init__(self, line_no, value):
+        self.line_no = line_no
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
 class Lexer(object):
     def __init__(self, stream):
         self.stream = stream
@@ -365,11 +374,18 @@ def parse_instruction(lexer, module):
     lexer.done_with_line()
 
     if op_name == 'OpFunction':
-        return ir.Function(module, op_result, operands[0], operands[1])
+        function = ir.Function(module, op_result, operands[0], operands[1])
+        module.inst_to_line[function.inst] = lexer.line_no
+        module.inst_to_line[function.end_inst] = lexer.line_no
+        return function
     elif op_name == 'OpLabel':
-        return ir.BasicBlock(module, op_result)
+        basic_block = ir.BasicBlock(module, op_result)
+        module.inst_to_line[basic_block.inst] = lexer.line_no
+        return basic_block
     else:
-        return ir.Instruction(module, op_name, op_result, op_type, operands)
+        inst = ir.Instruction(module, op_name, op_result, op_type, operands)
+        module.inst_to_line[inst] = lexer.line_no
+        return inst
 
 
 def parse_decorations(lexer, module, variable_name):
@@ -540,19 +556,58 @@ def parse_function(lexer, module):
             raise ParseError('Syntax error')
 
 
+def verify_id(module, inst, id_to_check):
+    """Verify that the ID is defined in user defined instructions.
+
+    Raise an 'used by not defined' exception if the ID is not defined for
+    a user defined instruction.  Instructions introduced by the implementation
+    are ignored (e.g. an OpName instruction that was inserted because a
+    user defined instruction used an undefined named ID) as the error will
+    be reported for the used defined instruction anyway.
+    """
+    if inst not in module.inst_to_line:
+        return
+    if not id_to_check in module.id_to_inst:
+        id_name = id_to_check
+        for name in module.symbol_name_to_id:
+            if module.symbol_name_to_id[name] == id_to_check:
+                id_name = name
+                break
+        line_no = module.inst_to_line[inst]
+        raise VerificationError(line_no, id_name + ' used but not defined')
+
+
+def verify_ids_are_defined(module):
+    """Verify that all IDs are defined in used defined instructions."""
+    for inst in module.instructions():
+        if inst.result_id is not None:
+            verify_id(module, inst, inst.result_id)
+        if inst.type_id is not None:
+            verify_id(module, inst, inst.type_id)
+        for operand in inst.operands:
+            if isinstance(operand, basestring):
+                if operand[0] == '%':
+                    verify_id(module, inst, operand)
+
+
 def read_module(stream):
     module = ir.Module()
     module.type_name_to_id = {}
     module.symbol_name_to_id = {}
+    module.inst_to_line = {}
     lexer = Lexer(stream)
     try:
         parse_instructions(lexer, module)
+        verify_ids_are_defined(module)
         module.finalize()
         return module
     except ParseError as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
     except ir.IRError as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.value)
+    except VerificationError as err:
+        raise ParseError(str(err.line_no) + ': error: ' + err.value)
     finally:
+        del module.inst_to_line
         del module.symbol_name_to_id
         del module.type_name_to_id
