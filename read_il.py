@@ -264,7 +264,7 @@ def parse_type(lexer, module):
         raise ParseError('Not a valid type: ' + token)
     type_id = create_id(module, token, tag)
     if type_id not in module.id_to_inst:
-        raise ParseError(token + ' is not defined')
+        raise ParseError(token + ' used but not defined')
     type_inst = module.id_to_inst[type_id]
     if type_inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         raise ParseError('Not a valid type: ' + token)
@@ -329,6 +329,9 @@ def parse_instruction(lexer, module):
     if tag == 'ID':
         token = parse_id(lexer, module)
         op_result = token
+        if op_result in module.id_to_inst:
+            id_name = get_id_name(module, op_result)
+            raise ParseError(id_name + ' is already defined')
         lexer.get_next_token('=')
         op_name, tag = lexer.get_next_token()
     else:
@@ -455,6 +458,9 @@ def parse_basic_block(lexer, module, function, initial_insts):
     assert tag == 'LABEL' and token[-1] == ':'
     lexer.done_with_line()
     basic_block_id = create_id(module, token[:-1], 'ID')
+    if basic_block_id in module.id_to_inst:
+        id_name = get_id_name(module, basic_block_id)
+        raise ParseError(id_name + ' is already defined')
     basic_block = ir.BasicBlock(module, basic_block_id)
 
     for inst in initial_insts:
@@ -548,6 +554,14 @@ def parse_function(lexer, module):
             raise ParseError('Syntax error')
 
 
+def get_id_name(module, id_to_check):
+    """Return the ID name if defined, otherwise return the numbered ID."""
+    for name in module.symbol_name_to_id:
+        if module.symbol_name_to_id[name] == id_to_check:
+            return name
+    return id_to_check
+
+
 def verify_id(module, inst, id_to_check):
     """Verify that the ID is defined in user defined instructions.
 
@@ -560,11 +574,7 @@ def verify_id(module, inst, id_to_check):
     if inst not in module.inst_to_line:
         return
     if not id_to_check in module.id_to_inst:
-        id_name = id_to_check
-        for name in module.symbol_name_to_id:
-            if module.symbol_name_to_id[name] == id_to_check:
-                id_name = name
-                break
+        id_name = get_id_name(module, id_to_check)
         line_no = module.inst_to_line[inst]
         raise VerificationError(line_no, id_name + ' used but not defined')
 
