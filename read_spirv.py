@@ -232,7 +232,7 @@ def read_module(stream):
     data = stream.read()
     if len(data) % 4 != 0:
         raise ParseError('File length is not divisible by 4')
-    words = array.array('L', data)
+    words = array.array('I', data)
     binary = SpirvBinary(words)
 
     module = ir.Module()

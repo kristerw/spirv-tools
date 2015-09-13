@@ -50,7 +50,7 @@ def output_instruction(stream, inst):
             inst_data.append(int(operand[1:]))
 
     inst_data[0] = (len(inst_data) << 16) + opcode['opcode']
-    words = array.array('L', inst_data)
+    words = array.array('I', inst_data)
     words.tofile(stream)
 
 
@@ -58,7 +58,7 @@ def output_header(stream, module):
     """Output the SPIR-V header."""
     header = [spirv.MAGIC, spirv.VERSION, spirv.GENERATOR_MAGIC,
               module.bound, 0]
-    words = array.array('L', header)
+    words = array.array('I', header)
     words.tofile(stream)
 
 
