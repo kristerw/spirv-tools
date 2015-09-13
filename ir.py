@@ -92,13 +92,17 @@ class Module(object):
         type_inst = self.id_to_inst[type_id]
         if (type_inst.op_name == 'OpTypeInt' or
                 type_inst.op_name == 'OpTypeFloat'):
+            if type_inst.operands[0] == 64:
+                value_operands = [value & 0xffffffff, value >> 32]
+            else:
+                value_operands = [value]
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstant' and
                         inst.type_id == type_inst.result_id and
-                        inst.operands[0] == value):
+                        cmp(inst.operands, value_operands) == 0):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
-                               type_inst.result_id, [value])
+                               type_inst.result_id, value_operands)
             self.add_global_inst(inst)
             return inst
         elif type_inst.op_name == 'OpTypeVector':
