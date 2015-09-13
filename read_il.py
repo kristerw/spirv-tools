@@ -277,10 +277,7 @@ def get_or_create_function_type(module, return_type, arguments):
             if inst.operands[0] == return_type:
                 if [arg[0] for arg in arguments] == inst.operands[1:]:
                     return inst.result_id
-    if arguments:
-        operands = [return_type] + [arg[0] for arg in arguments]
-    else:
-        operands = [return_type] + [get_or_create_type(module, 'void')]
+    operands = [return_type] + [arg[0] for arg in arguments]
     new_id = module.new_id()
     inst = ir.Instruction(module, 'OpTypeFunction', new_id, None, operands)
     module.add_global_inst(inst)
@@ -363,7 +360,8 @@ def parse_instruction(lexer, module):
     # remaining instruction operands are optional.
     while kinds:
         kind = kinds.pop(0)
-        if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals']:
+        if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals',
+                        'VariableIds']:
             raise ParseError('Missing operands')
 
     lexer.done_with_line()
