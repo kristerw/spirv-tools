@@ -485,4 +485,12 @@ def get_int_type_range(module, type_id):
     else:
         min_val = -0x8000000000000000
         max_val = 0xffffffffffffffff
+
+    if type_inst.op_name == 'OpTypeFloat':
+        # A negative value for OpTypeFloat probably mean that the caller
+        # has made a mistake (as it does not make much sense to specify
+        # the bits of a float using negative values), so don't permit
+        # negative values.
+        min_val = 0
+
     return min_val, max_val
