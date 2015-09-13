@@ -69,8 +69,8 @@ class Lexer(object):
             (r'}', None),
             (r'\(', None),
             (r'\)', None),
-            (r'-?0b[0-9]+', 'INT'),
-            (r'-?0x[0-9]+', 'INT'),
+            (r'-?0b[01]+', 'INT'),
+            (r'-?0x[0-9a-fA-F]+', 'INT'),
             (r'-?[1-9][0-9]*', 'INT'),
             (r'-?0', 'INT'),
             (r'[a-zA-Z0-9.]+', 'NAME')
