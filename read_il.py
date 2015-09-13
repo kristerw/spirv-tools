@@ -112,24 +112,6 @@ class Lexer(object):
         self.line = None
 
 
-def get_type_range(module, type_id):
-    type_inst = module.id_to_inst[type_id]
-    if type_inst.op_name != 'OpTypeInt':
-        raise ParseError('Type must be OpTypeInt')
-    bitwidth = type_inst.operands[0]
-    assert bitwidth in [16, 32, 64]
-    if bitwidth == 16:
-        min_val = -0x8000
-        max_val = 0xffff
-    elif bitwidth == 32:
-        min_val = -0x80000000
-        max_val = 0xffffffff
-    else:
-        min_val = -0x8000000000000000
-        max_val = 0xffffffffffffffff
-    return min_val, max_val
-
-
 def get_or_create_scalar_constant(module, token, type_id):
     if token == 'true':
         type_id = get_or_create_type(module, 'bool')
@@ -142,7 +124,11 @@ def get_or_create_scalar_constant(module, token, type_id):
                               type_id, [])
         module.add_global_inst(inst)
     else:
-        min_val, max_val = get_type_range(module, type_id)
+        type_inst = module.id_to_inst[type_id]
+        if type_inst.op_name != 'OpTypeInt':
+            raise ParseError('Type must be OpTypeInt')
+
+        min_val, max_val = ir.get_int_type_range(module, type_id)
         is_neg = token[0] == '-'
         if is_neg:
             token = token[1:]
@@ -158,7 +144,6 @@ def get_or_create_scalar_constant(module, token, type_id):
             value = -value
             if value < min_val:
                 raise ParseError('Value out of range')
-            value = value & max_val
         else:
             if value > max_val:
                 raise ParseError('Value out of range')

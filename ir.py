@@ -92,17 +92,25 @@ class Module(object):
         type_inst = self.id_to_inst[type_id]
         if (type_inst.op_name == 'OpTypeInt' or
                 type_inst.op_name == 'OpTypeFloat'):
-            if type_inst.operands[0] == 64:
-                value_operands = [value & 0xffffffff, value >> 32]
+            min_val, max_val = get_int_type_range(self, type_id)
+            if value < 0:
+                if value < min_val:
+                    raise IRError('Value out of range')
+                value = value & max_val
             else:
-                value_operands = [value]
+                if value > max_val:
+                    raise IRError('Value out of range')
+            if type_inst.operands[0] == 64:
+                operands = [value & 0xffffffff, value >> 32]
+            else:
+                operands = [value]
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstant' and
                         inst.type_id == type_inst.result_id and
-                        cmp(inst.operands, value_operands) == 0):
+                        cmp(inst.operands, operands) == 0):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
-                               type_inst.result_id, value_operands)
+                               type_inst.result_id, operands)
             self.add_global_inst(inst)
             return inst
         elif type_inst.op_name == 'OpTypeVector':
@@ -457,3 +465,24 @@ def lists_are_identical(list1, list2):
         if elem1 != elem2:
             return False
     return True
+
+
+def get_int_type_range(module, type_id):
+    type_inst = module.id_to_inst[type_id]
+    # Type must be OpTypeInt or OpTypeFloat (the OpTypeFloat is valid,
+    # as its value is stored as integer words, and these words must
+    # have value within the integer range).
+    if type_inst.op_name not in ['OpTypeInt', 'OpTypeFloat']:
+        raise IRError('Type must be OpTypeInt or OpTypeFloat')
+    bitwidth = type_inst.operands[0]
+    assert bitwidth in [16, 32, 64]
+    if bitwidth == 16:
+        min_val = -0x8000
+        max_val = 0xffff
+    elif bitwidth == 32:
+        min_val = -0x80000000
+        max_val = 0xffffffff
+    else:
+        min_val = -0x8000000000000000
+        max_val = 0xffffffffffffffff
+    return min_val, max_val
