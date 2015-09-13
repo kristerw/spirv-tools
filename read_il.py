@@ -258,8 +258,13 @@ def get_or_create_type(module, token):
 
 
 def parse_type(lexer, module):
+    """Parse one ID representing a type."""
     token, tag = lexer.get_next_token()
+    if tag not in ['ID', 'NAME']:
+        raise ParseError('Not a valid type: ' + token)
     type_id = create_id(module, token, tag)
+    if type_id not in module.id_to_inst:
+        raise ParseError(token + ' is not defined')
     type_inst = module.id_to_inst[type_id]
     if type_inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         raise ParseError('Not a valid type: ' + token)
