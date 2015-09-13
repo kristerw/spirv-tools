@@ -253,8 +253,47 @@ def get_or_create_type(module, token):
         else:
             raise ParseError('Not a valid type: ' + token)
         module.type_name_to_id[token] = inst.result_id
+        module.id_to_type_name[inst.result_id] = token
 
     return module.type_name_to_id[token]
+
+
+def add_type_name(module, inst):
+    """Create a name for the type instruction.
+
+    This is the "inverse" of get_or_create_type() and adds a name for
+    a given type instruction. This is needed when assembling "raw" IL,
+    as all of the original type instructions are present.
+
+    This function must handle exactly the same types as get_or_create_type().
+    """
+    assert inst.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS
+    if inst.result_id in module.id_to_type_name:
+        return
+
+    if inst.op_name == 'OpTypeVoid':
+        type_name = 'void'
+    elif inst.op_name == 'OpTypeBool':
+        type_name = 'bool'
+    elif inst.op_name == 'OpTypeInt':
+        if inst.operands[0] == 1:
+            type_name = 's' + str(inst.operands[0])
+        else:
+            type_name = 'u' + str(inst.operands[0])
+    elif inst.op_name == 'OpTypeFloat':
+        type_name = 'f' + str(inst.operands[0])
+    elif inst.op_name == 'OpTypeVector':
+        base_type_id = inst.operands[0]
+        if base_type_id not in module.id_to_type_name:
+            return
+        base_name = module.id_to_type_name[base_type_id]
+        nof_elem = inst.operands[1]
+        type_name = '<' + str(nof_elem) + ' x ' +  base_name + '>'
+    else:
+        return
+
+    module.type_name_to_id[type_name] = inst.result_id
+    module.id_to_type_name[inst.result_id] = type_name
 
 
 def parse_type(lexer, module):
@@ -378,6 +417,8 @@ def parse_instruction(lexer, module):
     else:
         inst = ir.Instruction(module, op_name, op_result, op_type, operands)
         module.inst_to_line[inst] = lexer.line_no
+        if op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+            add_type_name(module, inst)
         return inst
 
 
@@ -593,6 +634,7 @@ def verify_ids_are_defined(module):
 def read_module(stream):
     module = ir.Module()
     module.type_name_to_id = {}
+    module.id_to_type_name = {}
     module.symbol_name_to_id = {}
     module.inst_to_line = {}
     lexer = Lexer(stream)
@@ -610,4 +652,5 @@ def read_module(stream):
     finally:
         del module.inst_to_line
         del module.symbol_name_to_id
+        del module.id_to_type_name
         del module.type_name_to_id
