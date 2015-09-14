@@ -29,7 +29,7 @@ def output_instruction(stream, inst):
                 for char in reversed(operand[i:i+4]):
                     word = word << 8 | ord(char)
                 inst_data.append(word)
-        elif kind == 'VariableLiterals' or kind == 'VariableIds':
+        elif kind in ['VariableLiterals', 'OptionalLiteral', 'VariableIds']:
             # The variable kind must be the last (as rest of the operands
             # are included in them.  But loop will only give us one.
             # Handle these after the loop.
@@ -38,9 +38,9 @@ def output_instruction(stream, inst):
             constants = spirv.CONSTANTS[kind]
             inst_data.append(constants[operand])
         else:
-            raise Exception('Unhandled kind "' + kind)
+            raise Exception('Unhandled kind ' + kind)
 
-    if kind == 'VariableLiterals':
+    if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
         operands = inst.operands[(len(opcode['operands'])-1):]
         for operand in operands:
             inst_data.append(operand)
