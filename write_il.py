@@ -55,6 +55,10 @@ def get_symbol_name(module, symbol_id):
             # Truncate such names to fit our IL.
             regex = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*')
             match = regex.match(name)
+            if match is None:
+                sys.stderr.write('warning: Ignoring symbol name "'
+                                 + name + '"\n')
+                return symbol_id
             new_name = match.group(0)
             if new_name != name:
                 sys.stderr.write('warning: truncated symbol name "'
