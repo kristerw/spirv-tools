@@ -121,7 +121,18 @@ def parse_operand(binary, kind):
             if word is None:
                 return operands
             operands.append(word)
-    elif kind in ['VariableIds', 'OptionalId', 'OptionalImage']:
+    elif kind == 'OptionalImage':
+        operands = []
+        word = binary.get_next_word(throw_on_eol=False)
+        if word is None:
+            return operands
+        operands.append(word)
+        while True:
+            word = binary.get_next_word(throw_on_eol=False)
+            if word is None:
+                return operands
+            operands.append('%' + str(word))
+    elif kind in ['VariableIds', 'OptionalId']:
         operands = []
         while True:
             word = binary.get_next_word(throw_on_eol=False)

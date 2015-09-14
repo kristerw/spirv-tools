@@ -347,7 +347,25 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind == 'LiteralString':
         token, tag = lexer.get_next_token()
         return [token]
-    elif kind in ['VariableIds', 'OptionalId', 'OptionalImage']:
+    elif kind == 'OptionalImage':
+        operands = []
+        token, tag = lexer.get_next_token(accept_eol=True)
+        if token == '':
+            return operands
+        operands.append(int(token))
+        token, tag = lexer.get_next_token(peek=True, accept_eol=True)
+        if token == ',':
+            lexer.get_next_token()
+        while True:
+            operand_id = parse_id(lexer, module, accept_eol=True,
+                                  type_id=type_id)
+            if operand_id == '':
+                return operands
+            operands.append(operand_id)
+            token, tag = lexer.get_next_token(peek=True, accept_eol=True)
+            if token == ',':
+                lexer.get_next_token()
+    elif kind in ['VariableIds', 'OptionalId']:
         operands = []
         while True:
             operand_id = parse_id(lexer, module, accept_eol=True,
