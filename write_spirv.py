@@ -17,7 +17,7 @@ def output_instruction(stream, inst):
     for operand, kind in zip(inst.operands, opcode['operands']):
         if kind == 'Id' or kind == 'OptionalId':
             inst_data.append(int(operand[1:]))
-        elif kind == 'LiteralNumber':
+        elif kind == 'LiteralNumber' or kind == 'SamplerImageFormat':
             inst_data.append(operand)
         elif kind in spirv.MASKS:
             inst_data.append(operand)

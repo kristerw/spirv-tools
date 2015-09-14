@@ -69,6 +69,7 @@ class Lexer(object):
             (r'}', None),
             (r'\(', None),
             (r'\)', None),
+            (r'[1-3]D', 'NAME'),
             (r'-?0b[01]+', 'INT'),
             (r'-?0x[0-9a-fA-F]+', 'INT'),
             (r'-?[1-9][0-9]*', 'INT'),
@@ -330,7 +331,7 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind in spirv.MASKS:
         token, tag = lexer.get_next_token()
         return [int(token)]
-    elif kind == 'LiteralNumber':
+    elif kind == 'LiteralNumber' or kind == 'SamplerImageFormat':
         token, tag = lexer.get_next_token()
         return [int(token)]
     elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
@@ -346,7 +347,7 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind == 'LiteralString':
         token, tag = lexer.get_next_token()
         return [token]
-    elif kind == 'VariableIds' or kind == 'OptionalId':
+    elif kind in ['VariableIds', 'OptionalId', 'OptionalImage']:
         operands = []
         while True:
             operand_id = parse_id(lexer, module, accept_eol=True,
@@ -360,7 +361,7 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind in spirv.CONSTANTS:
         value, tag = lexer.get_next_token()
         if value not in spirv.CONSTANTS[kind]:
-            error = 'Invalid value "' + value + '"' 'for "' + kind + '"'
+            error = 'Invalid value ' + value + ' for ' + kind
             raise ParseError(error)
         return [value]
 
@@ -408,7 +409,7 @@ def parse_instruction(lexer, module):
     while kinds:
         kind = kinds.pop(0)
         if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals',
-                        'VariableIds']:
+                        'VariableIds', 'OptionalImage']:
             raise ParseError('Missing operands')
 
     lexer.done_with_line()
