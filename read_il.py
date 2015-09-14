@@ -330,11 +330,19 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind in spirv.MASKS:
         token, tag = lexer.get_next_token()
         return [int(token)]
-    elif kind in ['LiteralNumber',
-                  'VariableLiterals',
-                  'OptionalLiteral']:
+    elif kind == 'LiteralNumber':
         token, tag = lexer.get_next_token()
         return [int(token)]
+    elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+        operands = []
+        while True:
+            token, tag = lexer.get_next_token(accept_eol=True)
+            if token == '':
+                return operands
+            operands.append(int(token))
+            token, tag = lexer.get_next_token(peek=True, accept_eol=True)
+            if token == ',':
+                lexer.get_next_token()
     elif kind == 'LiteralString':
         token, tag = lexer.get_next_token()
         return [token]
