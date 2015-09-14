@@ -276,7 +276,7 @@ def add_type_name(module, inst):
     elif inst.op_name == 'OpTypeBool':
         type_name = 'bool'
     elif inst.op_name == 'OpTypeInt':
-        if inst.operands[0] == 1:
+        if inst.operands[1] == 1:
             type_name = 's' + str(inst.operands[0])
         else:
             type_name = 'u' + str(inst.operands[0])
