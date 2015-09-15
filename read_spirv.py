@@ -139,6 +139,17 @@ def parse_operand(binary, kind):
             if word is None:
                 return operands
             operands.append('%' + str(word))
+    elif kind == 'VariableLiteralId':
+        operands = []
+        while True:
+            word = binary.get_next_word(throw_on_eol=False)
+            if word is None:
+                return operands
+            operands.append(word)
+            word = binary.get_next_word()
+            if word is None:
+                return operands
+            operands.append('%' + str(word))
     elif kind in spirv.CONSTANTS:
         val = binary.get_next_word()
         constants = spirv.CONSTANTS[kind]

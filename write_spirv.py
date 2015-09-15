@@ -32,7 +32,8 @@ def output_instruction(stream, inst):
         elif kind in ['VariableLiterals',
                       'OptionalLiteral',
                       'VariableIds',
-                      'OptionalImage']:
+                      'OptionalImage',
+                      'VariableLiteralId']:
             # The variable kind must be the last (as rest of the operands
             # are included in them.  But loop will only give us one.
             # Handle these after the loop.
@@ -56,6 +57,12 @@ def output_instruction(stream, inst):
         inst_data.append(operands[0])
         for operand in operands[1:]:
             inst_data.append(int(operand[1:]))
+    elif kind == 'VariableLiteralId':
+        operands = inst.operands[(len(opcode['operands'])-1):]
+        while operands:
+            inst_data.append(operands.pop(0))
+            target_id = operands.pop(0)
+            inst_data.append(int(target_id[1:]))
 
     inst_data[0] = (len(inst_data) << 16) + opcode['opcode']
     words = array.array('I', inst_data)

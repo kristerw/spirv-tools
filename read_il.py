@@ -376,6 +376,19 @@ def parse_operand(lexer, module, kind, type_id):
             token, tag = lexer.get_next_token(peek=True, accept_eol=True)
             if token == ',':
                 lexer.get_next_token()
+    elif kind == 'VariableLiteralId':
+        operands = []
+        while True:
+            token, tag = lexer.get_next_token(accept_eol=True)
+            if token == '':
+                return operands
+            operands.append(int(token))
+            lexer.get_next_token(',')
+            operand_id = parse_id(lexer, module, type_id=type_id)
+            operands.append(operand_id)
+            token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+            if token == ',':
+                lexer.get_next_token()
     elif kind in spirv.CONSTANTS:
         value, tag = lexer.get_next_token()
         if value not in spirv.CONSTANTS[kind]:
@@ -427,7 +440,7 @@ def parse_instruction(lexer, module):
     while kinds:
         kind = kinds.pop(0)
         if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals',
-                        'VariableIds', 'OptionalImage']:
+                        'VariableIds', 'OptionalImage', 'VariableLiteralId']:
             raise ParseError('Missing operands')
 
     lexer.done_with_line()
