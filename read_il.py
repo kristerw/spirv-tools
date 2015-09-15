@@ -412,7 +412,7 @@ def parse_instruction(lexer, module):
         op_type = None
     operands = []
 
-    parse_decorations(lexer, module, op_result)
+    parse_decorations(lexer, module, op_result, op_name)
 
     kinds = opcode['operands'][:]
     while kinds:
@@ -449,13 +449,24 @@ def parse_instruction(lexer, module):
         return inst
 
 
-def parse_decorations(lexer, module, variable_name):
+def parse_decorations(lexer, module, variable_name, op_name):
     """Parse pretty-printed decorations."""
     while True:
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
             return
         elif token not in spirv.DECORATIONS:
+            return
+
+        # XXX We should check that the decorations are valid for the
+        # operation.
+        #
+        # In particular 'Uniform' is both a decoraton and a storage class,
+        # so instructions that have 'StorageClass' as first operand must
+        # not parse 'Uniform' as a decoration (and 'Uniform' is not a valid
+        # decoration for those operations).  At this as a special case
+        # here until the real decoration check has been implemented.
+        if op_name in ['OpTypePointer', 'OpVariable'] and token == 'Uniform':
             return
 
         decoration, _ = lexer.get_next_token()
