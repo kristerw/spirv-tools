@@ -292,6 +292,10 @@ class Instruction(object):
         self.type_id = type_id
         self.operands = operands
         self.basic_block = None
+        if op_name == 'OpFunction':
+            function_type_inst = module.id_to_inst[operands[1]]
+            if function_type_inst.op_name != 'OpTypeFunction':
+                raise IRError('Expected OpTypeFunction as second operand')
         if result_id is not None:
             if result_id in module.id_to_inst:
                 raise IRError('ID ' + result_id + ' already defined')
