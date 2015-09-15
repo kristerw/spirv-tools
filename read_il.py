@@ -562,12 +562,23 @@ def parse_basic_block(lexer, module, function, initial_insts):
 
 def parse_function_raw(lexer, module, function):
     """Parse one function staring with the 'OpFunction' instruction."""
+    func_type_inst = module.id_to_inst[function.inst.operands[1]]
+    assert func_type_inst.op_name == 'OpTypeFunction'
+    params = func_type_inst.operands[1:]
     while True:
-        token, _ = lexer.get_next_token(peek=True)
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
-            break  # This is an empty line -- nothing to do.
+            # This is an empty line -- nothing to do.
+            lexer.done_with_line()
+            continue
 
         inst = parse_instruction(lexer, module)
+
+        if params:
+            if not isinstance(inst, ir.Instruction):
+                raise ParseError('Expected OpFunctionParameter')
+            elif inst.op_name != 'OpFunctionParameter':
+                raise ParseError('Expected OpFunctionParameter')
 
         if isinstance(inst, ir.BasicBlock):
             parse_basic_block_body(lexer, module, inst)
@@ -577,9 +588,12 @@ def parse_function_raw(lexer, module, function):
         elif inst.op_name == 'OpFunctionEnd':
             return function
         elif inst.op_name == 'OpFunctionParameter':
+            if not params:
+                raise ParseError('Too many OpFunctionParameter')
+            params.pop(0)
             function.append_argument(inst)
         else:
-            raise ParseError('Syntax error')
+            raise ParseError('Expected a new label or OpFunctionEnd')
 
 
 def parse_arguments(lexer, module):
