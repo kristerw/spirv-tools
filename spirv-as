@@ -5,6 +5,7 @@ import os
 import sys
 
 import dead_code_elim
+import instcombine
 import simplify_cfg
 import read_il
 import write_spirv
@@ -39,6 +40,7 @@ def main():
         sys.exit(1)
 
     if args.O:
+        instcombine.optimize(module)
         simplify_cfg.optimize(module)
         dead_code_elim.optimize(module)
 
