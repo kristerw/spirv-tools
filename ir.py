@@ -218,6 +218,16 @@ class Function(object):
 
     def append_argument(self, inst):
         """Append argument to the arguments list."""
+        if inst.op_name != 'OpFunctionParameter':
+            raise IRError('Expected OpFunctionParameter')
+        func_type_inst = self.module.id_to_inst[self.inst.operands[1]]
+        assert func_type_inst.op_name == 'OpTypeFunction'
+        params = func_type_inst.operands[1:]
+        arg_idx = len(self.arguments)
+        if arg_idx >= len(params):
+            raise IRError('Too many parameters')
+        if inst.type_id != params[arg_idx]:
+            raise IRError('Incorrect parameter type')
         self.arguments.append(inst)
 
     def add_basic_block(self, basic_block):
