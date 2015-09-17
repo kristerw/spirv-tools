@@ -621,14 +621,16 @@ def parse_function_definition(lexer, module):
     """Parse the 'definition' line of a pretty-printed function."""
     lexer.get_next_token('define')
     return_type = parse_type(lexer, module)
-    name = parse_id(lexer, module)
+    function_id = parse_id(lexer, module)
     arguments = parse_arguments(lexer, module)
-    lexer.get_next_token('{')
-    lexer.done_with_line()
+
+    if function_id in module.id_to_inst:
+        function_id = get_id_name(module, function_id)
+        raise ParseError(function_id + ' is already defined')
 
     function_type = get_or_create_function_type(module, return_type, arguments)
 
-    function = ir.Function(module, name, 0, function_type) # XXX
+    function = ir.Function(module, function_id, 0, function_type) # XXX
     param_loads = []
     for (arg_type, arg_id) in arguments:
         arg_inst = ir.Instruction(module, 'OpFunctionParameter', arg_id,
@@ -641,6 +643,15 @@ def parse_function_definition(lexer, module):
 def parse_function(lexer, module):
     """Parse one pretty-printed function."""
     func, param_loads = parse_function_definition(lexer, module)
+
+    while True:
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+        if token == '':
+            lexer.done_with_line()
+        else:
+            break
+    lexer.get_next_token('{')
+    lexer.done_with_line()
 
     while True:
         token, tag = lexer.get_next_token(peek=True, accept_eol=True)
