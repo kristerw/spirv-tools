@@ -542,19 +542,17 @@ def parse_basic_block_body(lexer, module, basic_block):
                 return
 
 
-def parse_basic_block(lexer, module, function, initial_insts):
+def parse_basic_block(lexer, module, function):
     """Parse one basic block."""
     token, tag = lexer.get_next_token()
     assert tag == 'LABEL' and token[-1] == ':'
     lexer.done_with_line()
+
     basic_block_id = create_id(module, token[:-1], 'ID')
     if basic_block_id in module.id_to_inst:
         id_name = get_id_name(module, basic_block_id)
         raise ParseError(id_name + ' is already defined')
     basic_block = ir.BasicBlock(module, basic_block_id)
-
-    for inst in initial_insts:
-        basic_block.append_inst(inst)
 
     parse_basic_block_body(lexer, module, basic_block)
     function.add_basic_block(basic_block)
@@ -575,9 +573,8 @@ def parse_function_raw(lexer, module, function):
         inst = parse_instruction(lexer, module)
 
         if params:
-            if not isinstance(inst, ir.Instruction):
-                raise ParseError('Expected OpFunctionParameter')
-            elif inst.op_name != 'OpFunctionParameter':
+            if (not isinstance(inst, ir.Instruction) or
+                    inst.op_name != 'OpFunctionParameter'):
                 raise ParseError('Expected OpFunctionParameter')
 
         if isinstance(inst, ir.BasicBlock):
@@ -625,24 +622,22 @@ def parse_function_definition(lexer, module):
     arguments = parse_arguments(lexer, module)
 
     if function_id in module.id_to_inst:
-        function_id = get_id_name(module, function_id)
-        raise ParseError(function_id + ' is already defined')
+        id_name = get_id_name(module, function_id)
+        raise ParseError(id_name + ' is already defined')
 
     function_type = get_or_create_function_type(module, return_type, arguments)
-
     function = ir.Function(module, function_id, 0, function_type) # XXX
-    param_loads = []
     for (arg_type, arg_id) in arguments:
         arg_inst = ir.Instruction(module, 'OpFunctionParameter', arg_id,
                                   arg_type, [])
         function.append_argument(arg_inst)
 
-    return function, param_loads
+    return function
 
 
 def parse_function(lexer, module):
     """Parse one pretty-printed function."""
-    func, param_loads = parse_function_definition(lexer, module)
+    func = parse_function_definition(lexer, module)
 
     while True:
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
@@ -655,7 +650,6 @@ def parse_function(lexer, module):
 
     while True:
         token, tag = lexer.get_next_token(peek=True, accept_eol=True)
-
         if token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
         elif token == '}':
@@ -663,10 +657,9 @@ def parse_function(lexer, module):
             lexer.done_with_line()
             return func
         elif tag == 'LABEL':
-            parse_basic_block(lexer, module, func, param_loads)
-            param_loads = []
+            parse_basic_block(lexer, module, func)
         else:
-            raise ParseError('Syntax error')
+            raise ParseError('Expected a label or }')
 
 
 def get_id_name(module, id_to_check):
@@ -684,18 +677,17 @@ def verify_id(module, inst, id_to_check):
     a user defined instruction.  Instructions introduced by the implementation
     are ignored (e.g. an OpName instruction that was inserted because a
     user defined instruction used an undefined named ID) as the error will
-    be reported for the used defined instruction anyway.
+    be reported for the user defined instruction anyway.
     """
-    if inst not in module.inst_to_line:
-        return
-    if not id_to_check in module.id_to_inst:
-        id_name = get_id_name(module, id_to_check)
-        line_no = module.inst_to_line[inst]
-        raise VerificationError(line_no, id_name + ' used but not defined')
+    if inst in module.inst_to_line:
+        if not id_to_check in module.id_to_inst:
+            id_name = get_id_name(module, id_to_check)
+            line_no = module.inst_to_line[inst]
+            raise VerificationError(line_no, id_name + ' used but not defined')
 
 
 def verify_ids_are_defined(module):
-    """Verify that all IDs are defined in used defined instructions."""
+    """Verify that all IDs in used defined instructions are defined."""
     for inst in module.instructions():
         if inst.result_id is not None:
             verify_id(module, inst, inst.result_id)
@@ -719,9 +711,7 @@ def read_module(stream):
         verify_ids_are_defined(module)
         module.finalize()
         return module
-    except ParseError as err:
-        raise ParseError(str(lexer.line_no) + ': error: ' + err.message)
-    except ir.IRError as err:
+    except (ParseError, ir.IRError) as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.message)
     except VerificationError as err:
         raise ParseError(str(err.line_no) + ': error: ' + err.message)
