@@ -507,11 +507,11 @@ def parse_instructions(lexer, module):
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token is None:
             return
+        elif token == '':
+            lexer.done_with_line()  # This is an empty line -- nothing to do.
         elif token == 'define':
             func = parse_function(lexer, module)
             module.add_function(func)
-        elif token == '':
-            lexer.done_with_line()  # This is an empty line -- nothing to do.
         else:
             inst = parse_instruction(lexer, module)
             if isinstance(inst, ir.Function):
@@ -524,14 +524,19 @@ def parse_instructions(lexer, module):
 def parse_basic_block_body(lexer, module, basic_block):
     """Parse the instructions in one basic block."""
     while True:
-        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
-
+        token, tag = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
             lexer.done_with_line()  # This is an empty line -- nothing to do.
-        elif token[-1] == ':':
+        elif tag == 'LABEL':
             raise ParseError('Label without terminating previous basic block')
+        elif token == '}':
+            raise ParseError(
+                'Ending function without terminating previous basic block')
         else:
             inst = parse_instruction(lexer, module)
+            if inst.op_name == 'OpFunctionEnd':
+                raise ParseError(
+                    'OpFunctionEnd without terminating previous basic block')
             if isinstance(inst, ir.BasicBlock):
                 raise ParseError(
                     'Label without terminating previous basic block')
