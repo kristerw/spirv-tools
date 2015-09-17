@@ -508,7 +508,7 @@ def parse_instructions(lexer, module):
         if token is None:
             return
         elif token == '':
-            lexer.done_with_line()  # This is an empty line -- nothing to do.
+            lexer.done_with_line()
         elif token == 'define':
             func = parse_function(lexer, module)
             module.add_function(func)
@@ -526,7 +526,7 @@ def parse_basic_block_body(lexer, module, basic_block):
     while True:
         token, tag = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
-            lexer.done_with_line()  # This is an empty line -- nothing to do.
+            lexer.done_with_line()
         elif tag == 'LABEL':
             raise ParseError('Label without terminating previous basic block')
         elif token == '}':
@@ -571,7 +571,6 @@ def parse_function_raw(lexer, module, function):
     while True:
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
-            # This is an empty line -- nothing to do.
             lexer.done_with_line()
             continue
 
@@ -656,7 +655,7 @@ def parse_function(lexer, module):
     while True:
         token, tag = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
-            lexer.done_with_line()  # This is an empty line -- nothing to do.
+            lexer.done_with_line()
         elif token == '}':
             lexer.get_next_token()
             lexer.done_with_line()
