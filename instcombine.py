@@ -11,18 +11,32 @@ def optimize_OpVectorShuffle(module, inst):
     vec2_inst = module.id_to_inst[inst.operands[1]]
     components = inst.operands[2:]
 
-    # Change vectors shuffles "A, undef" or "undef, A" to "A, A" where
+    # Change vectors shuffles "A, unused" or "unused, A" to "A, A" where
     # the second operand is not used.
     #
-    # We use this form for swizzles, as it avoids extra operations for
-    # the OpUndef, and it makes the constant folder handle this for
-    # constant A, without needed it to special case OpUndef operands.
-    if vec2_inst.op_name == 'OpUndef':
+    # We use this form for swizzles instead of using an OpUndef for the
+    # unused vector, as it avoids adding extra operations for the OpUndef,
+    # and it makes the constant folder handle the shuffle for constant A
+    # without needing to special case OpUndef operands.
+    using_vec1 = False
+    using_vec2 = False
+    vec1_type_inst = module.id_to_inst[vec1_inst.type_id]
+    assert vec1_type_inst.op_name == 'OpTypeVector'
+    vec1_len = vec1_type_inst.operands[1]
+    for component in components:
+        if component != 0xffffffff:
+            if component < vec1_len:
+                using_vec1 = True
+            else:
+                using_vec2 = True
+    if not using_vec1 and not using_vec2:
+        new_inst = ir.Instruction(module, 'OpUndef', module.new_id(),
+                                  inst.type_id, [])
+        new_inst.insert_before(inst)
+        return new_inst
+    elif not using_vec2:
         vec2_inst = vec1_inst
-    elif vec1_inst.op_name == 'OpUndef':
-        vec1_type_inst = module.id_to_inst[vec1_inst.type_id]
-        assert vec1_type_inst.op_name == 'OpTypeVector'
-        vec1_len = vec1_type_inst.operands[1]
+    elif not using_vec1:
         for idx in range(len(components)):
             if components[idx] != 0xffffffff:
                 components[idx] = components[idx] - vec1_len
