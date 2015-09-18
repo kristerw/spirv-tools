@@ -170,7 +170,7 @@ def create_id(module, token, tag, type_id=None):
         if not token[1].isdigit():
             new_id = module.new_id()
             module.symbol_name_to_id[token] = new_id
-            name = '"' + token[1:] + '"'
+            name = token[1:]
             inst = ir.Instruction(module, 'OpName', None, None,
                                   [new_id, name])
             module.add_global_inst(inst)
@@ -345,7 +345,7 @@ def parse_operand(lexer, module, kind, type_id):
                 lexer.get_next_token()
     elif kind == 'LiteralString':
         token, tag = lexer.get_next_token()
-        return [token]
+        return [token[1:-1]]
     elif kind == 'OptionalImage':
         operands = []
         token, tag = lexer.get_next_token(accept_eol=True)

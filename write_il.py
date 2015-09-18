@@ -5,6 +5,15 @@ import ir
 import spirv
 
 
+def id_name(module, operand):
+    if operand in module.id_to_symbol_name:
+        return module.id_to_symbol_name[operand]
+    elif operand in module.type_id_to_name:
+        return module.type_id_to_name[operand]
+    else:
+        return str(operand)
+
+
 def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     """Output one instruction."""
     line = indent
@@ -20,14 +29,53 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     if not is_raw_mode:
         line = line + format_decorations_for_inst(module, inst)
 
+    opcode = spirv.OPNAME_TABLE[inst.op_name]
+    kind = None
     if inst.operands:
         line = line + ' '
-        for operand in inst.operands:
-            if operand in module.id_to_symbol_name:
-                operand = module.id_to_symbol_name[operand]
-            elif operand in module.type_id_to_name:
-                operand = module.type_id_to_name[operand]
-            line = line + str(operand) + ', '
+        for operand, kind in zip(inst.operands, opcode['operands']):
+            if kind == 'Id' or kind == 'OptionalId':
+                line = line + id_name(module, operand) + ', '
+            elif kind == 'LiteralNumber' or kind == 'SamplerImageFormat':
+                line = line + str(operand) + ', '
+            elif kind in spirv.MASKS:
+                line = line + str(operand) + ', '
+            elif kind == 'LiteralString':
+                line = line + '"' + operand + '"' + ', '
+            elif kind in ['VariableLiterals',
+                          'OptionalLiteral',
+                          'VariableIds',
+                          'OptionalImage',
+                          'VariableLiteralId']:
+                # The variable kind must be the last (as rest of the operands
+                # are included in them.  But loop will only give us one.
+                # Handle these after the loop.
+                break
+            elif kind in spirv.CONSTANTS:
+                line = line + operand + ', '
+            else:
+                raise Exception('Unhandled kind ' + kind)
+
+        if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+            operands = inst.operands[(len(opcode['operands'])-1):]
+            for operand in operands:
+                line = line + str(operand) + ', '
+        elif kind == 'VariableIds':
+            operands = inst.operands[(len(opcode['operands'])-1):]
+            for operand in operands:
+                line = line + id_name(module, operand) + ', '
+        elif kind == 'OptionalImage':
+            operands = inst.operands[(len(opcode['operands'])-1):]
+            inst_data.append(operands[0])
+            line = line + str(operands[0]) + ', '
+            for operand in operands[1:]:
+                line = line + id_name(module, operand) + ', '
+        elif kind == 'VariableLiteralId':
+            operands = inst.operands[(len(opcode['operands'])-1):]
+            while operands:
+                line = line + str(operands.pop(0)) + ', '
+                line = line + id_name(module, operands.pop(0)) + ', '
+
         line = line[:-2]
 
     stream.write(line + '\n')
@@ -48,7 +96,6 @@ def get_symbol_name(module, symbol_id):
     for inst in module.global_insts:
         if inst.op_name == 'OpName' and inst.operands[0] == symbol_id:
             name = inst.operands[1]
-            name = name[1:-1]
 
             # glslang tend to add type information to function names.
             # E.g. "foo(vec4)" get the symbol name "foo(vf4;"

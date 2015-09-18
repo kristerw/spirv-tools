@@ -113,7 +113,7 @@ def parse_operand(binary, module, kind):
                   'SamplerImageFormat']:
         return [binary.get_next_word()]
     elif kind == 'LiteralString':
-        return ['"' + parse_literal_string(binary) + '"']
+        return [parse_literal_string(binary)]
     elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
         operands = []
         while True:

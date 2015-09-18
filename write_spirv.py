@@ -22,7 +22,6 @@ def output_instruction(stream, inst):
         elif kind in spirv.MASKS:
             inst_data.append(operand)
         elif kind == 'LiteralString':
-            operand = operand[1:-1]    # Strip '"'
             operand = operand.encode('utf-8') + '\x00'
             for i in range(0, len(operand), 4):
                 word = 0
