@@ -66,7 +66,6 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
                 line = line + id_name(module, operand) + ', '
         elif kind == 'OptionalImage':
             operands = inst.operands[(len(opcode['operands'])-1):]
-            inst_data.append(operands[0])
             line = line + str(operands[0]) + ', '
             for operand in operands[1:]:
                 line = line + id_name(module, operand) + ', '
