@@ -516,6 +516,8 @@ def parse_translation_unit(lexer, module):
             if isinstance(inst, ir.Function):
                 func = parse_function_raw(lexer, module, inst)
                 module.add_function(func)
+            elif isinstance(inst, ir.BasicBlock):
+                raise ParseError('Basic block defined outside a function')
             else:
                 module.add_global_inst(inst)
 
