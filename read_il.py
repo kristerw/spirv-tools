@@ -500,8 +500,8 @@ def parse_decorations(lexer, module, variable_name, op_name):
         module.add_global_inst(inst)
 
 
-def parse_instructions(lexer, module):
-    """Parse all instructions."""
+def parse_translation_unit(lexer, module):
+    """Parse a translation unit."""
     while True:
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token is None:
@@ -563,7 +563,7 @@ def parse_basic_block(lexer, module, function):
 
 
 def parse_function_raw(lexer, module, function):
-    """Parse one function staring with the 'OpFunction' instruction."""
+    """Parse a function staring with the 'OpFunction' instruction."""
     func_type_inst = function.inst.operands[1].inst
     assert func_type_inst.op_name == 'OpTypeFunction'
     params = func_type_inst.operands[1:]
@@ -639,7 +639,7 @@ def parse_function_definition(lexer, module):
 
 
 def parse_function(lexer, module):
-    """Parse one pretty-printed function."""
+    """Parse a pretty-printed function."""
     func = parse_function_definition(lexer, module)
 
     while True:
@@ -674,13 +674,14 @@ def get_id_name(module, id_to_check):
 
 
 def verify_id(module, inst, id_to_check):
-    """Verify that the ID is defined in user defined instructions.
+    """Verify that the ID is defined in a user-defined instruction.
 
-    Raise an 'used by not defined' exception if the ID is not defined for
-    a user defined instruction.  Instructions introduced by the implementation
-    are ignored (e.g. an OpName instruction that was inserted because a
-    user defined instruction used an undefined named ID) as the error will
-    be reported for the user defined instruction anyway.
+    Raise an 'used but not defined' exception if the ID is not defined for
+    a user-defined instruction (i.e. an instruction that has a line number).
+    Instructions introduced by the implementation are ignored (e.g. an
+    OpName instruction that was inserted because a user-defined instruction
+    used an undefined named ID) as the error will be reported for a
+    user-defined instruction anyway.
     """
     if inst in module.inst_to_line:
         if id_to_check.inst is None:
@@ -690,7 +691,7 @@ def verify_id(module, inst, id_to_check):
 
 
 def verify_ids_are_defined(module):
-    """Verify that all IDs in used defined instructions are defined."""
+    """Verify that all IDs in user-defined instructions are defined."""
     for inst in module.instructions():
         if inst.result_id is not None:
             verify_id(module, inst, inst.result_id)
@@ -709,7 +710,7 @@ def read_module(stream):
     module.inst_to_line = {}
     lexer = Lexer(stream)
     try:
-        parse_instructions(lexer, module)
+        parse_translation_unit(lexer, module)
         verify_ids_are_defined(module)
         module.finalize()
         return module
