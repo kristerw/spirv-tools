@@ -29,32 +29,19 @@ fixed soon..._
 The `Instruction` object consists of the result ID, opcode name, type ID, and
 operands. The fields are mostly represented in the same form as in the
 high level assembly language used by the `spirv-as`/`spirv-dis`; the IDs
-are represented as strings `'%123'` where the ID number is the one used
-in the binary. The implementation may add temporary IDs of the form
-`'%.23'` that is allocated to real numbers at end of every transformation
-pass. An application should in general never create IDs itself; the only
-exception is when implementing an assembler. All other IDs should be
-created by calling `module.new_id()`. The opcode is represented by
+are represented as objects of the `Id` class that contains the value of the ID,
+and a link to the instruction that defines the ID. An application should in general
+never create ID values itself; the only exception is when implementing an assembler.
+All other IDs should be created by calling `module.new_id()`. The opcode is represented by
 the operation name (such as `'OpFAdd'`). The operands for the enumerated constants (such as
 the Storage Class) are represented as strings of the values (such as
 `'Input'`).
-
-_**TODO**: Integers, floating point, and Boolean values are currently represented
-as strings of the integer value used the binary. This will change. But it is not
-clear to me that Python floating point values are guaranteed to preserve
-the exact value._
 
 _**TODO**: Masks are currently represented as a string of the integer value.
 This should probably change to a normal integer._
 
 The `result_id` and `type_id` values are `None` for operations not using
 them, and `operands` is an empty list for instructions without operands.
-
-The types and most operands are represented as the ID as used in the
-binary. But most transformations on the IR need the instruction, so the
-application need to transform between the instruction and ID using the
-`module.id_to_inst[]` dictionary. For example, the type instruction
-used by `inst` is retrieved by `module.id_to_inst[inst.type_id]`.
 
 Instructions are immutable, so it is not possible to modify it after
 it is created. The way of modifying it is to create a new (nearly)
