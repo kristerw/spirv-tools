@@ -7,16 +7,16 @@ import spirv
 
 
 def optimize_OpCompositeExtract(module, inst):
-    result_inst = module.id_to_inst[inst.operands[0]]
+    result_inst = inst.operands[0].inst
     for index in inst.operands[1:]:
-        result_inst = module.id_to_inst[result_inst.operands[index]]
+        result_inst = result_inst.operands[index].inst
     return result_inst
 
 
 def optimize_OpVectorShuffle(module, inst):
-    vec1_inst = module.id_to_inst[inst.operands[0]]
+    vec1_inst = inst.operands[0].inst
     vec1_len = len(vec1_inst.operands)
-    vec2_inst = module.id_to_inst[inst.operands[1]]
+    vec2_inst = inst.operands[1].inst
     components = []
     for component in inst.operands[2:]:
         if component == 0xffffffff:
@@ -36,9 +36,8 @@ def optimize_OpVectorShuffle(module, inst):
 def optimize_inst(module, inst):
     """Simplify one instruction"""
     for operand in inst.operands:
-        if isinstance(operand, basestring) and operand[0] == '%':
-            operand_inst = module.id_to_inst[operand]
-            if operand_inst.op_name not in spirv.CONSTANT_INSTRUCTIONS:
+        if isinstance(operand, ir.Id):
+            if operand.inst.op_name not in spirv.CONSTANT_INSTRUCTIONS:
                 return inst
 
     if inst.op_name == 'OpCompositeExtract':

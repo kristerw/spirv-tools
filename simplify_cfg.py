@@ -25,7 +25,7 @@ def remove_constant_cond_branches(module):
         for basic_block in function.basic_blocks:
             inst = basic_block.insts[-1]
             if inst.op_name == 'OpBranchConditional':
-                cond_inst = module.id_to_inst[inst.operands[0]]
+                cond_inst = inst.operands[0].inst
                 if cond_inst.op_name == 'OpConstantTrue':
                     update_conditional_branch(module, inst, inst.operands[1])
                 elif cond_inst.op_name == 'OpConstantFalse':
@@ -61,7 +61,7 @@ def eliminate_phi_nodes(module):
     for inst in module.instructions():
         if inst.op_name == 'OpPhi':
             if len(inst.operands) == 2:
-                source_inst = module.id_to_inst[inst.operands[0]]
+                source_inst = inst.operands[0].inst
                 inst.replace_with(source_inst)
 
 

@@ -125,8 +125,7 @@ def get_or_create_scalar_constant(module, token, type_id):
                               type_id, [])
         module.add_global_inst(inst)
     else:
-        type_inst = module.id_to_inst[type_id]
-        if type_inst.op_name != 'OpTypeInt':
+        if type_id.inst.op_name != 'OpTypeInt':
             raise ParseError('Type must be OpTypeInt')
 
         min_val, max_val = ir.get_int_type_range(module, type_id)
@@ -176,7 +175,8 @@ def create_id(module, token, tag, type_id=None):
                                   [new_id, name])
             module.add_global_inst(inst)
             return new_id
-        return token
+        else:
+            return module.get_id(int(token[1:]))
     elif tag == 'INT' or token in ['true', 'false']:
         return get_or_create_scalar_constant(module, token, type_id)
     elif token in module.type_name_to_id:
@@ -194,7 +194,7 @@ def parse_id(lexer, module, accept_eol=False, type_id=None):
     """
     token, tag = lexer.get_next_token(accept_eol=accept_eol)
     if accept_eol and token == '':
-        return ''
+        return None
     else:
         return create_id(module, token, tag, type_id)
 
@@ -303,10 +303,9 @@ def parse_type(lexer, module):
     if tag not in ['ID', 'NAME', 'VEC_TYPE']:
         raise ParseError('Not a valid type: ' + token)
     type_id = create_id(module, token, tag)
-    if type_id not in module.id_to_inst:
+    if type_id.inst is None:
         raise ParseError(token + ' used but not defined')
-    type_inst = module.id_to_inst[type_id]
-    if type_inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+    if type_id.inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         raise ParseError('Not a valid type: ' + token)
     return type_id
 
@@ -359,7 +358,7 @@ def parse_operand(lexer, module, kind, type_id):
         while True:
             operand_id = parse_id(lexer, module, accept_eol=True,
                                   type_id=type_id)
-            if operand_id == '':
+            if operand_id is None:
                 return operands
             operands.append(operand_id)
             token, tag = lexer.get_next_token(peek=True, accept_eol=True)
@@ -370,7 +369,7 @@ def parse_operand(lexer, module, kind, type_id):
         while True:
             operand_id = parse_id(lexer, module, accept_eol=True,
                                   type_id=type_id)
-            if operand_id == '':
+            if operand_id is None:
                 return operands
             operands.append(operand_id)
             token, tag = lexer.get_next_token(peek=True, accept_eol=True)
@@ -405,7 +404,7 @@ def parse_instruction(lexer, module):
     if tag == 'ID':
         token = parse_id(lexer, module)
         op_result = token
-        if op_result in module.id_to_inst:
+        if op_result.inst is not None:
             id_name = get_id_name(module, op_result)
             raise ParseError(id_name + ' is already defined')
         lexer.get_next_token('=')
@@ -534,14 +533,14 @@ def parse_basic_block_body(lexer, module, basic_block):
                 'Ending function without terminating previous basic block')
         else:
             inst = parse_instruction(lexer, module)
-            if inst.op_name == 'OpFunctionEnd':
-                raise ParseError(
-                    'OpFunctionEnd without terminating previous basic block')
             if isinstance(inst, ir.BasicBlock):
                 raise ParseError(
                     'Label without terminating previous basic block')
             elif isinstance(inst, ir.Function):
                 raise ParseError('OpFunction within function')
+            elif inst.op_name == 'OpFunctionEnd':
+                raise ParseError(
+                    'OpFunctionEnd without terminating previous basic block')
             basic_block.append_inst(inst)
             if token in spirv.BRANCH_INSTRUCTIONS:
                 return
@@ -554,7 +553,7 @@ def parse_basic_block(lexer, module, function):
     lexer.done_with_line()
 
     basic_block_id = create_id(module, token[:-1], 'ID')
-    if basic_block_id in module.id_to_inst:
+    if basic_block_id.inst is not None:
         id_name = get_id_name(module, basic_block_id)
         raise ParseError(id_name + ' is already defined')
     basic_block = ir.BasicBlock(module, basic_block_id)
@@ -565,7 +564,7 @@ def parse_basic_block(lexer, module, function):
 
 def parse_function_raw(lexer, module, function):
     """Parse one function staring with the 'OpFunction' instruction."""
-    func_type_inst = module.id_to_inst[function.inst.operands[1]]
+    func_type_inst = function.inst.operands[1].inst
     assert func_type_inst.op_name == 'OpTypeFunction'
     params = func_type_inst.operands[1:]
     while True:
@@ -625,7 +624,7 @@ def parse_function_definition(lexer, module):
     function_id = parse_id(lexer, module)
     arguments = parse_arguments(lexer, module)
 
-    if function_id in module.id_to_inst:
+    if function_id.inst is not None:
         id_name = get_id_name(module, function_id)
         raise ParseError(id_name + ' is already defined')
 
@@ -671,7 +670,7 @@ def get_id_name(module, id_to_check):
     for name in module.symbol_name_to_id:
         if module.symbol_name_to_id[name] == id_to_check:
             return name
-    return id_to_check
+    return str(id_to_check)
 
 
 def verify_id(module, inst, id_to_check):
@@ -684,7 +683,7 @@ def verify_id(module, inst, id_to_check):
     be reported for the user defined instruction anyway.
     """
     if inst in module.inst_to_line:
-        if not id_to_check in module.id_to_inst:
+        if id_to_check.inst is None:
             id_name = get_id_name(module, id_to_check)
             line_no = module.inst_to_line[inst]
             raise VerificationError(line_no, id_name + ' used but not defined')
@@ -698,9 +697,8 @@ def verify_ids_are_defined(module):
         if inst.type_id is not None:
             verify_id(module, inst, inst.type_id)
         for operand in inst.operands:
-            if isinstance(operand, basestring):
-                if operand[0] == '%':
-                    verify_id(module, inst, operand)
+            if isinstance(operand, ir.Id):
+                verify_id(module, inst, operand)
 
 
 def read_module(stream):

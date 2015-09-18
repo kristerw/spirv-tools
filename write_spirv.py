@@ -9,14 +9,14 @@ def output_instruction(stream, inst):
     opcode = spirv.OPNAME_TABLE[inst.op_name]
 
     if opcode['type']:
-        inst_data.append(int(inst.type_id[1:]))
+        inst_data.append(inst.type_id.value)
     if opcode['result']:
-        inst_data.append(int(inst.result_id[1:]))
+        inst_data.append(inst.result_id.value)
 
     kind = None
     for operand, kind in zip(inst.operands, opcode['operands']):
         if kind == 'Id' or kind == 'OptionalId':
-            inst_data.append(int(operand[1:]))
+            inst_data.append(operand.value)
         elif kind == 'LiteralNumber' or kind == 'SamplerImageFormat':
             inst_data.append(operand)
         elif kind in spirv.MASKS:
@@ -51,18 +51,18 @@ def output_instruction(stream, inst):
     elif kind == 'VariableIds':
         operands = inst.operands[(len(opcode['operands'])-1):]
         for operand in operands:
-            inst_data.append(int(operand[1:]))
+            inst_data.append(operand.value)
     elif kind == 'OptionalImage':
         operands = inst.operands[(len(opcode['operands'])-1):]
         inst_data.append(operands[0])
         for operand in operands[1:]:
-            inst_data.append(int(operand[1:]))
+            inst_data.append(operand.value)
     elif kind == 'VariableLiteralId':
         operands = inst.operands[(len(opcode['operands'])-1):]
         while operands:
             inst_data.append(operands.pop(0))
             target_id = operands.pop(0)
-            inst_data.append(int(target_id[1:]))
+            inst_data.append(target_id.value)
 
     inst_data[0] = (len(inst_data) << 16) + opcode['opcode']
     words = array.array('I', inst_data)

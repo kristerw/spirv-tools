@@ -7,8 +7,8 @@ import constprop
 
 
 def optimize_OpVectorShuffle(module, inst):
-    vec1_inst = module.id_to_inst[inst.operands[0]]
-    vec2_inst = module.id_to_inst[inst.operands[1]]
+    vec1_inst = inst.operands[0].inst
+    vec2_inst = inst.operands[1].inst
     components = inst.operands[2:]
 
     # Change vectors shuffles "A, unused" or "unused, A" to "A, A" where
@@ -20,7 +20,7 @@ def optimize_OpVectorShuffle(module, inst):
     # without needing to special case OpUndef operands.
     using_vec1 = False
     using_vec2 = False
-    vec1_type_inst = module.id_to_inst[vec1_inst.type_id]
+    vec1_type_inst = vec1_inst.type_id.inst
     assert vec1_type_inst.op_name == 'OpTypeVector'
     vec1_len = vec1_type_inst.operands[1]
     for component in components:
@@ -44,7 +44,7 @@ def optimize_OpVectorShuffle(module, inst):
 
     # Change shuffle "A, A" so that only the first is used.
     if vec1_inst == vec2_inst:
-        vec1_type_inst = module.id_to_inst[vec1_inst.type_id]
+        vec1_type_inst = vec1_inst.type_id.inst
         assert vec1_type_inst.op_name == 'OpTypeVector'
         vec1_len = vec1_type_inst.operands[1]
         for idx in range(len(components)):

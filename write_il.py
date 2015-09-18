@@ -12,7 +12,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
         result_id = inst.result_id
         if result_id in module.id_to_symbol_name:
             result_id = module.id_to_symbol_name[result_id]
-        line = line + result_id + ' = '
+        line = line + str(result_id) + ' = '
     line = line + inst.op_name
     if inst.type_id is not None:
         line = line + ' ' + module.type_id_to_name[inst.type_id]
@@ -25,7 +25,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
         for operand in inst.operands:
             if operand in module.id_to_symbol_name:
                 operand = module.id_to_symbol_name[operand]
-            if operand in module.type_id_to_name:
+            elif operand in module.type_id_to_name:
                 operand = module.type_id_to_name[operand]
             line = line + str(operand) + ', '
         line = line[:-2]
@@ -58,7 +58,7 @@ def get_symbol_name(module, symbol_id):
             if match is None:
                 sys.stderr.write('warning: Ignoring symbol name "'
                                  + name + '"\n')
-                return symbol_id
+                return '%' + str(symbol_id.value)
             new_name = match.group(0)
             if new_name != name:
                 sys.stderr.write('warning: truncated symbol name "'
@@ -67,7 +67,7 @@ def get_symbol_name(module, symbol_id):
             symbol_name = '%' + new_name
             break
     else:
-        symbol_name = '%' + symbol_id[1:]
+        symbol_name = '%' + str(symbol_id.value)
 
     module.id_to_symbol_name[symbol_id] = symbol_name
 
@@ -95,14 +95,13 @@ def format_decorations_for_inst(module, inst):
 def add_type_if_needed(module, inst, needed_types):
     if inst.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
         if inst.op_name != 'OpTypeFunction':
-            if module.type_id_to_name[inst.result_id] == inst.result_id:
+            if module.type_id_to_name[inst.result_id] == str(inst.result_id):
                 needed_types.add(inst.result_id)
         for operand in inst.operands:
-            if operand[0] == '%':
-                type_inst = module.id_to_inst[operand]
-                add_type_if_needed(module, type_inst, needed_types)
+            if isinstance(operand, ir.Id):
+                add_type_if_needed(module, operand.inst, needed_types)
     if inst.type_id is not None:
-        if module.type_id_to_name[inst.type_id] == inst.type_id:
+        if module.type_id_to_name[inst.type_id] == str(inst.type_id):
             needed_types.add(inst.type_id)
 
 
@@ -125,7 +124,7 @@ def output_global_instructions(stream, module, is_raw_mode, names, newline=True)
 
 def output_basic_block(stream, module, basic_block):
     """Output one basic block."""
-    stream.write(basic_block.inst.result_id + ':\n')
+    stream.write(str(basic_block.inst.result_id) + ':\n')
     for inst in basic_block.insts:
         output_instruction(stream, module, inst, False)
 
@@ -151,7 +150,7 @@ def output_function(stream, module, func):
     line = line + symbol_name + '('
     for inst in func.arguments:
         line = line + module.type_id_to_name[inst.type_id]
-        line = line + ' ' + inst.result_id + ', '
+        line = line + ' ' + str(inst.result_id) + ', '
     if line[-2:] == ', ':
         line = line[:-2]
     line = line + ') {\n'
@@ -211,7 +210,7 @@ def add_type_name(module, inst):
             raise ir.IRError(error)
         type_name = '<' + str(count) + ' x ' + component_type + '>'
     else:
-        type_name = inst.result_id
+        type_name = str(inst.result_id)
 
     module.type_id_to_name[inst.result_id] = type_name
 

@@ -99,15 +99,15 @@ def parse_literal_string(binary):
     raise ParseError('bad encoding')
 
 
-def parse_id(binary):
+def parse_id(binary, module):
     """parse one Id."""
-    return '%' + str(binary.get_next_word())
+    return module.get_id(binary.get_next_word())
 
 
-def parse_operand(binary, kind):
+def parse_operand(binary, module, kind):
     """Parse one instruction operand."""
     if kind == 'Id':
-        return [parse_id(binary)]
+        return [parse_id(binary, module)]
     elif kind in ['LiteralNumber',
                   'FunctionControlMask',
                   'SamplerImageFormat']:
@@ -131,14 +131,14 @@ def parse_operand(binary, kind):
             word = binary.get_next_word(throw_on_eol=False)
             if word is None:
                 return operands
-            operands.append('%' + str(word))
+            operands.append(module.get_id(word))
     elif kind in ['VariableIds', 'OptionalId']:
         operands = []
         while True:
             word = binary.get_next_word(throw_on_eol=False)
             if word is None:
                 return operands
-            operands.append('%' + str(word))
+            operands.append(module.get_id(word))
     elif kind == 'VariableLiteralId':
         operands = []
         while True:
@@ -149,7 +149,7 @@ def parse_operand(binary, kind):
             word = binary.get_next_word()
             if word is None:
                 return operands
-            operands.append('%' + str(word))
+            operands.append(module.get_id(word))
     elif kind in spirv.CONSTANTS:
         val = binary.get_next_word()
         constants = spirv.CONSTANTS[kind]
@@ -170,14 +170,14 @@ def parse_instruction(binary, module):
     operands = []
     inst_type = None
     if opcode['type']:
-        inst_type = parse_id(binary)
+        inst_type = parse_id(binary, module)
     result = None
     if opcode['result']:
-        result = parse_id(binary)
-        if result in module.id_to_inst:
-            raise ParseError('ID ' + result + ' is already defined')
+        result = parse_id(binary, module)
+        if result.inst is not None:
+            raise ParseError('ID ' + str(result) + ' is already defined')
     for kind in opcode['operands']:
-        operands = operands + parse_operand(binary, kind)
+        operands = operands + parse_operand(binary, module, kind)
     binary.expect_eol()
 
     if opcode['name'] == 'OpFunction':
@@ -203,7 +203,7 @@ def parse_global_instructions(binary, module):
 def parse_basic_block(binary, module, function):
     """Parse one basic block."""
     opcode = binary.get_next_opcode()
-    basic_block_id = str(parse_id(binary))
+    basic_block_id = parse_id(binary, module)
     binary.expect_eol()
     basic_block = ir.BasicBlock(module, basic_block_id)
 

@@ -10,7 +10,7 @@ def remove_debug_if_dead(module, inst):
     """Remove debug instruction if it is not used."""
     assert inst.op_name in spirv.DEBUG_INSTRUCTIONS
     if inst.op_name != 'OpString':
-        if inst.operands[0] not in module.id_to_inst:
+        if inst.operands[0].inst is None:
             inst.destroy()
 
 
@@ -18,7 +18,7 @@ def remove_decoration_if_dead(module, inst):
     """Remove decoration instruction if it is not used."""
     assert inst.op_name in spirv.DECORATION_INSTRUCTIONS
     if inst.op_name != 'OpDecorationGroup':
-        if inst.operands[0] not in module.id_to_inst:
+        if inst.operands[0].inst is None:
             inst.destroy()
 
 

@@ -15,9 +15,9 @@ class IRError(Exception):
 class Module(object):
     def __init__(self):
         self.bound = None
-        self.id_to_inst = {}
         self.functions = []
         self.global_insts = []
+        self._value_to_id = {}
         self._tmp_id_counter = 0
 
     def dump(self, stream=sys.stdout):
@@ -47,7 +47,15 @@ class Module(object):
     def new_id(self):
         """Generate a new ID."""
         self._tmp_id_counter += 1
-        return '%.' + str(self._tmp_id_counter)
+        return Id(self, self._tmp_id_counter, True)
+
+    def get_id(self, value):
+        """Get or create the ID having the specied value."""
+        if value in self._value_to_id:
+            return self._value_to_id[value]
+        new_id = Id(self, value)
+        self._value_to_id[value] = new_id
+        return new_id
 
     def _copy_global_insts(self, dest, names):
         """Copy global insts with the provided operation names to dest."""
@@ -89,9 +97,8 @@ class Module(object):
         For vector types, the value need to be a list of the same length
         as the vector size, or a scalar, in which case the value is
         replicated for all elements."""
-        type_inst = self.id_to_inst[type_id]
-        if (type_inst.op_name == 'OpTypeInt' or
-                type_inst.op_name == 'OpTypeFloat'):
+        if (type_id.inst.op_name == 'OpTypeInt' or
+                type_id.inst.op_name == 'OpTypeFloat'):
             min_val, max_val = get_int_type_range(self, type_id)
             if value < 0:
                 if value < min_val:
@@ -100,34 +107,34 @@ class Module(object):
             else:
                 if value > max_val:
                     raise IRError('Value out of range')
-            if type_inst.operands[0] == 64:
+            if type_id.inst.operands[0] == 64:
                 operands = [value & 0xffffffff, value >> 32]
             else:
                 operands = [value]
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstant' and
-                        inst.type_id == type_inst.result_id and
+                        inst.type_id == type_id.inst.result_id and
                         cmp(inst.operands, operands) == 0):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
-                               type_inst.result_id, operands)
+                               type_id.inst.result_id, operands)
             self.add_global_inst(inst)
             return inst
-        elif type_inst.op_name == 'OpTypeVector':
-            nof_elements = type_inst.operands[1]
+        elif type_id.inst.op_name == 'OpTypeVector':
+            nof_elements = type_id.inst.operands[1]
             if not isinstance(value, (list, tuple)):
                 value = [value] * nof_elements
             operands = []
             for elem in value:
-                instr = self.get_constant(type_inst.operands[0], elem)
+                instr = self.get_constant(type_id.inst.operands[0], elem)
                 operands.append(instr.result_id)
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstantComposite' and
-                        inst.type_id == type_inst.result_id and
+                        inst.type_id == type_id.inst.result_id and
                         lists_are_identical(inst.operands, operands)):
                     return inst
             inst = Instruction(self, 'OpConstantComposite', self.new_id(),
-                               type_inst.result_id, operands)
+                               type_id.inst.result_id, operands)
             self.add_global_inst(inst)
             return inst
         else:
@@ -137,27 +144,31 @@ class Module(object):
         # Determine ID bound.
         self.bound = 0
         for inst in self.instructions():
-            if (inst.result_id is not None and
-                    inst.result_id[1].isdigit()):
-                self.bound = max(self.bound, int(inst.result_id[1:]))
+            if isinstance(inst.result_id, Id):
+                if not inst.result_id._is_temp:
+                    self.bound = max(self.bound, inst.result_id.value)
         self.bound += 1
 
-        # Create new numeric IDs for the named IDs.
-        named_ids = []
+        # Create new IDs for the temporary IDs.
+        temp_ids = []
         for inst in self.instructions():
             if (inst.result_id is not None and
-                    not inst.result_id[1].isdigit() and
-                    not inst.result_id in named_ids):
-                named_ids.append(inst.result_id)
+                    inst.result_id._is_temp and
+                    not inst.result_id in temp_ids):
+                temp_ids.append(inst.result_id)
         id_rename = {}
-        for named_id in named_ids:
-            id_rename[named_id] = '%' + str(self.bound)
+        for temp_id in temp_ids:
+            id_rename[temp_id] = self.get_id(self.bound)
             self.bound += 1
 
-        # Update all uses of named IDs to use the new numeric IDs.
+        # Update all uses of temporary IDs to use the new values.
         for inst in self.instructions():
             if inst.result_id in id_rename:
-                inst.result_id = id_rename[inst.result_id]
+                new_id = id_rename[inst.result_id]
+                old_id = inst.result_id
+                inst.result_id = new_id
+                new_id.inst = inst
+                old_id.inst = None
             if inst.type_id in id_rename:
                 inst.type_id = id_rename[inst.type_id]
             for i in range(len(inst.operands)):
@@ -165,19 +176,22 @@ class Module(object):
                     inst.operands[i] = id_rename[inst.operands[i]]
 
         # Rebuild mapping table to get rid of obsolete entries.
-        self.id_to_inst = {}
-        for inst in self.instructions():
-            self.id_to_inst[inst.result_id] = inst
+        obsolete = []
+        for value in self._value_to_id:
+            if self._value_to_id[value].inst is None:
+                obsolete.append(value)
+        if obsolete:
+            for value in obsolete:
+                del self._value_to_id[value]
 
 
 class Function(object):
     def __init__(self, module, function_id, function_control, function_type_id):
-        function_type_inst = module.id_to_inst[function_type_id]
         self.module = module
         self.arguments = []
         self.basic_blocks = []
         self.inst = Instruction(self.module, 'OpFunction',
-                                function_id, function_type_inst.operands[0],
+                                function_id, function_type_id.inst.operands[0],
                                 [function_control, function_type_id])
         self.end_inst = Instruction(self.module, 'OpFunctionEnd',
                                     None, None, [])
@@ -220,7 +234,7 @@ class Function(object):
         """Append argument to the arguments list."""
         if inst.op_name != 'OpFunctionParameter':
             raise IRError('Expected OpFunctionParameter')
-        func_type_inst = self.module.id_to_inst[self.inst.operands[1]]
+        func_type_inst = self.inst.operands[1].inst
         assert func_type_inst.op_name == 'OpTypeFunction'
         params = func_type_inst.operands[1:]
         arg_idx = len(self.arguments)
@@ -303,21 +317,21 @@ class Instruction(object):
         self.operands = operands
         self.basic_block = None
         if op_name == 'OpFunction':
-            function_type_inst = module.id_to_inst[operands[1]]
+            function_type_inst = operands[1].inst
             if function_type_inst.op_name != 'OpTypeFunction':
                 raise IRError('Expected OpTypeFunction as second operand')
         if result_id is not None:
-            if result_id in module.id_to_inst:
-                raise IRError('ID ' + result_id + ' already defined')
-            module.id_to_inst[result_id] = self
+            if result_id.inst is not None:
+                raise IRError('ID ' + str(result_id) + ' already defined')
+            result_id.inst = self
 
     def __str__(self):
         res = ''
         if self.result_id is not None:
-            res = res + self.result_id + ' = '
+            res = res + str(self.result_id) + ' = '
         res = res + self.op_name
         if self.type_id is not None:
-            res = res + ' ' + self.type_id
+            res = res + ' ' + str(self.type_id)
         if self.operands:
             res = res + ' '
             for operand in self.operands:
@@ -387,7 +401,7 @@ class Instruction(object):
             return
         self.basic_block.insts.remove(self)
         if self.result_id is not None:
-            del self.module.id_to_inst[self.result_id]
+            self.result_id.inst = None
         self.basic_block = None
         self.op_name = None
         self.result_id = None
@@ -471,6 +485,33 @@ class Instruction(object):
                 self.module.add_global_inst(new_inst)
 
 
+class Id(object):
+    def __init__(self, module, value, is_temp=False):
+        assert 0 < value <= 0xffffffff
+        assert is_temp or value not in module._value_to_id
+        self.value = value
+        self._is_temp = is_temp
+        self.inst = None
+
+    def __str__(self):
+        if self._is_temp:
+            return '%.' + str(self.value)
+        else:
+            return '%' + str(self.value)
+
+    def __hash__(self):
+        if self._is_temp:
+            return -self.value
+        else:
+            return self.value
+
+    def __eq__(self, other):
+        return other is self
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
 def lists_are_identical(list1, list2):
     """Return True if the lists are identical."""
     if len(list1) != len(list2):
@@ -482,13 +523,12 @@ def lists_are_identical(list1, list2):
 
 
 def get_int_type_range(module, type_id):
-    type_inst = module.id_to_inst[type_id]
     # Type must be OpTypeInt or OpTypeFloat (the OpTypeFloat is valid,
     # as its value is stored as integer words, and these words must
     # have value within the integer range).
-    if type_inst.op_name not in ['OpTypeInt', 'OpTypeFloat']:
+    if type_id.inst.op_name not in ['OpTypeInt', 'OpTypeFloat']:
         raise IRError('Type must be OpTypeInt or OpTypeFloat')
-    bitwidth = type_inst.operands[0]
+    bitwidth = type_id.inst.operands[0]
     assert bitwidth in [16, 32, 64]
     if bitwidth == 16:
         min_val = -0x8000
@@ -500,7 +540,7 @@ def get_int_type_range(module, type_id):
         min_val = -0x8000000000000000
         max_val = 0xffffffffffffffff
 
-    if type_inst.op_name == 'OpTypeFloat':
+    if type_id.inst.op_name == 'OpTypeFloat':
         # A negative value for OpTypeFloat probably mean that the caller
         # has made a mistake (as it does not make much sense to specify
         # the bits of a float using negative values), so don't permit
