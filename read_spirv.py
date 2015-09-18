@@ -234,7 +234,7 @@ def parse_function(binary, module):
             return function
         elif opcode['name'] == 'OpFunctionParameter':
             inst = parse_instruction(binary, module)
-            function.append_argument(inst)
+            function.append_parameter(inst)
         else:
             raise ParseError('Invalid opcode ' + opcode['name'])
 

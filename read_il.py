@@ -310,13 +310,13 @@ def parse_type(lexer, module):
     return type_id
 
 
-def get_or_create_function_type(module, return_type, arguments):
+def get_or_create_function_type(module, return_type, parameters):
     for inst in module.global_insts:
         if inst.op_name == 'OpTypeFunction':
             if inst.operands[0] == return_type:
-                if [arg[0] for arg in arguments] == inst.operands[1:]:
+                if [param[0] for param in parameters] == inst.operands[1:]:
                     return inst.result_id
-    operands = [return_type] + [arg[0] for arg in arguments]
+    operands = [return_type] + [param[0] for param in parameters]
     new_id = module.new_id()
     inst = ir.Instruction(module, 'OpTypeFunction', new_id, None, operands)
     module.add_global_inst(inst)
@@ -395,7 +395,7 @@ def parse_operand(lexer, module, kind, type_id):
             raise ParseError(error)
         return [value]
 
-    raise ParseError('Unknown argument kind "' + kind + '"')
+    raise ParseError('Unknown parameter kind "' + kind + '"')
 
 
 def parse_instruction(lexer, module):
@@ -593,14 +593,14 @@ def parse_function_raw(lexer, module, function):
             if not params:
                 raise ParseError('Too many OpFunctionParameter')
             params.pop(0)
-            function.append_argument(inst)
+            function.append_parameter(inst)
         else:
             raise ParseError('Expected a new label or OpFunctionEnd')
 
 
-def parse_arguments(lexer, module):
-    """Parse the arguments of a pretty-printed function."""
-    arguments = []
+def parse_parameters(lexer, module):
+    """Parse the parameters of a pretty-printed function."""
+    parameters = []
     lexer.get_next_token('(')
     token, _ = lexer.get_next_token(peek=True)
     if token == 'void':
@@ -608,15 +608,15 @@ def parse_arguments(lexer, module):
         lexer.get_next_token(')')
         return []
     while lexer.get_next_token(peek=True) != (')', None):
-        arg_type = parse_type(lexer, module)
-        arg_id = parse_id(lexer, module)
-        arguments.append((arg_type, arg_id))
+        param_type = parse_type(lexer, module)
+        param_id = parse_id(lexer, module)
+        parameters.append((param_type, param_id))
         if lexer.get_next_token(peek=True) == (',', None):
             lexer.get_next_token()
             if lexer.get_next_token(peek=True) == (')', None):
-                raise ParseError('Expected argument after ","')
+                raise ParseError('Expected parameter after ","')
     lexer.get_next_token(')')
-    return arguments
+    return parameters
 
 
 def parse_function_definition(lexer, module):
@@ -624,18 +624,19 @@ def parse_function_definition(lexer, module):
     lexer.get_next_token('define')
     return_type = parse_type(lexer, module)
     function_id = parse_id(lexer, module)
-    arguments = parse_arguments(lexer, module)
+    parameters = parse_parameters(lexer, module)
 
     if function_id.inst is not None:
         id_name = get_id_name(module, function_id)
         raise ParseError(id_name + ' is already defined')
 
-    function_type = get_or_create_function_type(module, return_type, arguments)
+    function_type = get_or_create_function_type(module, return_type,
+                                                parameters)
     function = ir.Function(module, function_id, 0, function_type) # XXX
-    for (arg_type, arg_id) in arguments:
-        arg_inst = ir.Instruction(module, 'OpFunctionParameter', arg_id,
-                                  arg_type, [])
-        function.append_argument(arg_inst)
+    for (param_type, param_id) in parameters:
+        param_inst = ir.Instruction(module, 'OpFunctionParameter', param_id,
+                                    param_type, [])
+        function.append_parameter(param_inst)
 
     return function
 

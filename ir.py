@@ -188,7 +188,7 @@ class Module(object):
 class Function(object):
     def __init__(self, module, function_id, function_control, function_type_id):
         self.module = module
-        self.arguments = []
+        self.parameters = []
         self.basic_blocks = []
         self.inst = Instruction(self.module, 'OpFunction',
                                 function_id, function_type_id.inst.operands[0],
@@ -209,7 +209,7 @@ class Function(object):
     def instructions(self):
         """Iterate over all instructions in the function."""
         yield self.inst
-        for inst in self.arguments[:]:
+        for inst in self.parameters[:]:
             yield inst
         for basic_block in self.basic_blocks[:]:
             if basic_block.function is not None:
@@ -226,23 +226,23 @@ class Function(object):
                 for inst in reversed(basic_block.insts[:]):
                     yield inst
                 yield basic_block.inst
-        for inst in reversed(self.arguments[:]):
+        for inst in reversed(self.parameters[:]):
             yield inst
         yield self.inst
 
-    def append_argument(self, inst):
-        """Append argument to the arguments list."""
+    def append_parameter(self, inst):
+        """Append parameter to the parameters list."""
         if inst.op_name != 'OpFunctionParameter':
             raise IRError('Expected OpFunctionParameter')
         func_type_inst = self.inst.operands[1].inst
         assert func_type_inst.op_name == 'OpTypeFunction'
         params = func_type_inst.operands[1:]
-        arg_idx = len(self.arguments)
-        if arg_idx >= len(params):
+        param_idx = len(self.parameters)
+        if param_idx >= len(params):
             raise IRError('Too many parameters')
-        if inst.type_id != params[arg_idx]:
+        if inst.type_id != params[param_idx]:
             raise IRError('Incorrect parameter type')
-        self.arguments.append(inst)
+        self.parameters.append(inst)
 
     def add_basic_block(self, basic_block):
         """Add one basic block to the function."""

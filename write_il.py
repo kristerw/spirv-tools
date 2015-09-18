@@ -194,7 +194,7 @@ def output_function(stream, module, func):
     symbol_name = get_symbol_name(module, func.inst.result_id)
     line = 'define ' + module.type_id_to_name[func.inst.type_id] + ' '
     line = line + symbol_name + '('
-    for inst in func.arguments:
+    for inst in func.parameters:
         line = line + module.type_id_to_name[inst.type_id]
         line = line + ' ' + str(inst.result_id) + ', '
     if line[-2:] == ', ':
