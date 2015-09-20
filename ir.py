@@ -75,6 +75,7 @@ class Module(object):
         self._copy_global_insts(sorted_insts,
                                 spirv.TYPE_DECLARATION_INSTRUCTIONS +
                                 spirv.CONSTANT_INSTRUCTIONS +
+                                spirv.SPECCONSTANT_INSTRUCTIONS +
                                 spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
         assert len(self.global_insts) == len(sorted_insts)
         self.global_insts = sorted_insts

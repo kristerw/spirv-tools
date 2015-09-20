@@ -302,6 +302,7 @@ def write_module(stream, module, is_raw_mode=False):
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.TYPE_DECLARATION_INSTRUCTIONS +
                                        spirv.CONSTANT_INSTRUCTIONS +
+                                       spirv.SPECCONSTANT_INSTRUCTIONS +
                                        spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
         else:
             needed_types = get_needed_types(module)
@@ -313,6 +314,8 @@ def write_module(stream, module, is_raw_mode=False):
                                            indent='')
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.CONSTANT_INSTRUCTIONS)
+            output_global_instructions(stream, module, is_raw_mode,
+                                       spirv.SPECCONSTANT_INSTRUCTIONS)
             output_global_instructions(stream, module, is_raw_mode,
                                        spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
 

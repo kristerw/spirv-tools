@@ -86,7 +86,9 @@ CONSTANT_INSTRUCTIONS = [
     'OpConstantComposite',
     'OpConstantSampler',
     'OpConstantNull',
+]
 
+SPECCONSTANT_INSTRUCTIONS = [
     'OpSpecConstantTrue',
     'OpSpecConstantFalse',
     'OpSpecConstant',
