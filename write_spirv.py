@@ -1,12 +1,12 @@
 import array
 
-import spirv
+import ir
 
 
 def output_instruction(stream, inst):
     """Output one instruction."""
     inst_data = [0]
-    opcode = spirv.OPNAME_TABLE[inst.op_name]
+    opcode = ir.OPNAME_TABLE[inst.op_name]
 
     if opcode['type']:
         inst_data.append(inst.type_id.value)
@@ -19,7 +19,7 @@ def output_instruction(stream, inst):
             inst_data.append(operand.value)
         elif kind == 'LiteralNumber':
             inst_data.append(operand)
-        elif kind in spirv.MASKS:
+        elif kind in ir.MASKS:
             inst_data.append(operand)
         elif kind == 'LiteralString':
             operand = operand.encode('utf-8') + '\x00'
@@ -37,8 +37,8 @@ def output_instruction(stream, inst):
             # are included in them.  But loop will only give us one.
             # Handle these after the loop.
             break
-        elif kind in spirv.KINDS:
-            constants = spirv.KINDS[kind]
+        elif kind in ir.KINDS:
+            constants = ir.KINDS[kind]
             inst_data.append(constants[operand])
         else:
             raise Exception('Unhandled kind ' + kind)
@@ -70,8 +70,7 @@ def output_instruction(stream, inst):
 
 def output_header(stream, module):
     """Output the SPIR-V header."""
-    header = [spirv.MAGIC, spirv.VERSION, spirv.GENERATOR_MAGIC,
-              module.bound, 0]
+    header = [ir.MAGIC, ir.VERSION, ir.GENERATOR_MAGIC, module.bound, 0]
     words = array.array('I', header)
     words.tofile(stream)
 

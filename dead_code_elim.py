@@ -3,12 +3,12 @@
 The definition of "unused instruction" is an instruction having a return
 ID that is not used by any non-debug and non-decoration instruction, and
 does not have side effects."""
-import spirv
+import ir
 
 
 def remove_debug_if_dead(module, inst):
     """Remove debug instruction if it is not used."""
-    assert inst.op_name in spirv.DEBUG_INSTRUCTIONS
+    assert inst.op_name in ir.DEBUG_INSTRUCTIONS
     if inst.op_name != 'OpString':
         if inst.operands[0].inst is None:
             inst.destroy()
@@ -16,7 +16,7 @@ def remove_debug_if_dead(module, inst):
 
 def remove_decoration_if_dead(module, inst):
     """Remove decoration instruction if it is not used."""
-    assert inst.op_name in spirv.DECORATION_INSTRUCTIONS
+    assert inst.op_name in ir.DECORATION_INSTRUCTIONS
     if inst.op_name != 'OpDecorationGroup':
         if inst.operands[0].inst is None:
             inst.destroy()
@@ -35,9 +35,9 @@ def optimize(module):
     # of this pass is handled by the real pass when the instruction they
     # point to is removed.
     for inst in reversed(module.global_insts[:]):
-        if inst.op_name in spirv.DEBUG_INSTRUCTIONS:
+        if inst.op_name in ir.DEBUG_INSTRUCTIONS:
             remove_debug_if_dead(module, inst)
-        elif inst.op_name in spirv.DECORATION_INSTRUCTIONS:
+        elif inst.op_name in ir.DECORATION_INSTRUCTIONS:
             remove_decoration_if_dead(module, inst)
 
     # Remove unused instructions.

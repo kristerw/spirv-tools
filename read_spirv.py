@@ -1,6 +1,5 @@
 import array
 
-import spirv
 import ir
 
 
@@ -18,14 +17,14 @@ class SpirvBinary(object):
         if len(words) < 5:
             raise ParseError('File length shorter than header size')
         magic = words[0]
-        if magic != spirv.MAGIC:
+        if magic != ir.MAGIC:
             words.byteswap()
             magic = words[0]
-            if magic != spirv.MAGIC:
+            if magic != ir.MAGIC:
                 raise ParseError('Incorrect magic: ' + format(magic, '#x'))
 
         version = words[1]
-        if version != spirv.VERSION:
+        if version != ir.VERSION:
             raise ParseError('Unknown version ' + str(version))
 
         self.words = words
@@ -54,10 +53,10 @@ class SpirvBinary(object):
         if not peek:
             self.idx += 1
 
-        if opcode not in spirv.OPCODE_TABLE:
+        if opcode not in ir.OPCODE_TABLE:
             raise ParseError('Invalid opcode ' + str(opcode))
 
-        return spirv.OPCODE_TABLE[opcode]
+        return ir.OPCODE_TABLE[opcode]
 
     def get_next_word(self, peek=False, throw_on_eol=True):
         if self.idx == len(self.words):
@@ -148,14 +147,14 @@ def parse_operand(binary, module, kind):
             if word is None:
                 return operands
             operands.append(module.get_id(word))
-    elif kind in spirv.KINDS:
+    elif kind in ir.KINDS:
         val = binary.get_next_word()
-        constants = spirv.KINDS[kind]
+        constants = ir.KINDS[kind]
         for name in constants:
             if constants[name] == val:
                 return [name]
         raise ParseError('Unknown "' + kind + '" value' + str(val))
-    elif kind in spirv.MASKS:
+    elif kind in ir.MASKS:
         val = binary.get_next_word()
         return [val]
 
@@ -214,7 +213,7 @@ def parse_basic_block(binary, module, function):
         if inst.op_name == 'OpLabel':
             raise ParseError('Invalid opcode OpLabel in basic block')
         basic_block.append_inst(inst)
-        if opcode['name'] in spirv.BRANCH_INSTRUCTIONS:
+        if opcode['name'] in ir.BRANCH_INSTRUCTIONS:
             function.add_basic_block(basic_block)
             return
 

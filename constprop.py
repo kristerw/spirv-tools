@@ -3,7 +3,6 @@
 This pass tends to leave dead instructions, so dead_code_elim should
 be run after."""
 import ir
-import spirv
 
 
 def optimize_OpCompositeExtract(module, inst):
@@ -37,7 +36,7 @@ def optimize_inst(module, inst):
     """Simplify one instruction"""
     for operand in inst.operands:
         if isinstance(operand, ir.Id):
-            if operand.inst.op_name not in spirv.CONSTANT_INSTRUCTIONS:
+            if operand.inst.op_name not in ir.CONSTANT_INSTRUCTIONS:
                 return inst
 
     if inst.op_name == 'OpCompositeExtract':

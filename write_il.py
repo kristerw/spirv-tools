@@ -2,7 +2,6 @@ import re
 import sys
 
 import ir
-import spirv
 
 
 def id_name(module, operand):
@@ -29,7 +28,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     if not is_raw_mode:
         line = line + format_decorations_for_inst(module, inst)
 
-    opcode = spirv.OPNAME_TABLE[inst.op_name]
+    opcode = ir.OPNAME_TABLE[inst.op_name]
     kind = None
     if inst.operands:
         line = line + ' '
@@ -38,7 +37,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
                 line = line + id_name(module, operand) + ', '
             elif kind == 'LiteralNumber':
                 line = line + str(operand) + ', '
-            elif kind in spirv.MASKS:
+            elif kind in ir.MASKS:
                 line = line + str(operand) + ', '
             elif kind == 'LiteralString':
                 line = line + '"' + operand + '"' + ', '
@@ -51,7 +50,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
                 # are included in them.  But loop will only give us one.
                 # Handle these after the loop.
                 break
-            elif kind in spirv.KINDS:
+            elif kind in ir.KINDS:
                 line = line + operand + ', '
             else:
                 raise Exception('Unhandled kind ' + kind)
@@ -139,7 +138,7 @@ def format_decorations_for_inst(module, inst):
 
 
 def add_type_if_needed(module, inst, needed_types):
-    if inst.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+    if inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
         if inst.op_name != 'OpTypeFunction':
             if module.type_id_to_name[inst.result_id] == str(inst.result_id):
                 needed_types.add(inst.result_id)
@@ -154,7 +153,7 @@ def add_type_if_needed(module, inst, needed_types):
 def get_needed_types(module):
     needed_types = set()
     for inst in module.instructions():
-        if inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        if inst.op_name not in ir.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_if_needed(module, inst, needed_types)
     return needed_types
 
@@ -263,7 +262,7 @@ def add_type_name(module, inst):
 
 def add_type_names(module):
     for inst in module.global_insts:
-        if inst.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        if inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_name(module, inst)
 
 
@@ -284,7 +283,7 @@ def write_module(stream, module, is_raw_mode=False):
         # types of instructions split into sections (and with unneeded
         # instructions eliminated for non-raw mode), so we need to do some
         # extra work here...
-        for name in spirv.INITIAL_INSTRUCTIONS:
+        for name in ir.INITIAL_INSTRUCTIONS:
             if name != 'OpExtInstImport':
                 output_global_instructions(stream, module, is_raw_mode, [name],
                                            newline=False)
@@ -298,12 +297,12 @@ def write_module(stream, module, is_raw_mode=False):
             output_global_instructions(stream, module, is_raw_mode,
                                        ['OpLine'])
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.DECORATION_INSTRUCTIONS)
+                                       ir.DECORATION_INSTRUCTIONS)
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.TYPE_DECLARATION_INSTRUCTIONS +
-                                       spirv.CONSTANT_INSTRUCTIONS +
-                                       spirv.SPECCONSTANT_INSTRUCTIONS +
-                                       spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+                                       ir.TYPE_DECLARATION_INSTRUCTIONS +
+                                       ir.CONSTANT_INSTRUCTIONS +
+                                       ir.SPECCONSTANT_INSTRUCTIONS +
+                                       ir.GLOBAL_VARIABLE_INSTRUCTIONS)
         else:
             needed_types = get_needed_types(module)
             if needed_types:
@@ -313,11 +312,11 @@ def write_module(stream, module, is_raw_mode=False):
                         output_instruction(stream, module, inst, is_raw_mode,
                                            indent='')
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.CONSTANT_INSTRUCTIONS)
+                                       ir.CONSTANT_INSTRUCTIONS)
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.SPECCONSTANT_INSTRUCTIONS)
+                                       ir.SPECCONSTANT_INSTRUCTIONS)
             output_global_instructions(stream, module, is_raw_mode,
-                                       spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+                                       ir.GLOBAL_VARIABLE_INSTRUCTIONS)
 
         # Output rest of the module.
         output_functions(stream, module, is_raw_mode)

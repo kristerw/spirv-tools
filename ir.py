@@ -1,6 +1,6 @@
+import json
+import os
 import sys
-
-import spirv
 
 
 class IRError(Exception):
@@ -66,23 +66,23 @@ class Module(object):
     def _sort_global_insts(self):
         """Sort self.global_insts as required by the SPIR-V specification."""
         sorted_insts = []
-        for name in spirv.INITIAL_INSTRUCTIONS:
+        for name in INITIAL_INSTRUCTIONS:
             self._copy_global_insts(sorted_insts, [name])
         self._copy_global_insts(sorted_insts, ['OpString'])
         self._copy_global_insts(sorted_insts, ['OpName', 'OpMemberName'])
         self._copy_global_insts(sorted_insts, ['OpLine'])
-        self._copy_global_insts(sorted_insts, spirv.DECORATION_INSTRUCTIONS)
+        self._copy_global_insts(sorted_insts, DECORATION_INSTRUCTIONS)
         self._copy_global_insts(sorted_insts,
-                                spirv.TYPE_DECLARATION_INSTRUCTIONS +
-                                spirv.CONSTANT_INSTRUCTIONS +
-                                spirv.SPECCONSTANT_INSTRUCTIONS +
-                                spirv.GLOBAL_VARIABLE_INSTRUCTIONS)
+                                TYPE_DECLARATION_INSTRUCTIONS +
+                                CONSTANT_INSTRUCTIONS +
+                                SPECCONSTANT_INSTRUCTIONS +
+                                GLOBAL_VARIABLE_INSTRUCTIONS)
         assert len(self.global_insts) == len(sorted_insts)
         self.global_insts = sorted_insts
 
     def add_global_inst(self, inst):
         """Add instruction to the module's global instructions."""
-        if inst.op_name not in spirv.GLOBAL_INSTRUCTIONS:
+        if inst.op_name not in GLOBAL_INSTRUCTIONS:
             raise IRError(inst.op_name + ' is not a valid global instruction')
         self.global_insts.append(inst)
         self._sort_global_insts()
@@ -391,8 +391,8 @@ class Instruction(object):
         instructions, from the module. The instruction must not be used
         after it is destroyed."""
         for inst in self.module.global_insts[:]:
-            if (inst.op_name in spirv.DECORATION_INSTRUCTIONS or
-                    inst.op_name in spirv.DEBUG_INSTRUCTIONS):
+            if (inst.op_name in DECORATION_INSTRUCTIONS or
+                    inst.op_name in DEBUG_INSTRUCTIONS):
                 if self.result_id in inst.operands:
                     inst.destroy()
         if self.basic_block is None:
@@ -414,9 +414,9 @@ class Instruction(object):
 
         Debug and decoration instructions are not considered using
         any instruction."""
-        if self.op_name in spirv.DECORATION_INSTRUCTIONS:
+        if self.op_name in DECORATION_INSTRUCTIONS:
             return False
-        if self.op_name in spirv.DEBUG_INSTRUCTIONS:
+        if self.op_name in DEBUG_INSTRUCTIONS:
             return False
         if self.type_id == inst.result_id:
             return True
@@ -442,9 +442,9 @@ class Instruction(object):
         Decoration and debug instructions are not updated, as they are
         considered being a part of the instruction they reference."""
         for inst in self.module.instructions():
-            if inst.op_name in spirv.DECORATION_INSTRUCTIONS:
+            if inst.op_name in DECORATION_INSTRUCTIONS:
                 continue
-            if inst.op_name in spirv.DEBUG_INSTRUCTIONS:
+            if inst.op_name in DEBUG_INSTRUCTIONS:
                 continue
             inst.substitute_type_and_operands(self, new_inst)
 
@@ -471,12 +471,12 @@ class Instruction(object):
         # XXX Need to handle OpExtInst correctly (it is conservative now)
         if self.result_id is None:
             return True
-        return self.op_name in spirv.HAS_SIDE_EFFECT
+        return self.op_name in HAS_SIDE_EFFECT
 
     def copy_decorations(self, src_inst):
         """Copy the decorations from src_inst to this instruction."""
         for inst in self.module.instructions():
-            if (inst.op_name in spirv.DECORATION_INSTRUCTIONS and
+            if (inst.op_name in DECORATION_INSTRUCTIONS and
                     inst.op_name != 'OpDecorationGroup' and
                     inst.operands[0] == src_inst.result_id):
                 new_operands = inst.operands[:]
@@ -549,3 +549,155 @@ def get_int_type_range(module, type_id):
         min_val = 0
 
     return min_val, max_val
+
+
+MAGIC = 0x07230203
+GENERATOR_MAGIC = 0
+VERSION = 99
+
+with open(os.path.join(os.path.dirname(__file__), 'spirv.json')) as fd:
+    TABLES = json.load(fd)
+
+OPCODE_TABLE = {}
+OPNAME_TABLE = {}
+for fmt in TABLES['instructions']:
+    OPCODE_TABLE[fmt['opcode']] = fmt
+    OPNAME_TABLE[fmt['name']] = fmt
+
+KINDS = TABLES['constants']
+DECORATIONS = KINDS['Decoration']
+MASKS = TABLES['masks']
+
+BRANCH_INSTRUCTIONS = [
+    'OpReturnValue',
+    'OpBranch',
+    'OpBranchConditional',
+    'OpReturn',
+    'OpKill',
+    'OpUnreachable',
+    'OpSwitch'
+]
+
+# The order of the instructions in the first part of the binary (before
+# the debug and annotation instructions).
+INITIAL_INSTRUCTIONS = [
+    'OpSource',
+    'OpSourceExtension',
+    'OpCapability',
+    'OpExtension',
+    'OpExtInstImport',
+    'OpMemoryModel',
+    'OpEntryPoint',
+    'OpExecutionMode'
+]
+
+DEBUG_INSTRUCTIONS = [
+    'OpString',
+    'OpName',
+    'OpMemberName',
+    'OpLine',
+]
+
+DECORATION_INSTRUCTIONS = [
+    'OpDecorate',
+    'OpMemberDecorate',
+    'OpGroupDecorate',
+    'OpGroupMemberDecorate',
+    'OpDecorationGroup'
+]
+
+TYPE_DECLARATION_INSTRUCTIONS = [
+    'OpTypeVoid',
+    'OpTypeBool',
+    'OpTypeInt',
+    'OpTypeFloat',
+    'OpTypeVector',
+    'OpTypeMatrix',
+    'OpTypeImage',
+    'OpTypeSampler',
+    'OpTypeSampledImage',
+    'OpTypeArray',
+    'OpTypeRuntimeArray',
+    'OpTypeStruct',
+    'OpTypeOpaque',
+    'OpTypePointer',
+    'OpTypeFunction',
+    'OpTypeEvent',
+    'OpTypeDeviceEvent',
+    'OpTypeReserveId',
+    'OpTypeQueue',
+    'OpTypePipe'
+]
+
+CONSTANT_INSTRUCTIONS = [
+    'OpConstantTrue',
+    'OpConstantFalse',
+    'OpConstant',
+    'OpConstantComposite',
+    'OpConstantSampler',
+    'OpConstantNull',
+]
+
+SPECCONSTANT_INSTRUCTIONS = [
+    'OpSpecConstantTrue',
+    'OpSpecConstantFalse',
+    'OpSpecConstant',
+    'OpSpecConstantComposite',
+    'OpSpecConstantOp'
+]
+
+GLOBAL_VARIABLE_INSTRUCTIONS = [
+    'OpVariable'
+]
+
+GLOBAL_INSTRUCTIONS = (INITIAL_INSTRUCTIONS +
+                       DEBUG_INSTRUCTIONS +
+                       DECORATION_INSTRUCTIONS +
+                       TYPE_DECLARATION_INSTRUCTIONS +
+                       CONSTANT_INSTRUCTIONS +
+                       GLOBAL_VARIABLE_INSTRUCTIONS)
+
+HAS_SIDE_EFFECT = [
+    'OpFunction',
+    'OpFunctionParameter',
+    'OpFunctionCall',
+    'OpExtInst',
+    'OpAtomicExchange',
+    'OpAtomicCompareExchange',
+    'OpAtomicCompareExchangeWeak',
+    'OpAtomicIIncrement',
+    'OpAtomicIDecrement',
+    'OpAtomicIAdd',
+    'OpAtomicISub',
+    'OpAtomicSMin',
+    'OpAtomicUMin',
+    'OpAtomicSMax',
+    'OpAtomicUMax',
+    'OpAtomicAnd',
+    'OpAtomicOr',
+    'OpAtomicXor',
+    'OpLabel',
+    'OpAsyncGroupCopy',
+    'OpWaitGroupEvents',
+    'OpGroupAll',
+    'OpGroupAny',
+    'OpGroupBroadcast',
+    'OpGroupIAdd',
+    'OpGroupFAdd',
+    'OpGroupFMin',
+    'OpGroupUMin',
+    'OpGroupSMin',
+    'OpGroupFMax',
+    'OpGroupUMax',
+    'OpGroupSMax',
+    'OpReadPipe',
+    'OpWritePipe',
+    'OpReservedReadPipe',
+    'OpReservedWritePipe',
+    'OpReserveReadPipePackets',
+    'OpReserveWritePipePackets',
+    'OpGroupReserveWritePipePackets',
+    'OpEnqueueMarker',
+    'OpEnqueueKernel',
+    'OpCreateUserEvent'
+]

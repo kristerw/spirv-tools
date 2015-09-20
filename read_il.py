@@ -1,6 +1,5 @@
 import re
 
-import spirv
 import ir
 
 
@@ -268,7 +267,7 @@ def add_type_name(module, inst):
 
     This function must handle exactly the same types as get_or_create_type().
     """
-    assert inst.op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS
+    assert inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS
     if inst.result_id in module.id_to_type_name:
         return
 
@@ -305,7 +304,7 @@ def parse_type(lexer, module):
     type_id = create_id(module, token, tag)
     if type_id.inst is None:
         raise ParseError(token + ' used but not defined')
-    if type_id.inst.op_name not in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+    if type_id.inst.op_name not in ir.TYPE_DECLARATION_INSTRUCTIONS:
         raise ParseError('Not a valid type: ' + token)
     return type_id
 
@@ -327,7 +326,7 @@ def parse_operand(lexer, module, kind, type_id):
     """Parse one instruction operand."""
     if kind == 'Id':
         return [parse_id(lexer, module, type_id=type_id)]
-    elif kind in spirv.MASKS:
+    elif kind in ir.MASKS:
         token, tag = lexer.get_next_token()
         return [int(token)]
     elif kind == 'LiteralNumber':
@@ -388,9 +387,9 @@ def parse_operand(lexer, module, kind, type_id):
             token, _ = lexer.get_next_token(peek=True, accept_eol=True)
             if token == ',':
                 lexer.get_next_token()
-    elif kind in spirv.KINDS:
+    elif kind in ir.KINDS:
         value, tag = lexer.get_next_token()
-        if value not in spirv.KINDS[kind]:
+        if value not in ir.KINDS[kind]:
             error = 'Invalid value ' + value + ' for ' + kind
             raise ParseError(error)
         return [value]
@@ -415,9 +414,9 @@ def parse_instruction(lexer, module):
         op_result = None
     if tag != 'NAME':
         raise ParseError('Expected an operation name')
-    if op_name not in spirv.OPNAME_TABLE:
+    if op_name not in ir.OPNAME_TABLE:
         raise ParseError('Invalid operation ' + op_name)
-    opcode = spirv.OPNAME_TABLE[op_name]
+    opcode = ir.OPNAME_TABLE[op_name]
     if opcode['type']:
         op_type = parse_type(lexer, module)
     else:
@@ -456,7 +455,7 @@ def parse_instruction(lexer, module):
     else:
         inst = ir.Instruction(module, op_name, op_result, op_type, operands)
         module.inst_to_line[inst] = lexer.line_no
-        if op_name in spirv.TYPE_DECLARATION_INSTRUCTIONS:
+        if op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_name(module, inst)
         return inst
 
@@ -467,7 +466,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
             return
-        elif token not in spirv.DECORATIONS:
+        elif token not in ir.DECORATIONS:
             return
 
         # XXX We should check that the decorations are valid for the
@@ -482,7 +481,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
             return
 
         decoration, _ = lexer.get_next_token()
-        if not decoration in spirv.DECORATIONS:
+        if not decoration in ir.DECORATIONS:
             raise ParseError('Unknown decoration ' + decoration)
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         operands = [variable_name, decoration]
@@ -544,7 +543,7 @@ def parse_basic_block_body(lexer, module, basic_block):
                 raise ParseError(
                     'OpFunctionEnd without terminating previous basic block')
             basic_block.append_inst(inst)
-            if token in spirv.BRANCH_INSTRUCTIONS:
+            if token in ir.BRANCH_INSTRUCTIONS:
                 return
 
 
