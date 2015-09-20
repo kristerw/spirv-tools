@@ -138,23 +138,31 @@ def format_decorations_for_inst(module, inst):
 
 
 def add_type_if_needed(module, inst, needed_types):
-    if inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
+    """Add this type id to the needed_types set if it is needed.
+
+    The type instruction is needed if it is not pretty-printed, and is used
+    by a normal instruction or by a needed type instruction.
+
+    The types needed by this type is added recursively."""
+    if inst not in needed_types:
         if inst.op_name != 'OpTypeFunction':
             if module.type_id_to_name[inst.result_id] == str(inst.result_id):
-                needed_types.add(inst.result_id)
+                needed_types.add(inst)
         for operand in inst.operands:
             if isinstance(operand, ir.Id):
-                add_type_if_needed(module, operand.inst, needed_types)
-    if inst.type_id is not None:
-        if module.type_id_to_name[inst.type_id] == str(inst.type_id):
-            needed_types.add(inst.type_id)
+                if operand.inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
+                    add_type_if_needed(module, operand.inst, needed_types)
 
 
 def get_needed_types(module):
+    """Determine the type instruction needed in a prety-printed IL.
+
+    The type instruction is needed if it is not pretty-printed, and is used
+    by a normal instruction, or used by a needed type instruction."""
     needed_types = set()
     for inst in module.instructions():
-        if inst.op_name not in ir.TYPE_DECLARATION_INSTRUCTIONS:
-            add_type_if_needed(module, inst, needed_types)
+        if inst.type_id is not None:
+            add_type_if_needed(module, inst.type_id.inst, needed_types)
     return needed_types
 
 
@@ -308,7 +316,7 @@ def write_module(stream, module, is_raw_mode=False):
             if needed_types:
                 stream.write('\n')
                 for inst in module.global_insts:
-                    if inst.result_id in needed_types:
+                    if inst in needed_types:
                         output_instruction(stream, module, inst, is_raw_mode,
                                            indent='')
             output_global_instructions(stream, module, is_raw_mode,
