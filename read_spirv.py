@@ -150,9 +150,9 @@ def parse_operand(binary, module, kind):
             if word is None:
                 return operands
             operands.append(module.get_id(word))
-    elif kind in spirv.CONSTANTS:
+    elif kind in spirv.KINDS:
         val = binary.get_next_word()
-        constants = spirv.CONSTANTS[kind]
+        constants = spirv.KINDS[kind]
         for name in constants:
             if constants[name] == val:
                 return [name]

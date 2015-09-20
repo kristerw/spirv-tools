@@ -37,8 +37,8 @@ def output_instruction(stream, inst):
             # are included in them.  But loop will only give us one.
             # Handle these after the loop.
             break
-        elif kind in spirv.CONSTANTS:
-            constants = spirv.CONSTANTS[kind]
+        elif kind in spirv.KINDS:
+            constants = spirv.KINDS[kind]
             inst_data.append(constants[operand])
         else:
             raise Exception('Unhandled kind ' + kind)

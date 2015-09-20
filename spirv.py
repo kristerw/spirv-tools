@@ -14,8 +14,8 @@ for fmt in TABLES['instructions']:
     OPCODE_TABLE[fmt['opcode']] = fmt
     OPNAME_TABLE[fmt['name']] = fmt
 
-CONSTANTS = TABLES['constants']
-DECORATIONS = CONSTANTS['Decoration']
+KINDS = TABLES['constants']
+DECORATIONS = KINDS['Decoration']
 MASKS = TABLES['masks']
 
 BRANCH_INSTRUCTIONS = [

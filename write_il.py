@@ -51,7 +51,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
                 # are included in them.  But loop will only give us one.
                 # Handle these after the loop.
                 break
-            elif kind in spirv.CONSTANTS:
+            elif kind in spirv.KINDS:
                 line = line + operand + ', '
             else:
                 raise Exception('Unhandled kind ' + kind)

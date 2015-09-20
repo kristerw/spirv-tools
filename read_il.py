@@ -388,9 +388,9 @@ def parse_operand(lexer, module, kind, type_id):
             token, _ = lexer.get_next_token(peek=True, accept_eol=True)
             if token == ',':
                 lexer.get_next_token()
-    elif kind in spirv.CONSTANTS:
+    elif kind in spirv.KINDS:
         value, tag = lexer.get_next_token()
-        if value not in spirv.CONSTANTS[kind]:
+        if value not in spirv.KINDS[kind]:
             error = 'Invalid value ' + value + ' for ' + kind
             raise ParseError(error)
         return [value]
