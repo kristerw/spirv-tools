@@ -209,6 +209,9 @@ def add_vector_type(module, token):
     elif token[-5:-2] == ' x ':
         base_type = token[-2:]
         nof_elem = int(token[:-5])
+    elif token[-7:-4] == ' x ':
+        base_type = token[-4:]
+        nof_elem = int(token[:-7])
     else:
         raise ParseError('Not a valid type: ' + orig_token)
 
