@@ -330,7 +330,7 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind in spirv.MASKS:
         token, tag = lexer.get_next_token()
         return [int(token)]
-    elif kind == 'LiteralNumber' or kind == 'SamplerImageFormat':
+    elif kind == 'LiteralNumber':
         token, tag = lexer.get_next_token()
         return [int(token)]
     elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':

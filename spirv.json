@@ -601,7 +601,7 @@
                 "LiteralNumber", 
                 "LiteralNumber", 
                 "LiteralNumber", 
-                "SamplerImageFormat", 
+                "ImageFormat",
                 "OptionalLiteral"
             ], 
             "name": "OpTypeImage"

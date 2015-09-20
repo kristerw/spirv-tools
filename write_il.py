@@ -36,7 +36,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
         for operand, kind in zip(inst.operands, opcode['operands']):
             if kind == 'Id' or kind == 'OptionalId':
                 line = line + id_name(module, operand) + ', '
-            elif kind == 'LiteralNumber' or kind == 'SamplerImageFormat':
+            elif kind == 'LiteralNumber':
                 line = line + str(operand) + ', '
             elif kind in spirv.MASKS:
                 line = line + str(operand) + ', '

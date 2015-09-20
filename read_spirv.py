@@ -108,9 +108,7 @@ def parse_operand(binary, module, kind):
     """Parse one instruction operand."""
     if kind == 'Id':
         return [parse_id(binary, module)]
-    elif kind in ['LiteralNumber',
-                  'FunctionControlMask',
-                  'SamplerImageFormat']:
+    elif kind in ['LiteralNumber', 'FunctionControlMask']:
         return [binary.get_next_word()]
     elif kind == 'LiteralString':
         return [parse_literal_string(binary)]
