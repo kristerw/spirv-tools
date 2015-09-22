@@ -72,11 +72,14 @@ def merge_basic_blocks(module):
 
 def eliminate_phi_nodes(module):
     """Eliminates PHI nodes for basic blocks with a single predecessor."""
-    for inst in module.instructions():
-        if inst.op_name == 'OpPhi':
-            if len(inst.operands) == 2:
-                source_inst = inst.operands[0].inst
-                inst.replace_with(source_inst)
+    for function in module.functions:
+        for basic_block in function.basic_blocks:
+            for inst in basic_block.insts:
+                if inst.op_name != 'OpPhi':
+                    break
+                if len(inst.operands) == 2:
+                    source_inst = inst.operands[0].inst
+                    inst.replace_with(source_inst)
 
 
 def optimize(module):
