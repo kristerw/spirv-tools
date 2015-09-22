@@ -48,12 +48,12 @@ def merge_basic_blocks(module):
             predecessors = basic_block.predecessors()
             if len(predecessors) == 1:
                 pred_block = predecessors[0]
-                assert pred_block.insts[-1].op_name == 'OpBranch'
-                pred_block.insts[-1].destroy()
-                for inst in basic_block.insts[:]:
-                    inst.remove()
-                    pred_block.append_inst(inst)
-                basic_block.destroy()
+                if pred_block.insts[-1].op_name == 'OpBranch':
+                    pred_block.insts[-1].destroy()
+                    for inst in basic_block.insts[:]:
+                        inst.remove()
+                        pred_block.append_inst(inst)
+                    basic_block.destroy()
 
 
 def eliminate_phi_nodes(module):
