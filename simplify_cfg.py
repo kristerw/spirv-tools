@@ -40,13 +40,27 @@ def remove_unused_basic_blocks(module):
                 basic_block.destroy()
 
 
+def get_merge_targest(module):
+    """Return a set of BBs that are a taget of a merge instruction."""
+    merge_targets = set()
+    for function in module.functions:
+        for basic_block in function.basic_blocks:
+            if (len(basic_block.insts) > 1 and
+                    basic_block.insts[-2] in ['OpLoopMerge',
+                                              'OpSelectionMerge']):
+                target_id = basic_block.inst.operands[0]
+                merge_targets.add(target_id.inst.basic_block)
+    return merge_targets
+
+
 def merge_basic_blocks(module):
     """Merges a basic block into its predecessor if there is only one and
     the predecessor only has one successor."""
+    merge_targets = get_merge_targest(module)
     for function in module.functions:
         for basic_block in reversed(function.basic_blocks[1:]):
             predecessors = basic_block.predecessors()
-            if len(predecessors) == 1:
+            if len(predecessors) == 1 and basic_block not in merge_targets:
                 pred_block = predecessors[0]
                 if pred_block.insts[-1].op_name == 'OpBranch':
                     pred_block.insts[-1].destroy()
