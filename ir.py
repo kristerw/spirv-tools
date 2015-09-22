@@ -86,6 +86,7 @@ class Module(object):
             raise IRError(inst.op_name + ' is not a valid global instruction')
         self.global_insts.append(inst)
         self._sort_global_insts()
+        _add_use_to_id(inst)
 
     def add_function(self, function):
         """Add function to the module."""
@@ -194,8 +195,10 @@ class Function(object):
         self.inst = Instruction(self.module, 'OpFunction',
                                 function_id, function_type_id.inst.operands[0],
                                 [function_control, function_type_id])
+        _add_use_to_id(self.inst)
         self.end_inst = Instruction(self.module, 'OpFunctionEnd',
                                     None, None, [])
+        _add_use_to_id(self.end_inst)
 
     def __str__(self):
         return str(self.inst)
@@ -244,6 +247,7 @@ class Function(object):
         if inst.type_id != params[param_idx]:
             raise IRError('Incorrect parameter type')
         self.parameters.append(inst)
+        _add_use_to_id(inst)
 
     def add_basic_block(self, basic_block):
         """Add one basic block to the function."""
@@ -256,6 +260,7 @@ class BasicBlock(object):
         self.function = None
         self.module = module
         self.inst = Instruction(self.module, 'OpLabel', label_id, None, [])
+        _add_use_to_id(self.inst)
         self.inst.basic_block = self
         self.insts = []
 
@@ -272,11 +277,13 @@ class BasicBlock(object):
         """Add instruction at the end of the basic block."""
         inst.basic_block = self
         self.insts.append(inst)
+        _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
         """Add instruction at the top of the basic block."""
         inst.basic_block = self
         self.insts = [inst] + self.insts
+        _add_use_to_id(inst)
 
     def remove(self):
         """Remove basic block from function."""
@@ -361,6 +368,7 @@ class Instruction(object):
         idx = basic_block.insts.index(insert_pos_inst)
         self.basic_block = basic_block
         basic_block.insts.insert(idx + 1, self)
+        _add_use_to_id(self)
 
     def insert_before(self, insert_pos_inst):
         """Add instruction before an existing instruction."""
@@ -370,12 +378,14 @@ class Instruction(object):
         idx = basic_block.insts.index(insert_pos_inst)
         self.basic_block = basic_block
         basic_block.insts.insert(idx, self)
+        _add_use_to_id(self)
 
     def remove(self):
         """Remove instruction from basic block or global instruction list.
 
         The instruction's debug and decoration instructions are unaffected,
         so that it is possible to re-insert the instruction again."""
+        _remove_use_from_id(self)
         if self.basic_block is None:
             if self not in self.module.global_insts:
                 raise IRError('Instruction is not in basic block or module')
@@ -390,6 +400,7 @@ class Instruction(object):
         This removes the instruction, together with its debug and decoration
         instructions, from the module. The instruction must not be used
         after it is destroyed."""
+        _remove_use_from_id(self)
         for inst in self.module.global_insts[:]:
             if (inst.op_name in DECORATION_INSTRUCTIONS or
                     inst.op_name in DEBUG_INSTRUCTIONS):
@@ -430,11 +441,10 @@ class Instruction(object):
 
         Debug and decoration instructions are not considered using
         any instruction."""
-        uses = []
-        for inst in self.module.instructions():
-            if inst.is_using(self):
-                uses.append(inst)
-        return uses
+        res = []
+        if self.result_id is not None:
+            res = [inst for inst in self.result_id.uses if inst.is_using(self)]
+        return res
 
     def replace_uses_with(self, new_inst):
         """Replace all uses of this instruction with new_inst.
@@ -447,6 +457,8 @@ class Instruction(object):
             if inst.op_name in DEBUG_INSTRUCTIONS:
                 continue
             inst.substitute_type_and_operands(self, new_inst)
+            _add_use_to_id(new_inst)
+        _remove_use_from_id(self)
 
     def replace_with(self, new_inst):
         """Replace this instruction with new_inst.
@@ -493,6 +505,7 @@ class Id(object):
         self.value = value
         self._is_temp = is_temp
         self.inst = None
+        self.uses = set()
 
     def __str__(self):
         if self._is_temp:
@@ -511,6 +524,24 @@ class Id(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+
+def _add_use_to_id(inst):
+    if inst.type_id is not None:
+        inst.type_id.uses.add(inst)
+    for operand in inst.operands:
+        if isinstance(operand, Id):
+            operand.uses.add(inst)
+
+
+def _remove_use_from_id(inst):
+    if inst.type_id is not None:
+        assert inst in inst.type_id.uses
+        inst.type_id.uses.remove(inst)
+    for operand in inst.operands:
+        if isinstance(operand, Id):
+            if inst in operand.uses:
+                operand.uses.remove(inst)
 
 
 def lists_are_identical(list1, list2):
