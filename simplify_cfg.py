@@ -4,7 +4,7 @@ Specifically:
 * Removes basic blocks with no predecessors.
 * Merges a basic block into its predecessor if there is only one and the
   predecessor only has one successor.
-* Eliminates PHI nodes for basic blocks with a single predecessor.
+* Eliminates PHI nodes where all variables are identical.
 * Eliminates conditional branches having a constant conditional."""
 import ir
 
@@ -41,7 +41,7 @@ def remove_unused_basic_blocks(module):
 
 
 def get_merge_targest(module):
-    """Return a set of BBs that are a taget of a merge instruction."""
+    """Return a set of basic blocks that are targets of merge instructions."""
     merge_targets = set()
     for function in module.functions:
         for basic_block in function.basic_blocks:
@@ -71,15 +71,20 @@ def merge_basic_blocks(module):
 
 
 def eliminate_phi_nodes(module):
-    """Eliminates PHI nodes for basic blocks with a single predecessor."""
+    """Eliminates PHI nodes where all variables are identical."""
     for function in module.functions:
         for basic_block in function.basic_blocks:
             for inst in basic_block.insts:
                 if inst.op_name != 'OpPhi':
                     break
-                if len(inst.operands) == 2:
-                    source_inst = inst.operands[0].inst
-                    inst.replace_with(source_inst)
+                first_variable = inst.operands[0]
+                operands = inst.operands[2:]
+                while operands:
+                    if first_variable != operands[0]:
+                        break
+                    operands = operands[2:]
+                else:
+                    inst.replace_uses_with(first_variable.inst)
 
 
 def optimize(module):
