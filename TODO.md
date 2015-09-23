@@ -5,7 +5,6 @@ Known bugs and limitations in the API include:
 * Need a `mem2reg` pass
 * `Module.get_constant()` need to handle more types. At least Booleans, NULL pointers, etc. But probably "all" constants.
 * Need an API similar to 'Module.get_constant()' for creating types
-* The implementation is _very_ inefficient. Need to be able to get instruction uses etc. without iterating over the module
 
 Known bugs and limitations in the assembler/disassembler include:
 * The assembler syntax is mostly undocumented
