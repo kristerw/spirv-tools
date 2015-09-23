@@ -161,6 +161,7 @@ class Module(object):
         id_rename = {}
         for temp_id in temp_ids:
             id_rename[temp_id] = self.get_id(self.bound)
+            id_rename[temp_id].uses = temp_id.uses
             self.bound += 1
 
         # Update all uses of temporary IDs to use the new values.
@@ -451,14 +452,8 @@ class Instruction(object):
 
         Decoration and debug instructions are not updated, as they are
         considered being a part of the instruction they reference."""
-        for inst in self.module.instructions():
-            if inst.op_name in DECORATION_INSTRUCTIONS:
-                continue
-            if inst.op_name in DEBUG_INSTRUCTIONS:
-                continue
+        for inst in self.uses():
             inst.substitute_type_and_operands(self, new_inst)
-            _add_use_to_id(new_inst)
-        _remove_use_from_id(self)
 
     def replace_with(self, new_inst):
         """Replace this instruction with new_inst.
@@ -472,11 +467,13 @@ class Instruction(object):
 
     def substitute_type_and_operands(self, old_inst, new_inst):
         """Change use of old_inst in this instruction to new_inst."""
+        _remove_use_from_id(self)
         if self.type_id == old_inst.result_id:
             self.type_id = new_inst.result_id
         for idx in range(len(self.operands)):
             if self.operands[idx] == old_inst.result_id:
                 self.operands[idx] = new_inst.result_id
+        _add_use_to_id(self)
 
     def has_side_effect(self):
         """True if the instruction may be removed if unused."""
