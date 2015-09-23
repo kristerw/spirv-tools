@@ -422,30 +422,24 @@ class Instruction(object):
         self.type_id = None
         self.operands = None
 
-    def is_using(self, inst):
-        """Return True if this instruction is using the instruction.
-
-        Debug and decoration instructions are not considered using
-        any instruction."""
-        if self.op_name in DECORATION_INSTRUCTIONS:
-            return False
-        if self.op_name in DEBUG_INSTRUCTIONS:
-            return False
-        if self.type_id == inst.result_id:
-            return True
-        for operand in self.operands:
-            if operand == inst.result_id:
-                return True
-        return False
-
     def uses(self):
-        """Return all instructions using this instructions.
+        """Return all instructions using this instruction.
 
         Debug and decoration instructions are not considered using
         any instruction."""
         res = []
         if self.result_id is not None:
-            res = [inst for inst in self.result_id.uses if inst.is_using(self)]
+            res = [inst for inst in self.result_id.uses
+                   if (inst.op_name not in DECORATION_INSTRUCTIONS and
+                       inst.op_name not in DEBUG_INSTRUCTIONS)]
+        return res
+
+    def get_decorations(self):
+        """Return all decorations for this instruction."""
+        res = []
+        if self.result_id is not None:
+            res = [inst for inst in self.result_id.uses
+                   if inst.op_name in DECORATION_INSTRUCTIONS]
         return res
 
     def replace_uses_with(self, new_inst):

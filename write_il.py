@@ -79,14 +79,6 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     stream.write(line + '\n')
 
 
-def get_decorations(module, inst_id):
-    decorations = []
-    for inst in module.global_insts:
-        if inst.op_name == 'OpDecorate' and inst.operands[0] == inst_id:
-            decorations.append(inst)
-    return decorations
-
-
 def get_symbol_name(module, symbol_id):
     if symbol_id in module.id_to_symbol_name:
         return module.id_to_symbol_name[symbol_id]
@@ -131,9 +123,10 @@ def format_decoration(decoration_inst):
 
 def format_decorations_for_inst(module, inst):
     line = ''
-    decorations = get_decorations(module, inst.result_id)
-    for decoration in decorations:
-        line = line + ' ' + format_decoration(decoration)
+    if inst.result_id is not None:
+        decorations = inst.get_decorations()
+        for decoration in decorations:
+            line = line + ' ' + format_decoration(decoration)
     return line
 
 
