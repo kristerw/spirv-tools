@@ -85,7 +85,6 @@ class Module(object):
         if inst.op_name not in GLOBAL_INSTRUCTIONS:
             raise IRError(inst.op_name + ' is not a valid global instruction')
         self.global_insts.append(inst)
-        self._sort_global_insts()
         _add_use_to_id(inst)
 
     def add_function(self, function):
@@ -143,6 +142,8 @@ class Module(object):
             raise IRError('Invalid type for constant')
 
     def finalize(self):
+        self._sort_global_insts()
+
         # Determine ID bound.
         self.bound = 0
         for inst in self.instructions():
