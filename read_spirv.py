@@ -136,6 +136,15 @@ def parse_operand(binary, module, kind):
             if word is None:
                 return operands
             operands.append(module.get_id(word))
+    elif kind == 'VariableIdLiteral':
+        operands = []
+        while True:
+            word = binary.get_next_word(throw_on_eol=False)
+            if word is None:
+                return operands
+            operands.append(module.get_id(word))
+            word = binary.get_next_word()
+            operands.append(word)
     elif kind == 'VariableLiteralId':
         operands = []
         while True:
@@ -144,8 +153,6 @@ def parse_operand(binary, module, kind):
                 return operands
             operands.append(word)
             word = binary.get_next_word()
-            if word is None:
-                return operands
             operands.append(module.get_id(word))
     elif kind in ir.KINDS:
         val = binary.get_next_word()

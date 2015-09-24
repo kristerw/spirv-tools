@@ -32,6 +32,7 @@ def output_instruction(stream, inst):
                       'OptionalLiteral',
                       'VariableIds',
                       'OptionalImage',
+                      'VariableIdLiteral',
                       'VariableLiteralId']:
             # The variable kind must be the last (as rest of the operands
             # are included in them.  But loop will only give us one.
@@ -56,6 +57,12 @@ def output_instruction(stream, inst):
         inst_data.append(operands[0])
         for operand in operands[1:]:
             inst_data.append(operand.value)
+    elif kind == 'VariableIdLiteral':
+        operands = inst.operands[(len(opcode['operands'])-1):]
+        while operands:
+            target_id = operands.pop(0)
+            inst_data.append(target_id.value)
+            inst_data.append(operands.pop(0))
     elif kind == 'VariableLiteralId':
         operands = inst.operands[(len(opcode['operands'])-1):]
         while operands:

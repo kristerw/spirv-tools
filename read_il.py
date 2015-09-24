@@ -363,6 +363,20 @@ def parse_operand(lexer, module, kind, type_id):
             token, tag = lexer.get_next_token(peek=True, accept_eol=True)
             if token == ',':
                 lexer.get_next_token()
+    elif kind == 'VariableIdLiteral':
+        operands = []
+        while True:
+            token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+            if token == '':
+                return operands
+            operand_id = parse_id(lexer, module, type_id=type_id)
+            operands.append(operand_id)
+            lexer.get_next_token(',')
+            token, tag = lexer.get_next_token()
+            operands.append(int(token))
+            token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+            if token == ',':
+                lexer.get_next_token()
     elif kind == 'VariableLiteralId':
         operands = []
         while True:
@@ -404,7 +418,8 @@ def parse_operands(lexer, module, opcode, type_id):
     while kinds:
         kind = kinds.pop(0)
         if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals',
-                        'VariableIds', 'OptionalImage', 'VariableLiteralId']:
+                        'VariableIds', 'OptionalImage', 'VariableIdLiteral',
+                        'VariableLiteralId']:
             raise ParseError('Missing operands')
 
     return operands
