@@ -479,15 +479,12 @@ class Instruction(object):
 
     def copy_decorations(self, src_inst):
         """Copy the decorations from src_inst to this instruction."""
-        for inst in self.module.instructions():
-            if (inst.op_name in DECORATION_INSTRUCTIONS and
-                    inst.op_name != 'OpDecorationGroup' and
-                    inst.operands[0] == src_inst.result_id):
-                new_operands = inst.operands[:]
-                new_operands[0] = self.result_id
-                new_inst = Instruction(self.module, inst.op_name,
-                                       None, None, new_operands)
-                self.module.add_global_inst(new_inst)
+        for inst in src_inst.get_decorations():
+            new_operands = inst.operands[:]
+            new_operands[0] = self.result_id
+            new_inst = Instruction(self.module, inst.op_name,
+                                   None, None, new_operands)
+            self.module.add_global_inst(new_inst)
 
 
 class Id(object):
