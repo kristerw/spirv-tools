@@ -24,9 +24,28 @@ class VerificationError(Exception):
 
 class Lexer(object):
     def __init__(self, stream):
+        token_exprs = [
+            (r'%[1-9][0-9]*:', 'LABEL'),
+            (r'%[a-zA-Z_][a-zA-Z0-9_]*:', 'LABEL'),
+            (r'%[1-9][0-9]*', 'ID'),
+            (r'%[a-zA-Z_][a-zA-Z0-9_]*', 'ID'),
+            (r'[a-zA-Z][a-zA-Z0-9.]*', 'NAME'),
+            (r'[,={}\(\)]', None),
+            (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
+            (r'[1-3]D', 'NAME'),
+            (r'-?0b[01]+', 'INT'),
+            (r'-?0x[0-9a-fA-F]+', 'INT'),
+            (r'-?[1-9][0-9]*', 'INT'),
+            (r'-?0', 'INT'),
+            (r'".*"', "STRING")
+        ]
         self.stream = stream
         self.line = None
         self.line_no = 0
+        self.compiled_token_exprs = []
+        for pattern, tag in token_exprs:
+            regex = re.compile(pattern)
+            self.compiled_token_exprs.append((regex, tag))
 
     def get_next_token(self, expect=None, peek=False, accept_eol=False):
         """Return the next token from the file
@@ -54,28 +73,6 @@ class Lexer(object):
           or when a token does not match the expected token (if the
           expect parameter is provided)
         """
-
-        token_exprs = [
-            (r'%[a-zA-Z_][a-zA-Z0-9_]*:', 'LABEL'),
-            (r'%[1-9][0-9]*:', 'LABEL'),
-            (r'%[a-zA-Z_][a-zA-Z0-9_]*', 'ID'),
-            (r'%[1-9][0-9]*', 'ID'),
-            (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
-            (r'".*"', "STRING"),
-            (r',', None),
-            (r'=', None),
-            (r'{', None),
-            (r'}', None),
-            (r'\(', None),
-            (r'\)', None),
-            (r'[1-3]D', 'NAME'),
-            (r'-?0b[01]+', 'INT'),
-            (r'-?0x[0-9a-fA-F]+', 'INT'),
-            (r'-?[1-9][0-9]*', 'INT'),
-            (r'-?0', 'INT'),
-            (r'[a-zA-Z0-9.]+', 'NAME')
-        ]
-
         if self.line is None:
             self.line = self.stream.readline()
             if not self.line:
@@ -89,9 +86,7 @@ class Lexer(object):
             else:
                 raise ParseError('Expected more tokens')
 
-        for token_expr in token_exprs:
-            pattern, tag = token_expr
-            regex = re.compile(pattern)
+        for regex, tag in self.compiled_token_exprs:
             match = regex.match(self.line)
             if match:
                 token = match.group(0)
@@ -102,7 +97,6 @@ class Lexer(object):
                 return token, tag
 
         raise ParseError('Syntax error')
-
 
     def done_with_line(self):
         """Check that no tokens are remaining, and mark the line as done."""
