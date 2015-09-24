@@ -6,20 +6,12 @@ import ir
 class ParseError(Exception):
     def __init__(self, message):
         super(ParseError, self).__init__(message)
-        self.message = message
-
-    def __str__(self):
-        return repr(self.message)
 
 
 class VerificationError(Exception):
     def __init__(self, line_no, message):
         super(VerificationError, self).__init__(message)
         self.line_no = line_no
-        self.message = message
-
-    def __str__(self):
-        return repr(self.message)
 
 
 class Lexer(object):
@@ -394,41 +386,18 @@ def parse_operand(lexer, module, kind, type_id):
     raise ParseError('Unknown parameter kind "' + kind + '"')
 
 
-def parse_instruction(lexer, module):
-    """Parse one instruction."""
-    token, tag = lexer.get_next_token(peek=True)
-    if tag == 'ID':
-        token = parse_id(lexer, module)
-        op_result = token
-        if op_result.inst is not None:
-            id_name = get_id_name(module, op_result)
-            raise ParseError(id_name + ' is already defined')
-        lexer.get_next_token('=')
-        op_name, tag = lexer.get_next_token()
-    else:
-        token, tag = lexer.get_next_token()
-        op_name = token
-        op_result = None
-    if tag != 'NAME':
-        raise ParseError('Expected an operation name')
-    if op_name not in ir.OPNAME_TABLE:
-        raise ParseError('Invalid operation ' + op_name)
-    opcode = ir.OPNAME_TABLE[op_name]
-    if opcode['type']:
-        op_type = parse_type(lexer, module)
-    else:
-        op_type = None
+def parse_operands(lexer, module, opcode, type_id):
+    """Parse operands for one instruction."""
     operands = []
-
-    parse_decorations(lexer, module, op_result, op_name)
-
     kinds = opcode['operands'][:]
     while kinds:
         kind = kinds.pop(0)
-        operands = operands + parse_operand(lexer, module, kind, op_type)
-        comma, tag = lexer.get_next_token(',', accept_eol=True)
-        if comma == '':
+        operands = operands + parse_operand(lexer, module, kind, type_id)
+        token, _ = lexer.get_next_token(',', accept_eol=True)
+        if token == '':
             break
+        if not kinds:
+            raise ParseError('Spurious "," after last operand')
 
     # There are no more operands in the input.  This is OK if all the
     # remaining instruction operands are optional.
@@ -438,19 +407,46 @@ def parse_instruction(lexer, module):
                         'VariableIds', 'OptionalImage', 'VariableLiteralId']:
             raise ParseError('Missing operands')
 
+    return operands
+
+
+def parse_instruction(lexer, module):
+    """Parse one instruction."""
+    _, tag = lexer.get_next_token(peek=True)
+    if tag == 'ID':
+        result_id = parse_id(lexer, module)
+        if result_id.inst is not None:
+            id_name = get_id_name(module, result_id)
+            raise ParseError(id_name + ' is already defined')
+        lexer.get_next_token('=')
+    else:
+        result_id = None
+    op_name, tag = lexer.get_next_token()
+    if tag != 'NAME':
+        raise ParseError('Expected an operation name')
+    if op_name not in ir.OPNAME_TABLE:
+        raise ParseError('Invalid operation ' + op_name)
+    opcode = ir.OPNAME_TABLE[op_name]
+    if opcode['type']:
+        type_id = parse_type(lexer, module)
+    else:
+        type_id = None
+
+    parse_decorations(lexer, module, result_id, op_name)
+    operands = parse_operands(lexer, module, opcode, type_id)
     lexer.done_with_line()
 
     if op_name == 'OpFunction':
-        function = ir.Function(module, op_result, operands[0], operands[1])
+        function = ir.Function(module, result_id, operands[0], operands[1])
         module.inst_to_line[function.inst] = lexer.line_no
         module.inst_to_line[function.end_inst] = lexer.line_no
         return function
     elif op_name == 'OpLabel':
-        basic_block = ir.BasicBlock(module, op_result)
+        basic_block = ir.BasicBlock(module, result_id)
         module.inst_to_line[basic_block.inst] = lexer.line_no
         return basic_block
     else:
-        inst = ir.Instruction(module, op_name, op_result, op_type, operands)
+        inst = ir.Instruction(module, op_name, result_id, type_id, operands)
         module.inst_to_line[inst] = lexer.line_no
         if op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_name(module, inst)
@@ -469,7 +465,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
         # XXX We should check that the decorations are valid for the
         # operation.
         #
-        # In particular 'Uniform' is both a decoraton and a storage class,
+        # In particular 'Uniform' is both a decoration and a storage class,
         # so instructions that have 'StorageClass' as first operand must
         # not parse 'Uniform' as a decoration (and 'Uniform' is not a valid
         # decoration for those operations).  At this as a special case
@@ -545,7 +541,7 @@ def parse_basic_block_body(lexer, module, basic_block):
 
 
 def parse_basic_block(lexer, module, function):
-    """Parse one basic block."""
+    """Parse one pretty-printed basic block."""
     token, tag = lexer.get_next_token()
     assert tag == 'LABEL' and token[-1] == ':'
     lexer.done_with_line()
@@ -601,16 +597,15 @@ def parse_parameters(lexer, module):
     token, _ = lexer.get_next_token(peek=True)
     if token == 'void':
         lexer.get_next_token('void')
-        lexer.get_next_token(')')
-        return []
-    while lexer.get_next_token(peek=True) != (')', None):
-        param_type = parse_type(lexer, module)
-        param_id = parse_id(lexer, module)
-        parameters.append((param_type, param_id))
-        if lexer.get_next_token(peek=True) == (',', None):
-            lexer.get_next_token()
-            if lexer.get_next_token(peek=True) == (')', None):
-                raise ParseError('Expected parameter after ","')
+    else:
+        while lexer.get_next_token(peek=True) != (')', None):
+            param_type = parse_type(lexer, module)
+            param_id = parse_id(lexer, module)
+            parameters.append((param_type, param_id))
+            if lexer.get_next_token(peek=True) == (',', None):
+                lexer.get_next_token()
+                if lexer.get_next_token(peek=True) == (')', None):
+                    raise ParseError('Expected parameter after ","')
     lexer.get_next_token(')')
     return parameters
 
@@ -702,6 +697,7 @@ def verify_ids_are_defined(module):
 
 
 def read_module(stream):
+    """Create a module from the IL read from the stream."""
     module = ir.Module()
     module.type_name_to_id = {}
     module.id_to_type_name = {}
