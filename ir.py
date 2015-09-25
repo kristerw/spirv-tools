@@ -144,28 +144,25 @@ class Module(object):
     def finalize(self):
         self._sort_global_insts()
 
-        # Determine ID bound.
+        # Determine ID bound, and collect all temporary IDs.
+        temp_ids = []
         self.bound = 0
         for inst in self.instructions():
             if inst.result_id is not None:
-                if not inst.result_id._is_temp:
+                if inst.result_id.is_temp:
+                    temp_ids.append(inst.result_id)
+                else:
                     self.bound = max(self.bound, inst.result_id.value)
         self.bound += 1
 
-        # Create new IDs for the temporary IDs.
-        temp_ids = []
-        for inst in self.instructions():
-            if (inst.result_id is not None and
-                    inst.result_id._is_temp and
-                    not inst.result_id in temp_ids):
-                temp_ids.append(inst.result_id)
+        # Create a new ID for each temporary ID.
         id_rename = {}
         for temp_id in temp_ids:
             id_rename[temp_id] = self.get_id(self.bound)
             id_rename[temp_id].uses = temp_id.uses
             self.bound += 1
 
-        # Update all uses of temporary IDs to use the new values.
+        # Update all uses of temporary ID to use the new values.
         for inst in self.instructions():
             if inst.result_id in id_rename:
                 new_id = id_rename[inst.result_id]
@@ -179,13 +176,10 @@ class Module(object):
                 if inst.operands[i] in id_rename:
                     inst.operands[i] = id_rename[inst.operands[i]]
 
-        # Rebuild mapping table to get rid of obsolete entries.
-        obsolete = []
-        for value in self._value_to_id:
+        # Rebuild ID mapping table to get rid of obsolete entries.
+        for value in self._value_to_id.keys():
             if self._value_to_id[value].inst is None:
-                obsolete.append(value)
-        if obsolete:
-            for value in obsolete:
+                self._value_to_id[value].destroy()
                 del self._value_to_id[value]
 
 
@@ -440,6 +434,7 @@ class Instruction(object):
         if self.result_id is not None:
             res = [inst for inst in self.result_id.uses
                    if inst.op_name in DECORATION_INSTRUCTIONS]
+            res.sort(key=_decoration_key)
         return res
 
     def replace_uses_with(self, new_inst):
@@ -491,28 +486,41 @@ class Id(object):
     def __init__(self, module, value, is_temp=False):
         assert 0 < value <= 0xffffffff
         assert is_temp or value not in module._value_to_id
-        self.value = value
-        self._is_temp = is_temp
+        self.value = -value if is_temp else value
+        self.is_temp = is_temp
         self.inst = None
         self.uses = set()
 
+    def destroy(self):
+        """Destroy the ID."""
+        self.is_temp = False
+        self.inst = None
+        self.uses = None
+        # Change the value to be out of range so that it will be caught
+        # if the ID escapes and is written to a binary, and so that the
+        # orginal value can be retrieved by subtracting 0x200000000, which
+        # should be helpful during debugging.
+        self.value = self.value + 0x200000000
+
     def __str__(self):
-        if self._is_temp:
-            return '%.' + str(self.value)
+        if self.is_temp:
+            return '%.' + str(-self.value)
         else:
             return '%' + str(self.value)
 
     def __hash__(self):
-        if self._is_temp:
-            return -self.value
-        else:
-            return self.value
+        return self.value
 
     def __eq__(self, other):
         return other is self
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+
+def _decoration_key(decoration_inst):
+    """Comparision key to return decorations in deterministic order."""
+    return decoration_inst.operands[1]
 
 
 def _add_use_to_id(inst):
