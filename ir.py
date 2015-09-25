@@ -147,7 +147,7 @@ class Module(object):
         # Determine ID bound.
         self.bound = 0
         for inst in self.instructions():
-            if isinstance(inst.result_id, Id):
+            if inst.result_id is not None:
                 if not inst.result_id._is_temp:
                     self.bound = max(self.bound, inst.result_id.value)
         self.bound += 1
