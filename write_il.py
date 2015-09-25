@@ -277,8 +277,6 @@ def write_module(stream, module, is_raw_mode=False):
     module.id_to_symbol_name = {}
     module.type_id_to_name = {}
     try:
-        module.finalize()
-
         add_type_names(module)
         if not is_raw_mode:
             generate_global_symbols(module)
