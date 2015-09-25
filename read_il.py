@@ -1,5 +1,6 @@
 import re
 
+import spirv
 import ir
 
 
@@ -24,7 +25,6 @@ class Lexer(object):
             (r'[a-zA-Z][a-zA-Z0-9.]*', 'NAME'),
             (r'[,={}\(\)]', None),
             (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
-            (r'[1-3]D', 'NAME'),
             (r'-?0b[01]+', 'INT'),
             (r'-?0x[0-9a-fA-F]+', 'INT'),
             (r'-?[1-9][0-9]*', 'INT'),
@@ -390,9 +390,9 @@ def parse_operand(lexer, module, kind, type_id):
             token, _ = lexer.get_next_token(peek=True, accept_eol=True)
             if token == ',':
                 lexer.get_next_token()
-    elif kind in ir.KINDS:
+    elif kind in spirv.spv:
         value, tag = lexer.get_next_token()
-        if value not in ir.KINDS[kind]:
+        if value not in spirv.spv[kind]:
             error = 'Invalid value ' + value + ' for ' + kind
             raise ParseError(error)
         return [value]
@@ -474,7 +474,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         if token == '':
             return
-        elif token not in ir.DECORATIONS:
+        elif token not in spirv.spv['Decoration']:
             return
 
         # XXX We should check that the decorations are valid for the
@@ -489,7 +489,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
             return
 
         decoration, _ = lexer.get_next_token()
-        if not decoration in ir.DECORATIONS:
+        if not decoration in spirv.spv['Decoration']:
             raise ParseError('Unknown decoration ' + decoration)
         token, _ = lexer.get_next_token(peek=True, accept_eol=True)
         operands = [variable_name, decoration]

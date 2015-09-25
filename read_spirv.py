@@ -1,5 +1,6 @@
 import array
 
+import spirv
 import ir
 
 
@@ -154,9 +155,9 @@ def parse_operand(binary, module, kind):
             operands.append(word)
             word = binary.get_next_word()
             operands.append(module.get_id(word))
-    elif kind in ir.KINDS:
+    elif kind in spirv.spv:
         val = binary.get_next_word()
-        constants = ir.KINDS[kind]
+        constants = spirv.spv[kind]
         for name in constants:
             if constants[name] == val:
                 return [name]

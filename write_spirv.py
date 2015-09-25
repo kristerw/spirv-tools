@@ -1,5 +1,6 @@
 import array
 
+import spirv
 import ir
 
 
@@ -38,8 +39,8 @@ def output_instruction(stream, inst):
             # are included in them.  But loop will only give us one.
             # Handle these after the loop.
             break
-        elif kind in ir.KINDS:
-            constants = ir.KINDS[kind]
+        elif kind in spirv.spv:
+            constants = spirv.spv[kind]
             inst_data.append(constants[operand])
         else:
             raise Exception('Unhandled kind ' + kind)

@@ -2,6 +2,8 @@ import json
 import os
 import sys
 
+import spirv
+
 
 class IRError(Exception):
     def __init__(self, message):
@@ -592,9 +594,7 @@ for fmt in TABLES['instructions']:
     OPCODE_TABLE[fmt['opcode']] = fmt
     OPNAME_TABLE[fmt['name']] = fmt
 
-KINDS = TABLES['constants']
-DECORATIONS = KINDS['Decoration']
-MASKS = TABLES['masks']
+MASKS = set([name[:-4] for name in spirv.spv if name[-4:] == 'Mask'])
 
 BRANCH_INSTRUCTIONS = [
     'OpReturnValue',
