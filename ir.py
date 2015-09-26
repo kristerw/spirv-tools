@@ -117,7 +117,7 @@ class Module(object):
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstant' and
                         inst.type_id == type_id.inst.result_id and
-                        cmp(inst.operands, operands) == 0):
+                        inst.operands == operands):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
                                type_id.inst.result_id, operands)
@@ -134,7 +134,7 @@ class Module(object):
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstantComposite' and
                         inst.type_id == type_id.inst.result_id and
-                        lists_are_identical(inst.operands, operands)):
+                        inst.operands == operands):
                     return inst
             inst = Instruction(self, 'OpConstantComposite', self.new_id(),
                                type_id.inst.result_id, operands)
@@ -541,16 +541,6 @@ def _remove_use_from_id(inst):
         if isinstance(operand, Id):
             if inst in operand.uses:
                 operand.uses.remove(inst)
-
-
-def lists_are_identical(list1, list2):
-    """Return True if the lists are identical."""
-    if len(list1) != len(list2):
-        return False
-    for elem1, elem2 in zip(list1, list2):
-        if elem1 != elem2:
-            return False
-    return True
 
 
 def get_int_type_range(type_id):

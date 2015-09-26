@@ -62,7 +62,7 @@ def optimize_OpVectorShuffle(module, inst):
 
     # Create new inst if we have changed the instruction.
     operands = [vec1_inst.result_id, vec2_inst.result_id] + components
-    if cmp(operands, inst.operands) != 0:
+    if operands != inst.operands:
         new_inst = ir.Instruction(module, 'OpVectorShuffle', module.new_id(),
                                   inst.type_id, operands)
         new_inst.insert_before(inst)
