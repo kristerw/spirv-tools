@@ -29,7 +29,7 @@ class Lexer(object):
             (r'-?0x[0-9a-fA-F]+', 'INT'),
             (r'-?[1-9][0-9]*', 'INT'),
             (r'-?0', 'INT'),
-            (r'".*"', "STRING")
+            (r'".*"', 'STRING')
         ]
         self.stream = stream
         self.line = None
@@ -102,7 +102,8 @@ def get_or_create_scalar_constant(module, token, type_id):
     """Return a const inst corresponding of type_id with value from token.
 
     An already existing instruction is returned if it exists, otherwise
-    a new instruction is created and added to the global instructions."""
+    a new instruction is created and added to the global instructions.
+    """
     if token == 'true':
         type_id = get_or_create_type(module, 'bool')
         inst = ir.Instruction(module, 'OpConstantTrue', module.new_id(),
@@ -188,6 +189,24 @@ def parse_id(lexer, module, accept_eol=False, type_id=None):
         return create_id(module, token, tag, type_id)
 
 
+def parse_literal_number(lexer):
+    """Parse one LiteralNumber operand."""
+    token, tag = lexer.get_next_token()
+    if tag != 'INT':
+        raise ParseError('Expected an integer literal')
+    if token[0] == '-':
+        raise ParseError('Invalid value, must not be negative')
+
+    if token[0:2] == '0x':
+        value = int(token, 16)
+    elif token[0:2] == '0b':
+        value = int(token, 2)
+    else:
+        value = int(token)
+
+    return value
+
+
 def add_vector_type(module, token, new_id):
     """Create a vector type inst corresponding to the token."""
     orig_token = token
@@ -215,7 +234,8 @@ def get_or_create_type(module, token):
     """Return a type inst corresponding to the token.
 
     An already existing type instruction is returned if it exists, otherwise
-    a new instruction is created and added to the global instructions."""
+    a new instruction is created and added to the global instructions.
+    """
     if not token in module.type_name_to_id:
         new_id = module.new_id()
         if token == 'void':
@@ -301,7 +321,8 @@ def get_or_create_function_type(module, return_type, parameters):
     """Return the function type inst for the return type/parameter list.
 
     An already existing type instruction is returned if it exists, otherwise
-    a new instruction is created and added to the global instructions."""
+    a new instruction is created and added to the global instructions.
+    """
     for inst in module.global_insts:
         if inst.op_name == 'OpTypeFunction':
             if inst.operands[0] == return_type:
@@ -314,93 +335,83 @@ def get_or_create_function_type(module, return_type, parameters):
     return new_id
 
 
+def parse_var_operand(lexer, module, kind, type_id):
+    """Parse one instruction operand of the specified var/optional kind.
+
+    The var/optional kind may be realized by multiple "real" operands, so
+    the result is returned as a list.
+
+    Operands of the 'Id' kind may be a literal, in which case a constant
+    inst is created using the type in type_id.
+    """
+    if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+        kinds = ['LiteralNumber']
+    elif kind == 'VariableIds' or kind == 'OptionalId':
+        kinds = ['Id']
+    elif kind == 'VariableIdLiteral':
+        kinds = ['Id', 'LiteralNumber']
+    elif kind == 'VariableLiteralId':
+        kinds = ['LiteralNumber', 'Id']
+    else:
+        raise Exception("Invalid kind " + str(kind))
+
+    operands = []
+    while True:
+        tmp_kinds = kinds[:]
+        while tmp_kinds:
+            kind = tmp_kinds.pop(0)
+            if kind == 'Id':
+                operands.append(parse_id(lexer, module, type_id=type_id))
+            elif kind == 'LiteralNumber':
+                operands.append(parse_literal_number(lexer))
+
+            if tmp_kinds:
+                lexer.get_next_token(',')
+
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+        if token == '':
+            break
+        lexer.get_next_token(',')
+    return operands
+
+
 def parse_operand(lexer, module, kind, type_id):
-    """Parse one instruction operand."""
+    """Parse one instruction operand of the specified kind.
+
+    Operands of the 'Id' kind may be a literal, in which case a constant
+    inst is created using the type in type_id.
+    """
     if kind == 'Id':
-        return [parse_id(lexer, module, type_id=type_id)]
-    elif kind in ir.MASKS:
-        token, tag = lexer.get_next_token()
-        return [int(token)]
-    elif kind == 'LiteralNumber':
-        token, tag = lexer.get_next_token()
-        return [int(token)]
-    elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
-        operands = []
-        while True:
-            token, tag = lexer.get_next_token(accept_eol=True)
-            if token == '':
-                return operands
-            operands.append(int(token))
-            token, tag = lexer.get_next_token(peek=True, accept_eol=True)
-            if token == ',':
-                lexer.get_next_token()
+        operands = [parse_id(lexer, module, type_id=type_id)]
+    elif kind == 'LiteralNumber' or kind in ir.MASKS:
+        operands = [parse_literal_number(lexer)]
+    elif kind in ['VariableLiterals', 'OptionalLiteral', 'VariableIds',
+                  'OptionalId', 'VariableIdLiteral', 'VariableLiteralId']:
+        operands = parse_var_operand(lexer, module, kind, type_id)
     elif kind == 'LiteralString':
         token, tag = lexer.get_next_token()
-        return [token[1:-1]]
+        if tag != 'STRING':
+            raise ParseError('Expected a string literal')
+        operands = [token[1:-1]]
     elif kind == 'OptionalImage':
         operands = []
-        token, tag = lexer.get_next_token(accept_eol=True)
-        if token == '':
-            return operands
-        operands.append(int(token))
-        token, tag = lexer.get_next_token(peek=True, accept_eol=True)
-        if token == ',':
-            lexer.get_next_token()
-        while True:
-            operand_id = parse_id(lexer, module, accept_eol=True,
-                                  type_id=type_id)
-            if operand_id is None:
-                return operands
-            operands.append(operand_id)
-            token, tag = lexer.get_next_token(peek=True, accept_eol=True)
-            if token == ',':
-                lexer.get_next_token()
-    elif kind in ['VariableIds', 'OptionalId']:
-        operands = []
-        while True:
-            operand_id = parse_id(lexer, module, accept_eol=True,
-                                  type_id=type_id)
-            if operand_id is None:
-                return operands
-            operands.append(operand_id)
-            token, tag = lexer.get_next_token(peek=True, accept_eol=True)
-            if token == ',':
-                lexer.get_next_token()
-    elif kind == 'VariableIdLiteral':
-        operands = []
-        while True:
-            operand_id = parse_id(lexer, module, accept_eol=True,
-                                  type_id=type_id)
-            if operand_id is None:
-                return operands
-            operands.append(operand_id)
-            lexer.get_next_token(',')
-            token, tag = lexer.get_next_token()
-            operands.append(int(token))
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+        if token != '':
+            operands.append(parse_literal_number(lexer))
             token, _ = lexer.get_next_token(peek=True, accept_eol=True)
             if token == ',':
                 lexer.get_next_token()
-    elif kind == 'VariableLiteralId':
-        operands = []
-        while True:
-            token, tag = lexer.get_next_token(accept_eol=True)
-            if token == '':
-                return operands
-            operands.append(int(token))
-            lexer.get_next_token(',')
-            operand_id = parse_id(lexer, module, type_id=type_id)
-            operands.append(operand_id)
-            token, _ = lexer.get_next_token(peek=True, accept_eol=True)
-            if token == ',':
-                lexer.get_next_token()
+                operands = operands + parse_var_operand(lexer, module,
+                                                        'VariableIds', type_id)
     elif kind in spirv.spv:
-        value, tag = lexer.get_next_token()
+        value, _ = lexer.get_next_token()
         if value not in spirv.spv[kind]:
             error = 'Invalid value ' + value + ' for ' + kind
             raise ParseError(error)
-        return [value]
-
-    raise ParseError('Unknown parameter kind "' + kind + '"')
+        operands = [value]
+    else:
+        raise ParseError('Unknown parameter kind "' + kind + '"')
+    return operands
 
 
 def parse_operands(lexer, module, op_format, type_id):
@@ -499,8 +510,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
         if token == '(':
             lexer.get_next_token()
             while True:
-                token, tag = lexer.get_next_token()
-                operands.append(int(token))
+                operands.append(parse_literal_number(lexer))
                 token, _ = lexer.get_next_token()
                 if token == ')':
                     break
