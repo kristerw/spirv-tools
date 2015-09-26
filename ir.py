@@ -102,7 +102,7 @@ class Module(object):
         replicated for all elements."""
         if (type_id.inst.op_name == 'OpTypeInt' or
                 type_id.inst.op_name == 'OpTypeFloat'):
-            min_val, max_val = get_int_type_range(self, type_id)
+            min_val, max_val = get_int_type_range(type_id)
             if value < 0:
                 if value < min_val:
                     raise IRError('Value out of range')
@@ -553,7 +553,7 @@ def lists_are_identical(list1, list2):
     return True
 
 
-def get_int_type_range(module, type_id):
+def get_int_type_range(type_id):
     # Type must be OpTypeInt or OpTypeFloat (the OpTypeFloat is valid,
     # as its value is stored as integer words, and these words must
     # have value within the integer range).
@@ -585,16 +585,12 @@ MAGIC = 0x07230203
 GENERATOR_MAGIC = 0
 VERSION = 99
 
-with open(os.path.join(os.path.dirname(__file__), 'spirv.json')) as fd:
-    TABLES = json.load(fd)
+with open(os.path.join(os.path.dirname(__file__), 'inst_format.json')) as fd:
+    INST_FORMAT = json.load(fd)
 
-OPCODE_TABLE = {}
-OPNAME_TABLE = {}
-for fmt in TABLES['instructions']:
-    OPCODE_TABLE[fmt['opcode']] = fmt
-    OPNAME_TABLE[fmt['name']] = fmt
+OPCODE_TO_OPNAME = dict(zip(spirv.spv['Op'].values(), spirv.spv['Op'].keys()))
 
-MASKS = set([name[:-4] for name in spirv.spv if name[-4:] == 'Mask'])
+MASKS = set([_name[:-4] for _name in spirv.spv if _name[-4:] == 'Mask'])
 
 BRANCH_INSTRUCTIONS = [
     'OpReturnValue',

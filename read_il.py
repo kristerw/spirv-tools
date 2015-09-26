@@ -113,7 +113,7 @@ def get_or_create_scalar_constant(module, token, type_id):
         if type_id.inst.op_name != 'OpTypeInt':
             raise ParseError('Type must be OpTypeInt')
 
-        min_val, max_val = ir.get_int_type_range(module, type_id)
+        min_val, max_val = ir.get_int_type_range(type_id)
         is_neg = token[0] == '-'
         if is_neg:
             token = token[1:]
@@ -400,10 +400,10 @@ def parse_operand(lexer, module, kind, type_id):
     raise ParseError('Unknown parameter kind "' + kind + '"')
 
 
-def parse_operands(lexer, module, opcode, type_id):
+def parse_operands(lexer, module, op_format, type_id):
     """Parse operands for one instruction."""
     operands = []
-    kinds = opcode['operands'][:]
+    kinds = op_format['operands'][:]
     while kinds:
         kind = kinds.pop(0)
         operands = operands + parse_operand(lexer, module, kind, type_id)
@@ -439,16 +439,16 @@ def parse_instruction(lexer, module):
     op_name, tag = lexer.get_next_token()
     if tag != 'NAME':
         raise ParseError('Expected an operation name')
-    if op_name not in ir.OPNAME_TABLE:
+    if op_name not in ir.INST_FORMAT:
         raise ParseError('Invalid operation ' + op_name)
-    opcode = ir.OPNAME_TABLE[op_name]
-    if opcode['type']:
+    op_format = ir.INST_FORMAT[op_name]
+    if op_format['type']:
         type_id = parse_type(lexer, module)
     else:
         type_id = None
 
     parse_decorations(lexer, module, result_id, op_name)
-    operands = parse_operands(lexer, module, opcode, type_id)
+    operands = parse_operands(lexer, module, op_format, type_id)
     lexer.done_with_line()
 
     if op_name == 'OpFunction':

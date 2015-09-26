@@ -7,15 +7,15 @@ import ir
 def output_instruction(stream, inst):
     """Output one instruction."""
     inst_data = [0]
-    opcode = ir.OPNAME_TABLE[inst.op_name]
+    op_format = ir.INST_FORMAT[inst.op_name]
 
-    if opcode['type']:
+    if op_format['type']:
         inst_data.append(inst.type_id.value)
-    if opcode['result']:
+    if op_format['result']:
         inst_data.append(inst.result_id.value)
 
     kind = None
-    for operand, kind in zip(inst.operands, opcode['operands']):
+    for operand, kind in zip(inst.operands, op_format['operands']):
         if kind == 'Id' or kind == 'OptionalId':
             inst_data.append(operand.value)
         elif kind == 'LiteralNumber':
@@ -46,32 +46,32 @@ def output_instruction(stream, inst):
             raise Exception('Unhandled kind ' + kind)
 
     if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
-        operands = inst.operands[(len(opcode['operands'])-1):]
+        operands = inst.operands[(len(op_format['operands'])-1):]
         for operand in operands:
             inst_data.append(operand)
     elif kind == 'VariableIds':
-        operands = inst.operands[(len(opcode['operands'])-1):]
+        operands = inst.operands[(len(op_format['operands'])-1):]
         for operand in operands:
             inst_data.append(operand.value)
     elif kind == 'OptionalImage':
-        operands = inst.operands[(len(opcode['operands'])-1):]
+        operands = inst.operands[(len(op_format['operands'])-1):]
         inst_data.append(operands[0])
         for operand in operands[1:]:
             inst_data.append(operand.value)
     elif kind == 'VariableIdLiteral':
-        operands = inst.operands[(len(opcode['operands'])-1):]
+        operands = inst.operands[(len(op_format['operands'])-1):]
         while operands:
             target_id = operands.pop(0)
             inst_data.append(target_id.value)
             inst_data.append(operands.pop(0))
     elif kind == 'VariableLiteralId':
-        operands = inst.operands[(len(opcode['operands'])-1):]
+        operands = inst.operands[(len(op_format['operands'])-1):]
         while operands:
             inst_data.append(operands.pop(0))
             target_id = operands.pop(0)
             inst_data.append(target_id.value)
 
-    inst_data[0] = (len(inst_data) << 16) + opcode['opcode']
+    inst_data[0] = (len(inst_data) << 16) + spirv.spv['Op'][inst.op_name]
     words = array.array('I', inst_data)
     words.tofile(stream)
 

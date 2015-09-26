@@ -27,13 +27,13 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
         line = line + ' ' + module.type_id_to_name[inst.type_id]
 
     if not is_raw_mode:
-        line = line + format_decorations_for_inst(module, inst)
+        line = line + format_decorations_for_inst(inst)
 
-    opcode = ir.OPNAME_TABLE[inst.op_name]
+    op_format = ir.INST_FORMAT[inst.op_name]
     kind = None
     if inst.operands:
         line = line + ' '
-        for operand, kind in zip(inst.operands, opcode['operands']):
+        for operand, kind in zip(inst.operands, op_format['operands']):
             if kind == 'Id' or kind == 'OptionalId':
                 line = line + id_name(module, operand) + ', '
             elif kind == 'LiteralNumber':
@@ -58,25 +58,25 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
                 raise Exception('Unhandled kind ' + kind)
 
         if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
-            operands = inst.operands[(len(opcode['operands'])-1):]
+            operands = inst.operands[(len(op_format['operands'])-1):]
             for operand in operands:
                 line = line + str(operand) + ', '
         elif kind == 'VariableIds':
-            operands = inst.operands[(len(opcode['operands'])-1):]
+            operands = inst.operands[(len(op_format['operands'])-1):]
             for operand in operands:
                 line = line + id_name(module, operand) + ', '
         elif kind == 'OptionalImage':
-            operands = inst.operands[(len(opcode['operands'])-1):]
+            operands = inst.operands[(len(op_format['operands'])-1):]
             line = line + str(operands[0]) + ', '
             for operand in operands[1:]:
                 line = line + id_name(module, operand) + ', '
         elif kind == 'VariableIdLiteral':
-            operands = inst.operands[(len(opcode['operands'])-1):]
+            operands = inst.operands[(len(op_format['operands'])-1):]
             while operands:
                 line = line + id_name(module, operands.pop(0)) + ', '
                 line = line + str(operands.pop(0)) + ', '
         elif kind == 'VariableLiteralId':
-            operands = inst.operands[(len(opcode['operands'])-1):]
+            operands = inst.operands[(len(op_format['operands'])-1):]
             while operands:
                 line = line + str(operands.pop(0)) + ', '
                 line = line + id_name(module, operands.pop(0)) + ', '
@@ -128,7 +128,7 @@ def format_decoration(decoration_inst):
     return res
 
 
-def format_decorations_for_inst(module, inst):
+def format_decorations_for_inst(inst):
     line = ''
     if inst.result_id is not None:
         decorations = inst.get_decorations()
