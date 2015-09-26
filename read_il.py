@@ -99,6 +99,10 @@ class Lexer(object):
 
 
 def get_or_create_scalar_constant(module, token, type_id):
+    """Return a const inst corresponding of type_id with value from token.
+
+    An already existing instruction is returned if it exists, otherwise
+    a new instruction is created and added to the global instructions."""
     if token == 'true':
         type_id = get_or_create_type(module, 'bool')
         inst = ir.Instruction(module, 'OpConstantTrue', module.new_id(),
@@ -184,7 +188,8 @@ def parse_id(lexer, module, accept_eol=False, type_id=None):
         return create_id(module, token, tag, type_id)
 
 
-def add_vector_type(module, token):
+def add_vector_type(module, token, new_id):
+    """Create a vector type inst corresponding to the token."""
     orig_token = token
     if token[0] != '<' or token[-1] != '>':
         raise ParseError('Not a valid type: ' + orig_token)
@@ -202,45 +207,39 @@ def add_vector_type(module, token):
         raise ParseError('Not a valid type: ' + orig_token)
 
     base_type_id = get_or_create_type(module, base_type)
-    new_id = module.new_id()
-    inst = ir.Instruction(module, 'OpTypeVector', new_id, None,
+    return ir.Instruction(module, 'OpTypeVector', new_id, None,
                           [base_type_id, nof_elem])
-    module.add_global_inst(inst)
-    return inst
 
 
 def get_or_create_type(module, token):
+    """Return a type inst corresponding to the token.
+
+    An already existing type instruction is returned if it exists, otherwise
+    a new instruction is created and added to the global instructions."""
     if not token in module.type_name_to_id:
+        new_id = module.new_id()
         if token == 'void':
-            new_id = module.new_id()
             inst = ir.Instruction(module, 'OpTypeVoid', new_id, None, [])
-            module.add_global_inst(inst)
         elif token == 'bool':
-            new_id = module.new_id()
             inst = ir.Instruction(module, 'OpTypeBool', new_id, None, [])
-            module.add_global_inst(inst)
         elif token in ['s8', 's16', 's32', 's64']:
-            new_id = module.new_id()
             width = int(token[1:])
             inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
                                   [width, 1])
-            module.add_global_inst(inst)
         elif token in ['u8', 'u16', 'u32', 'u64']:
-            new_id = module.new_id()
             width = int(token[1:])
             inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
                                   [width, 0])
-            module.add_global_inst(inst)
         elif token in ['f16', 'f32', 'f64']:
-            new_id = module.new_id()
             width = int(token[1:])
             inst = ir.Instruction(module, 'OpTypeFloat', new_id, None,
                                   [width])
-            module.add_global_inst(inst)
         elif token[0] == '<':
-            inst = add_vector_type(module, token)
+            inst = add_vector_type(module, token, new_id)
         else:
             raise ParseError('Not a valid type: ' + token)
+
+        module.add_global_inst(inst)
         module.type_name_to_id[token] = inst.result_id
         module.id_to_type_name[inst.result_id] = token
 
@@ -299,6 +298,10 @@ def parse_type(lexer, module):
 
 
 def get_or_create_function_type(module, return_type, parameters):
+    """Return the function type inst for the return type/parameter list.
+
+    An already existing type instruction is returned if it exists, otherwise
+    a new instruction is created and added to the global instructions."""
     for inst in module.global_insts:
         if inst.op_name == 'OpTypeFunction':
             if inst.operands[0] == return_type:
@@ -366,10 +369,10 @@ def parse_operand(lexer, module, kind, type_id):
     elif kind == 'VariableIdLiteral':
         operands = []
         while True:
-            token, _ = lexer.get_next_token(peek=True, accept_eol=True)
-            if token == '':
+            operand_id = parse_id(lexer, module, accept_eol=True,
+                                  type_id=type_id)
+            if operand_id is None:
                 return operands
-            operand_id = parse_id(lexer, module, type_id=type_id)
             operands.append(operand_id)
             lexer.get_next_token(',')
             token, tag = lexer.get_next_token()
@@ -692,8 +695,8 @@ def verify_id(module, inst, id_to_check):
     used an undefined named ID) as the error will be reported for a
     user-defined instruction anyway.
     """
-    if inst in module.inst_to_line:
-        if id_to_check.inst is None:
+    if id_to_check.inst is None:
+        if inst in module.inst_to_line:
             id_name = get_id_name(module, id_to_check)
             line_no = module.inst_to_line[inst]
             raise VerificationError(line_no, id_name + ' used but not defined')
