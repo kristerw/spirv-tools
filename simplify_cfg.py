@@ -32,11 +32,21 @@ def remove_constant_cond_branches(module):
                     update_conditional_branch(module, inst, inst.operands[2])
 
 
+def reachable(basic_block, reachable_blocks):
+    """Recursively mark basic blocks reachable from basic_block."""
+    reachable_blocks.add(basic_block)
+    for successor in basic_block.get_successors():
+        if successor not in reachable_blocks:
+            reachable(successor, reachable_blocks)
+
+
 def remove_unused_basic_blocks(module):
-    """Removes basic blocks with no predecessors."""
+    """Remove unreachable basic blocks."""
     for function in module.functions:
-        for basic_block in function.basic_blocks[1:]:
-            if not basic_block.predecessors():
+        reachable_blocks = set()
+        reachable(function.basic_blocks[0], reachable_blocks)
+        for basic_block in function.basic_blocks[:]:
+            if basic_block not in reachable_blocks:
                 basic_block.destroy()
 
 

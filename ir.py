@@ -265,6 +265,34 @@ class BasicBlock(object):
     def __str__(self):
         return str(self.inst)
 
+    def __hash__(self):
+        return id(self)
+
+    def __eq__(self, other):
+        return other is self
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def get_successors(self):
+        """Return the list of successor basic blocks."""
+        branch_inst = self.insts[-1]
+        assert branch_inst.op_name in BRANCH_INSTRUCTIONS
+        if branch_inst.op_name == 'OpBranch':
+            successors = [branch_inst.operands[0].inst.basic_block]
+        elif branch_inst.op_name == 'OpBranchConditional':
+            successors = [branch_inst.operands[1].inst.basic_block,
+                          branch_inst.operands[2].inst.basic_block]
+        elif branch_inst.op_name == 'OpSwitch':
+            successors = [branch_inst.operands[1].inst.basic_block]
+            targets = branch_inst.operands[2:]
+            while targets:
+                targets.pop(0)
+                successors.append(targets.pop(0).inst.basic_block)
+        else:
+            successors = []
+        return successors
+
     def dump(self, stream=sys.stdout):
         """Write debug dump to stream."""
         stream.write(str(self.inst) + '\n')
@@ -511,7 +539,7 @@ class Id(object):
             return '%' + str(self.value)
 
     def __hash__(self):
-        return self.value
+        return id(self)
 
     def __eq__(self, other):
         return other is self
