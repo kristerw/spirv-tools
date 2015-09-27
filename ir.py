@@ -498,7 +498,7 @@ class Instruction(object):
     def has_side_effect(self):
         """True if the instruction may be removed if unused."""
         # XXX Need to handle OpExtInst correctly (it is conservative now)
-        if self.result_id is None:
+        if self.result_id is None and self.result_id != 'OpNop':
             return True
         return self.op_name in HAS_SIDE_EFFECT
 
