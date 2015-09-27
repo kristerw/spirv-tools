@@ -6,6 +6,52 @@ import ir
 import constprop
 
 
+def optimize_OpBitcast(module, inst):
+    # bitcast(bitcast(x)) -> bitcast(x) or x
+    operand_inst = inst.operands[0].inst
+    if operand_inst.op_name == 'OpBitcast':
+        if inst.type_id == operand_inst.operands[0].inst.type_id:
+            return operand_inst.operands[0].inst
+        else:
+            new_inst = ir.Instruction(module, 'OpBitcast', module.new_id(),
+                                      inst.type_id, [operand_inst.operands[0]])
+            new_inst.insert_before(inst)
+            return new_inst
+    return inst
+
+
+def optimize_OpLogicalNot(inst):
+    # not(not(x)) -> x
+    operand_inst = inst.operands[0].inst
+    if operand_inst.op_name == 'OpLogicalNot':
+        return operand_inst.operands[0].inst
+    return inst
+
+
+def optimize_OpNot(inst):
+    # not(not(x)) -> x
+    operand_inst = inst.operands[0].inst
+    if operand_inst.op_name == 'OpNot':
+        return operand_inst.operands[0].inst
+    return inst
+
+
+def optimize_OpSNegate(inst):
+    # neg(neg(x)) -> x
+    operand_inst = inst.operands[0].inst
+    if operand_inst.op_name == 'OpSNegate':
+        return operand_inst.operands[0].inst
+    return inst
+
+
+def optimize_OpTranspose(inst):
+    # transpose(transpose(m)) -> m
+    operand_inst = inst.operands[0].inst
+    if operand_inst.op_name == 'OpTranspose':
+        return operand_inst.operands[0].inst
+    return inst
+
+
 def optimize_OpVectorShuffle(module, inst):
     vec1_inst = inst.operands[0].inst
     vec2_inst = inst.operands[1].inst
@@ -71,16 +117,41 @@ def optimize_OpVectorShuffle(module, inst):
     return inst
 
 
-def optimize_inst(module, inst):
-    """Simplify one instruction"""
-    if inst.op_name == 'OpVectorShuffle':
+def peephole_inst(module, inst):
+    """Do peephole optimizations for one instruction."""
+    if inst.op_name == 'OpBitcast':
+        inst = optimize_OpBitcast(module, inst)
+    elif inst.op_name == 'OpLogicalNot':
+        inst = optimize_OpLogicalNot(inst)
+    elif inst.op_name == 'OpNot':
+        inst = optimize_OpNot(inst)
+    elif inst.op_name == 'OpSNegate':
+        inst = optimize_OpSNegate(inst)
+    elif inst.op_name == 'OpTranspose':
+        inst = optimize_OpTranspose(inst)
+    elif inst.op_name == 'OpVectorShuffle':
         inst = optimize_OpVectorShuffle(module, inst)
 
-    # It is common that the simplified instruction can be constant
-    # folded, or constant folded instructions can give opportunities
-    # for simplification.  We therefore run constprop here instead
-    # of needing to iterate constprop and instcombine  passes until
-    # the result stabilizes.
+    return inst
+
+
+def optimize_inst(module, inst):
+    """Simplify one instruction"""
+
+    # Do peephole kind of optimization. It is possible that the transformed
+    # instruction trigger a new optimization rule, so this is iterated until
+    # the result cannot be improved.
+    while True:
+        new_inst = peephole_inst(module, inst)
+        if new_inst == inst:
+            break
+        inst = new_inst
+
+    # It is common that the simplified instruction can be constant folded,
+    # or constant folded instructions can give opportunities for simplifying
+    # succeeding instructions. We therefore run constprop here instead of
+    # needing to iterate constprop and instcombine passes until the result
+    # stabilizes.
     inst = constprop.optimize_inst(module, inst)
 
     return inst
