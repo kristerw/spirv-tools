@@ -1,17 +1,21 @@
-"""Performs dead code elimination and basic block merging.
+"""Perform dead code elimination, basic block merging, and CFG simplifications.
 
 Specifically:
-* Removes basic blocks with no predecessors.
-* Merges a basic block into its predecessor if there is only one and the
-  predecessor only has one successor.
+* Removes unreachable basic blocks.
+* Merges a basic block into its predecessor if there is only one predecessor
+  and it only has one successor.
 * Eliminates PHI nodes where all variables are identical.
-* Eliminates conditional branches having a constant conditional."""
+* Changes conditional branches having constant conditional to an unconditional
+  branch.
+* Changes conditional branches or switch operations to an unconditional
+  branch if all branch targets are identical.
+"""
 import ir
 
 
 def update_conditional_branch(module, inst, dest_id):
-    """Change the conditional branch instruction to a branch to dest_id."""
-    assert inst.op_name == 'OpBranchConditional'
+    """Change the OpBranchConditional or OpSwitch to a branch to dest_id."""
+    assert inst.op_name == 'OpBranchConditional' or inst.op_name == 'OpSwitch'
     basic_block = inst.basic_block
     branch_inst = ir.Instruction(module, 'OpBranch', None, None, [dest_id])
     inst.replace_with(branch_inst)
@@ -19,8 +23,8 @@ def update_conditional_branch(module, inst, dest_id):
     basic_block.insts[-2].destroy()
 
 
-def remove_constant_cond_branches(module):
-    """Eliminate conditional branches having a constant conditional."""
+def simplify_cond_branches(module):
+    """Change conditional branches to unconditional branches if possible."""
     for function in module.functions:
         for basic_block in function.basic_blocks:
             inst = basic_block.insts[-1]
@@ -30,6 +34,17 @@ def remove_constant_cond_branches(module):
                     update_conditional_branch(module, inst, inst.operands[1])
                 elif cond_inst.op_name == 'OpConstantFalse':
                     update_conditional_branch(module, inst, inst.operands[2])
+                elif inst.operands[1] == inst.operands[2]:
+                    update_conditional_branch(module, inst, inst.operands[1])
+            elif inst.op_name == 'OpSwitch':
+                default_id = inst.operands[1]
+                operands = inst.operands[2:]
+                while operands:
+                    if default_id != operands[1]:
+                        break
+                    operands = operands[2:]
+                else:
+                    update_conditional_branch(module, inst, default_id)
 
 
 def reachable(basic_block, reachable_blocks):
@@ -99,7 +114,7 @@ def eliminate_phi_nodes(module):
 
 def optimize(module):
     """Perform dead code elimination and basic block merging."""
-    remove_constant_cond_branches(module)
+    simplify_cond_branches(module)
     remove_unused_basic_blocks(module)
     merge_basic_blocks(module)
     eliminate_phi_nodes(module)
