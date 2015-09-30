@@ -1,4 +1,5 @@
 import re
+from operator import itemgetter
 
 import spirv
 import ir
@@ -23,7 +24,7 @@ class Lexer(object):
             (r'%[1-9][0-9]*', 'ID'),
             (r'%[a-zA-Z_][a-zA-Z0-9_]*', 'ID'),
             (r'[a-zA-Z][a-zA-Z0-9.]*', 'NAME'),
-            (r'[,={}\(\)]', None),
+            (r'[,={}\(\)|]', None),
             (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
             (r'-?0b[01]+', 'INT'),
             (r'-?0x[0-9a-fA-F]+', 'INT'),
@@ -207,6 +208,43 @@ def parse_literal_number(lexer):
     return value
 
 
+def expand_mask(kind, value):
+    """Format the mask as a list of mask strings."""
+    result = []
+    if value != 0:
+        mask_values = zip(spirv.spv[kind].values(), spirv.spv[kind].keys())
+        mask_values = sorted(mask_values, key=itemgetter(0))
+        for mask_number,mask_token in mask_values:
+            if (mask_number & value) != 0:
+                result.append(mask_token)
+                value = value ^ mask_number
+        if value != 0:
+            raise ParseError('Invalid mask value')
+    return result
+
+
+def parse_mask(lexer, kind):
+    """Parse one mask kind."""
+    value = 0
+    while True:
+        token, tag = lexer.get_next_token(peek=True)
+        if tag == 'INT':
+            tok_value = parse_literal_number(lexer)
+        else:
+            token, tag = lexer.get_next_token()
+            if token not in spirv.spv[kind]:
+                raise ParseError('Unknown mask value ' + token +
+                                 ' for ' + kind)
+            tok_value = spirv.spv[kind][token]
+        value = value | tok_value
+        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
+        if token != '|':
+            break
+        lexer.get_next_token('|')
+
+    return expand_mask(kind, value)
+
+
 def add_vector_type(module, token, new_id):
     """Create a vector type inst corresponding to the token."""
     orig_token = token
@@ -383,8 +421,10 @@ def parse_operand(lexer, module, kind, type_id):
     """
     if kind == 'Id':
         operands = [parse_id(lexer, module, type_id=type_id)]
-    elif kind == 'LiteralNumber' or kind in ir.MASKS:
+    elif kind == 'LiteralNumber':
         operands = [parse_literal_number(lexer)]
+    elif kind in ir.MASKS:
+        operands = [parse_mask(lexer, kind)]
     elif kind in ['VariableLiterals', 'OptionalLiteral', 'VariableIds',
                   'OptionalId', 'VariableIdLiteral', 'VariableLiteralId']:
         operands = parse_var_operand(lexer, module, kind, type_id)
@@ -651,7 +691,7 @@ def parse_function_definition(lexer, module):
 
     function_type = get_or_create_function_type(module, return_type,
                                                 parameters)
-    function = ir.Function(module, function_id, 0, function_type) # XXX
+    function = ir.Function(module, function_id, [], function_type) # XXX
     for (param_type, param_id) in parameters:
         param_inst = ir.Instruction(module, 'OpFunctionParameter', param_id,
                                     param_type, [])

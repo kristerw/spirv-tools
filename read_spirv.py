@@ -1,4 +1,5 @@
 import array
+from operator import itemgetter
 
 import spirv
 import ir
@@ -105,11 +106,26 @@ def parse_id(binary, module):
     return module.get_id(binary.get_next_word())
 
 
+def expand_mask(kind, value):
+    """Convert the mask to a list of mask strings."""
+    result = []
+    if value != 0:
+        mask_values = zip(spirv.spv[kind].values(), spirv.spv[kind].keys())
+        mask_values = sorted(mask_values, key=itemgetter(0))
+        for mask_number,mask_token in mask_values:
+            if (mask_number & value) != 0:
+                result.append(mask_token)
+                value = value ^ mask_number
+        if value != 0:
+            raise ParseError('Invalid mask value')
+    return result
+
+
 def parse_operand(binary, module, kind):
     """Parse one instruction operand."""
     if kind == 'Id':
         return [parse_id(binary, module)]
-    elif kind in ['LiteralNumber', 'FunctionControlMask']:
+    elif kind == 'LiteralNumber':
         return [binary.get_next_word()]
     elif kind == 'LiteralString':
         return [parse_literal_string(binary)]
@@ -156,6 +172,9 @@ def parse_operand(binary, module, kind):
             operands.append(word)
             word = binary.get_next_word()
             operands.append(module.get_id(word))
+    elif kind in ir.MASKS:
+        val = binary.get_next_word()
+        return [expand_mask(kind, val)]
     elif kind in spirv.spv:
         val = binary.get_next_word()
         constants = spirv.spv[kind]
@@ -163,9 +182,6 @@ def parse_operand(binary, module, kind):
             if constants[name] == val:
                 return [name]
         raise ParseError('Unknown "' + kind + '" value' + str(val))
-    elif kind in ir.MASKS:
-        val = binary.get_next_word()
-        return [val]
 
     raise ParseError('Unknown kind "' + kind + '"')
 

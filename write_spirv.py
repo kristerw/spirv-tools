@@ -4,6 +4,14 @@ import spirv
 import ir
 
 
+def mask_to_value(kind, mask_list):
+    """Return the value represented by a list of mask strings."""
+    value = 0
+    for mask in mask_list:
+        value = value | spirv.spv[kind][mask]
+    return value
+
+
 def output_instruction(stream, inst):
     """Output one instruction."""
     inst_data = [0]
@@ -21,7 +29,7 @@ def output_instruction(stream, inst):
         elif kind == 'LiteralNumber':
             inst_data.append(operand)
         elif kind in ir.MASKS:
-            inst_data.append(operand)
+            inst_data.append(mask_to_value(kind, operand))
         elif kind == 'LiteralString':
             operand = operand.encode('utf-8') + '\x00'
             for i in range(0, len(operand), 4):

@@ -14,6 +14,14 @@ def id_name(module, operand):
         return str(operand)
 
 
+def format_mask(kind, mask_list):
+    """Format the list of mask strings as the assembly syntax."""
+    if not mask_list:
+        return filter(lambda x: spirv.spv[kind][x] == 0, spirv.spv[kind])[0]
+    spearator = ' | '
+    return spearator.join(mask_list)
+
+
 def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     """Output one instruction."""
     line = indent
@@ -39,7 +47,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
             elif kind == 'LiteralNumber':
                 line = line + str(operand) + ', '
             elif kind in ir.MASKS:
-                line = line + str(operand) + ', '
+                line = line + format_mask(kind, operand) + ', '
             elif kind == 'LiteralString':
                 line = line + '"' + operand + '"' + ', '
             elif kind in ['VariableLiterals',

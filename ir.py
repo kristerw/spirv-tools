@@ -175,8 +175,9 @@ class Module(object):
             if inst.type_id in id_rename:
                 inst.type_id = id_rename[inst.type_id]
             for i in range(len(inst.operands)):
-                if inst.operands[i] in id_rename:
-                    inst.operands[i] = id_rename[inst.operands[i]]
+                if isinstance(inst.operands[i], Id):
+                    if inst.operands[i] in id_rename:
+                        inst.operands[i] = id_rename[inst.operands[i]]
 
         # Rebuild ID mapping table to get rid of obsolete entries.
         for value in self._value_to_id.keys():
@@ -608,7 +609,7 @@ with open(os.path.join(os.path.dirname(__file__), 'inst_format.json')) as fd:
 
 OPCODE_TO_OPNAME = dict(zip(spirv.spv['Op'].values(), spirv.spv['Op'].keys()))
 
-MASKS = set([_name[:-4] for _name in spirv.spv if _name[-4:] == 'Mask'])
+MASKS = set([_name for _name in spirv.spv if _name[-4:] == 'Mask'])
 
 BRANCH_INSTRUCTIONS = [
     'OpReturnValue',

@@ -167,7 +167,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -287,8 +287,8 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
+            "MemorySemanticsMask", 
             "Id", 
             "Id"
         ]
@@ -298,7 +298,7 @@
         "result": false, 
         "operands": [
             "Id", 
-            "SelectionControl"
+            "SelectionControlMask"
         ]
     }, 
     "OpIsInf": {
@@ -515,7 +515,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -680,7 +680,7 @@
         "type": true, 
         "result": true, 
         "operands": [
-            "FunctionControl", 
+            "FunctionControlMask", 
             "Id"
         ]
     }, 
@@ -818,7 +818,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -894,7 +894,7 @@
         "operands": [
             "Scope", 
             "Scope", 
-            "MemorySemantics"
+            "MemorySemanticsMask"
         ]
     }, 
     "OpName": {
@@ -1028,8 +1028,8 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
+            "MemorySemanticsMask", 
             "Id", 
             "Id"
         ]
@@ -1096,7 +1096,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -1144,7 +1144,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -1185,7 +1185,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics"
+            "MemorySemanticsMask"
         ]
     }, 
     "OpConvertSToF": {
@@ -1290,7 +1290,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -1462,7 +1462,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -1492,7 +1492,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMasks", 
             "Id"
         ]
     }, 
@@ -1580,7 +1580,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics"
+            "MemorySemanticsMasks"
         ]
     }, 
     "OpLogicalEqual": {
@@ -1619,7 +1619,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics"
+            "MemorySemanticsMasks"
         ]
     }, 
     "OpFOrdNotEqual": {
@@ -1635,7 +1635,7 @@
         "result": false, 
         "operands": [
             "Id", 
-            "LoopControl"
+            "LoopControlMask"
         ]
     }, 
     "OpSatConvertSToU": {
@@ -1713,7 +1713,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMasks", 
             "Id"
         ]
     }, 
@@ -1942,7 +1942,7 @@
         "result": false, 
         "operands": [
             "Scope", 
-            "MemorySemantics"
+            "MemorySemanticsMasks"
         ]
     }, 
     "OpFunctionParameter": {
@@ -2074,7 +2074,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMasks", 
             "Id"
         ]
     }, 
@@ -2161,7 +2161,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemantics", 
+            "MemorySemanticsMasks", 
             "Id"
         ]
     }
