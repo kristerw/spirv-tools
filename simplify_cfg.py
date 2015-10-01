@@ -19,8 +19,8 @@ def update_conditional_branch(module, inst, dest_id):
     basic_block = inst.basic_block
     branch_inst = ir.Instruction(module, 'OpBranch', None, None, [dest_id])
     inst.replace_with(branch_inst)
-    assert basic_block.insts[-2].op_name in ['OpSelectionMerge', 'OpLoopMerge']
-    basic_block.insts[-2].destroy()
+    if basic_block.insts[-2].op_name in ['OpSelectionMerge', 'OpLoopMerge']:
+        basic_block.insts[-2].destroy()
 
 
 def simplify_cond_branches(module):
