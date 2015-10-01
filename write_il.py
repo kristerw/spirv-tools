@@ -108,20 +108,21 @@ def get_symbol_name(module, symbol_id):
             regex = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*')
             match = regex.match(name)
             if match is None:
-                sys.stderr.write('warning: Ignoring symbol name "'
-                                 + name + '"\n')
                 return '%' + str(symbol_id.value)
             new_name = match.group(0)
-            if new_name != name:
-                sys.stderr.write('warning: truncated symbol name "'
-                                 + name + '" to "' + new_name + '"\n')
-
             symbol_name = '%' + new_name
+            if symbol_name in module.symbol_name_to_id:
+                # This name is already used for another ID (which is
+                # possible, as the decorations we are ussing for symbol
+                # names are not guaranteed to be unique). Let the first
+                # ID use this name, and use a numerical name for this ID.
+                symbol_name = '%' + str(symbol_id.value)
             break
     else:
         symbol_name = '%' + str(symbol_id.value)
 
     module.id_to_symbol_name[symbol_id] = symbol_name
+    module.symbol_name_to_id[symbol_name] = symbol_id
 
     return symbol_name
 
@@ -283,6 +284,7 @@ def add_type_names(module):
 
 
 def write_module(stream, module, is_raw_mode=False):
+    module.symbol_name_to_id = {}
     module.id_to_symbol_name = {}
     module.type_id_to_name = {}
     try:
@@ -337,3 +339,4 @@ def write_module(stream, module, is_raw_mode=False):
     finally:
         del module.type_id_to_name
         del module.id_to_symbol_name
+        del module.symbol_name_to_id
