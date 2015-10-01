@@ -14,17 +14,12 @@ which consists of all instructions from an `OpLabel` to the branch or return
 instruction. Finally the instructions are represented by the `Instruction`
 class.
 
-Most information in the classes (such as lists of functions, basic blocks,
+Most class attributes (such as lists of functions, basic blocks,
 instructions) are meant to be read by applications, but applications must
 not modify the information directly. Instead, the objects have methods
 for updating the data. The reason for this is so the IR implementation
 may update data structures keeping track of various information in order to
 make the API more efficient, or for validity checking.
-
-_**Note**: The current implementation does not use any data structure on the
-side, which makes some operations very slow. For example, finding uses of an
-instruction iterates through the whole binary. This is expected to be
-fixed soon..._
 
 The `Instruction` object consists of the result ID, opcode name, type ID, and
 operands. The fields are mostly represented in the same form as in the
@@ -35,10 +30,7 @@ never create ID values itself; the only exception is when implementing an assemb
 All other IDs should be created by calling `module.new_id()`. The opcode is represented by
 the operation name (such as `'OpFAdd'`). The operands for the enumerated constants (such as
 the Storage Class) are represented as strings of the values (such as
-`'Input'`).
-
-_**TODO**: Masks are currently represented as a string of the integer value.
-This should probably change to a normal integer._
+`'Input'`), and masks are represented as a list of enumerated constants.
 
 The `result_id` and `type_id` values are `None` for operations not using
 them, and `operands` is an empty list for instructions without operands.
