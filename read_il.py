@@ -99,49 +99,20 @@ class Lexer(object):
         self.line = None
 
 
-def get_or_create_scalar_constant(module, token, type_id):
-    """Return a const inst corresponding of type_id with value from token.
-
-    An already existing instruction is returned if it exists, otherwise
-    a new instruction is created and added to the global instructions.
-    """
-    if token == 'true':
-        type_id = get_or_create_type(module, 'bool')
-        inst = ir.Instruction(module, 'OpConstantTrue', module.new_id(),
-                              type_id, [])
-        module.add_global_inst(inst)
-    elif token == 'false':
-        type_id = get_or_create_type(module, 'bool')
-        inst = ir.Instruction(module, 'OpConstantFalse', module.new_id(),
-                              type_id, [])
-        module.add_global_inst(inst)
-    else:
+def get_scalar_value(token, tag, type_id):
+    """Return a value from token representing a scalar constant."""
+    if tag == 'INT':
         if type_id.inst.op_name != 'OpTypeInt':
             raise ParseError('Type must be OpTypeInt')
-
         min_val, max_val = ir.get_int_type_range(type_id)
-        is_neg = token[0] == '-'
-        if is_neg:
-            token = token[1:]
-
-        if token[0:2] == '0x':
-            value = int(token, 16)
-        elif token[0:2] == '0b':
-            value = int(token, 2)
-        else:
-            value = int(token)
-
-        if is_neg:
-            value = -value
-            if value < min_val:
-                raise ParseError('Value out of range')
-        else:
-            if value > max_val:
-                raise ParseError('Value out of range')
-
-        inst = module.get_constant(type_id, value)
-
-    return inst.result_id
+        value = get_integer_value(token, min_val, max_val)
+    elif token in ['true', 'false']:
+        if type_id.inst.op_name != 'OpTypeBool':
+            raise ParseError('Type must be OpTypeBool')
+        value = (token == 'true')
+    else:
+        raise ParseError('Expected an integer or true/false')
+    return value
 
 
 def create_id(module, token, tag, type_id=None):
@@ -169,11 +140,30 @@ def create_id(module, token, tag, type_id=None):
         else:
             return module.get_id(int(token[1:]))
     elif tag == 'INT' or token in ['true', 'false']:
-        return get_or_create_scalar_constant(module, token, type_id)
+        value = get_scalar_value(token, tag, type_id)
+        inst = module.get_constant(type_id, value)
+        return inst.result_id
     elif token in module.type_name_to_id:
         return module.type_name_to_id[token]
     else:
         return get_or_create_type(module, token)
+
+
+def parse_vector_const(lexer, module, token, type_id):
+    """Parse a vector constant."""
+    if type_id.inst.op_name != 'OpTypeVector':
+        raise ParseError('Type must be OpTypeVector')
+    elements = []
+    while True:
+        token, tag = lexer.get_next_token()
+        elements.append(get_scalar_value(token, tag, type_id.inst.operands[0]))
+        token, _ = lexer.get_next_token()
+        if token == ')':
+            break
+        elif token != ',':
+            raise ParseError('Expected , or )')
+    inst = module.get_constant(type_id, elements)
+    return inst.result_id
 
 
 def parse_id(lexer, module, accept_eol=False, type_id=None):
@@ -186,8 +176,28 @@ def parse_id(lexer, module, accept_eol=False, type_id=None):
     token, tag = lexer.get_next_token(accept_eol=accept_eol)
     if accept_eol and token == '':
         return None
+    elif token == '(':
+        return parse_vector_const(lexer, module, token, type_id)
     else:
         return create_id(module, token, tag, type_id)
+
+
+def get_integer_value(token, min_val, max_val):
+    """Get the value in the range [min_val, max_val] from an INT token."""
+    is_neg = token[0] == '-'
+    if is_neg:
+        token = token[1:]
+    if token[0:2] == '0x':
+        value = int(token, 16)
+    elif token[0:2] == '0b':
+        value = int(token, 2)
+    else:
+        value = int(token)
+    if is_neg:
+        value = -value
+    if value < min_val or value > max_val:
+        raise ParseError('Value out of range')
+    return value
 
 
 def parse_literal_number(lexer):
@@ -195,17 +205,7 @@ def parse_literal_number(lexer):
     token, tag = lexer.get_next_token()
     if tag != 'INT':
         raise ParseError('Expected an integer literal')
-    if token[0] == '-':
-        raise ParseError('Invalid value, must not be negative')
-
-    if token[0:2] == '0x':
-        value = int(token, 16)
-    elif token[0:2] == '0b':
-        value = int(token, 2)
-    else:
-        value = int(token)
-
-    return value
+    return get_integer_value(token, 0, 0xffffffff)
 
 
 def expand_mask(kind, value):
@@ -214,7 +214,7 @@ def expand_mask(kind, value):
     if value != 0:
         mask_values = zip(spirv.spv[kind].values(), spirv.spv[kind].keys())
         mask_values = sorted(mask_values, key=itemgetter(0))
-        for mask_number,mask_token in mask_values:
+        for mask_number, mask_token in mask_values:
             if (mask_number & value) != 0:
                 result.append(mask_token)
                 value = value ^ mask_number

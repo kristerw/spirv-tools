@@ -116,11 +116,11 @@ class Module(object):
                 operands = [value]
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstant' and
-                        inst.type_id == type_id.inst.result_id and
+                        inst.type_id == type_id and
                         inst.operands == operands):
                     return inst
             inst = Instruction(self, 'OpConstant', self.new_id(),
-                               type_id.inst.result_id, operands)
+                               type_id, operands)
             self.add_global_inst(inst)
             return inst
         elif type_id.inst.op_name == 'OpTypeVector':
@@ -133,11 +133,19 @@ class Module(object):
                 operands.append(instr.result_id)
             for inst in self.global_insts:
                 if (inst.op_name == 'OpConstantComposite' and
-                        inst.type_id == type_id.inst.result_id and
+                        inst.type_id == type_id and
                         inst.operands == operands):
                     return inst
             inst = Instruction(self, 'OpConstantComposite', self.new_id(),
-                               type_id.inst.result_id, operands)
+                               type_id, operands)
+            self.add_global_inst(inst)
+            return inst
+        elif type_id.inst.op_name == 'OpTypeBool':
+            op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
+            for inst in self.global_insts:
+                if inst.op_name == op_name:
+                    return inst
+            inst = Instruction(self, op_name, self.new_id(), type_id, [])
             self.add_global_inst(inst)
             return inst
         else:
