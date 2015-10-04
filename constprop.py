@@ -12,7 +12,7 @@ def optimize_OpCompositeConstruct(module, inst):
     return new_inst
 
 
-def optimize_OpCompositeExtract(module, inst):
+def optimize_OpCompositeExtract(inst):
     result_inst = inst.operands[0].inst
     for index in inst.operands[1:]:
         result_inst = result_inst.operands[index].inst
@@ -35,7 +35,7 @@ def optimize_OpVectorShuffle(module, inst):
             components.append(vec2_inst.operands[component - vec1_len])
     new_inst = ir.Instruction(module, 'OpConstantComposite', module.new_id(),
                               inst.type_id, components)
-    new_inst.insert_before(inst)
+    module.add_global_inst(new_inst)
     return new_inst
 
 
@@ -49,7 +49,7 @@ def optimize_inst(module, inst):
     if inst.op_name == 'OpCompositeConstruct':
         inst = optimize_OpCompositeConstruct(module, inst)
     elif inst.op_name == 'OpCompositeExtract':
-        inst = optimize_OpCompositeExtract(module, inst)
+        inst = optimize_OpCompositeExtract(inst)
     elif inst.op_name == 'OpVectorShuffle':
         inst = optimize_OpVectorShuffle(module, inst)
 
