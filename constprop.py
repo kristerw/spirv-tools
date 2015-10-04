@@ -5,6 +5,13 @@ be run after."""
 import ir
 
 
+def optimize_OpCompositeConstruct(module, inst):
+    new_inst = ir.Instruction(module, 'OpConstantComposite', module.new_id(),
+                              inst.type_id, inst.operands[:])
+    module.add_global_inst(new_inst)
+    return new_inst
+
+
 def optimize_OpCompositeExtract(module, inst):
     result_inst = inst.operands[0].inst
     for index in inst.operands[1:]:
@@ -39,7 +46,9 @@ def optimize_inst(module, inst):
             if operand.inst.op_name not in ir.CONSTANT_INSTRUCTIONS:
                 return inst
 
-    if inst.op_name == 'OpCompositeExtract':
+    if inst.op_name == 'OpCompositeConstruct':
+        inst = optimize_OpCompositeConstruct(module, inst)
+    elif inst.op_name == 'OpCompositeExtract':
         inst = optimize_OpCompositeExtract(module, inst)
     elif inst.op_name == 'OpVectorShuffle':
         inst = optimize_OpVectorShuffle(module, inst)
