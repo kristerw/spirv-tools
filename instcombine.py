@@ -21,6 +21,45 @@ def optimize_OpBitcast(module, inst):
     return inst
 
 
+def optimize_OpCompositeConstruct(module, inst):
+    # Code of the form
+    #   %20 = OpCompositeExtract f32 %19, 0
+    #   %21 = OpCompositeExtract f32 %19, 1
+    #   %22 = OpCompositeExtract f32 %19, 2
+    #   %23 = OpCompositeConstruct <3 x f32> %20, %21, %22
+    # can be changed to a OpVectorShuffle if all OpCompositeExtract
+    # comes from one or two vectors.
+    if inst.type_id.inst.op_name == 'OpTypeVector':
+        sources = []
+        for operand in inst.operands:
+            if operand.inst.op_name != 'OpCompositeExtract':
+                break
+            src_inst = operand.inst.operands[0].inst
+            if src_inst.result_id not in sources:
+                if src_inst.type_id.inst.op_name != 'OpTypeVector':
+                    break
+                sources.append(src_inst.result_id)
+            if len(sources) > 2:
+                break
+        else:
+            vec1_id = sources[0]
+            vec2_id = sources[0] if len(sources) == 1 else sources[1]
+            vec1_len = vec1_id.inst.type_id.inst.operands[1]
+            vecshuffle_operands = [vec1_id, vec2_id]
+            for operand in inst.operands:
+                idx = operand.inst.operands[1]
+                if operand.inst.operands[0] != vec1_id:
+                    idx = idx + vec1_len
+                vecshuffle_operands.append(idx)
+            new_inst = ir.Instruction(module, 'OpVectorShuffle',
+                                      module.new_id(),
+                                      inst.type_id, vecshuffle_operands)
+            new_inst.copy_decorations(inst)
+            new_inst.insert_before(inst)
+            return new_inst
+    return inst
+
+
 def optimize_OpLogicalNot(inst):
     # not(not(x)) -> x
     operand_inst = inst.operands[0].inst
@@ -123,6 +162,8 @@ def peephole_inst(module, inst):
     """Do peephole optimizations for one instruction."""
     if inst.op_name == 'OpBitcast':
         inst = optimize_OpBitcast(module, inst)
+    if inst.op_name == 'OpCompositeConstruct':
+        inst = optimize_OpCompositeConstruct(module, inst)
     elif inst.op_name == 'OpLogicalNot':
         inst = optimize_OpLogicalNot(inst)
     elif inst.op_name == 'OpNot':
