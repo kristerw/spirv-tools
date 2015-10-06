@@ -84,7 +84,7 @@ class Module(object):
 
     def add_global_inst(self, inst):
         """Add instruction to the module's global instructions."""
-        if inst.op_name not in GLOBAL_INSTRUCTIONS:
+        if not inst.is_global_inst():
             raise IRError(inst.op_name + ' is not a valid global instruction')
         self.global_insts.append(inst)
         _add_use_to_id(inst)
@@ -310,12 +310,16 @@ class BasicBlock(object):
 
     def append_inst(self, inst):
         """Add instruction at the end of the basic block."""
+        if inst.is_global_inst():
+            raise IRError(inst.op_name + ' is a global instruction')
         inst.basic_block = self
         self.insts.append(inst)
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
         """Add instruction at the top of the basic block."""
+        if inst.is_global_inst():
+            raise IRError(inst.op_name + ' is a global instruction')
         inst.basic_block = self
         self.insts = [inst] + self.insts
         _add_use_to_id(inst)
@@ -397,6 +401,8 @@ class Instruction(object):
 
     def insert_after(self, insert_pos_inst):
         """Add instruction after an existing instruction."""
+        if self.is_global_inst():
+            raise IRError(inst.op_name + ' is a global instruction')
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
             raise IRError('Instruction is not in basic block')
@@ -407,6 +413,8 @@ class Instruction(object):
 
     def insert_before(self, insert_pos_inst):
         """Add instruction before an existing instruction."""
+        if self.is_global_inst():
+            raise IRError(inst.op_name + ' is a global instruction')
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
             raise IRError('Instruction is not in basic block')
@@ -510,6 +518,14 @@ class Instruction(object):
         if self.result_id is None and self.result_id != 'OpNop':
             return True
         return self.op_name in HAS_SIDE_EFFECT
+
+    def is_global_inst(self):
+        """Return true if this is a global instruction, false otherwise."""
+        if (self.op_name in GLOBAL_INSTRUCTIONS and
+                not (self.op_name == 'OpVariable' and
+                     self.operands[0] == 'Function')):
+            return True
+        return False
 
     def copy_decorations(self, src_inst):
         """Copy the decorations from src_inst to this instruction."""
@@ -701,14 +717,14 @@ GLOBAL_VARIABLE_INSTRUCTIONS = [
     'OpVariable'
 ]
 
-GLOBAL_INSTRUCTIONS = (INITIAL_INSTRUCTIONS +
-                       DEBUG_INSTRUCTIONS +
-                       DECORATION_INSTRUCTIONS +
-                       TYPE_DECLARATION_INSTRUCTIONS +
-                       CONSTANT_INSTRUCTIONS +
-                       GLOBAL_VARIABLE_INSTRUCTIONS)
+GLOBAL_INSTRUCTIONS = set(INITIAL_INSTRUCTIONS +
+                          DEBUG_INSTRUCTIONS +
+                          DECORATION_INSTRUCTIONS +
+                          TYPE_DECLARATION_INSTRUCTIONS +
+                          CONSTANT_INSTRUCTIONS +
+                          GLOBAL_VARIABLE_INSTRUCTIONS)
 
-HAS_SIDE_EFFECT = [
+HAS_SIDE_EFFECT = set([
     'OpFunction',
     'OpFunctionParameter',
     'OpFunctionCall',
@@ -751,4 +767,4 @@ HAS_SIDE_EFFECT = [
     'OpEnqueueMarker',
     'OpEnqueueKernel',
     'OpCreateUserEvent'
-]
+])
