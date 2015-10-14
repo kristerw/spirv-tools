@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-import dead_code_elim
+import dead_inst_elim
 import instcombine
 import mem2reg
 import simplify_cfg
@@ -41,11 +41,11 @@ class Module(object):
         on all architectures (such as removing dead code)."""
         instcombine.optimize(self)
         simplify_cfg.optimize(self)
-        dead_code_elim.optimize(self)
+        dead_inst_elim.optimize(self)
         mem2reg.optimize(self)
         instcombine.optimize(self)
         simplify_cfg.optimize(self)
-        dead_code_elim.optimize(self)
+        dead_inst_elim.optimize(self)
 
     def instructions(self):
         """Iterate over all instructions in the module."""
