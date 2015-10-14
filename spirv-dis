@@ -4,9 +4,6 @@ import argparse
 import os
 import sys
 
-import dead_code_elim
-import instcombine
-import simplify_cfg
 import read_spirv
 import write_il
 
@@ -43,9 +40,7 @@ def main():
         sys.exit(1)
 
     if args.O:
-        instcombine.optimize(module)
-        simplify_cfg.optimize(module)
-        dead_code_elim.optimize(module)
+        module.optimize()
 
     try:
         with open(output_file_name, 'w') as stream:

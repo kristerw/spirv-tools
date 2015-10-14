@@ -2,6 +2,10 @@ import json
 import os
 import sys
 
+import dead_code_elim
+import instcombine
+import mem2reg
+import simplify_cfg
 import spirv
 
 
@@ -29,6 +33,19 @@ class Module(object):
         for function in self.functions:
             stream.write('\n')
             function.dump(stream)
+
+    def optimize(self):
+        """Do basic optimizations.
+
+        This only runs optimization passes that are likely to be profitable
+        on all architectures (such as removing dead code)."""
+        instcombine.optimize(self)
+        simplify_cfg.optimize(self)
+        dead_code_elim.optimize(self)
+        mem2reg.optimize(self)
+        instcombine.optimize(self)
+        simplify_cfg.optimize(self)
+        dead_code_elim.optimize(self)
 
     def instructions(self):
         """Iterate over all instructions in the module."""
@@ -402,7 +419,7 @@ class Instruction(object):
     def insert_after(self, insert_pos_inst):
         """Add instruction after an existing instruction."""
         if self.is_global_inst():
-            raise IRError(inst.op_name + ' is a global instruction')
+            raise IRError(self.op_name + ' is a global instruction')
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
             raise IRError('Instruction is not in basic block')
@@ -414,7 +431,7 @@ class Instruction(object):
     def insert_before(self, insert_pos_inst):
         """Add instruction before an existing instruction."""
         if self.is_global_inst():
-            raise IRError(inst.op_name + ' is a global instruction')
+            raise IRError(self.op_name + ' is a global instruction')
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
             raise IRError('Instruction is not in basic block')
