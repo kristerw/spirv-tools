@@ -3,6 +3,7 @@ import os
 import sys
 
 import dead_inst_elim
+import dead_func_elim
 import instcombine
 import mem2reg
 import simplify_cfg
@@ -42,10 +43,12 @@ class Module(object):
         instcombine.optimize(self)
         simplify_cfg.optimize(self)
         dead_inst_elim.optimize(self)
+        dead_func_elim.optimize(self)
         mem2reg.optimize(self)
         instcombine.optimize(self)
         simplify_cfg.optimize(self)
         dead_inst_elim.optimize(self)
+        dead_func_elim.optimize(self)
 
     def instructions(self):
         """Iterate over all instructions in the module."""
@@ -226,6 +229,24 @@ class Function(object):
 
     def __str__(self):
         return str(self.inst)
+
+    def destroy(self):
+        """Destroy the function.
+
+        This destroys all basic blocks and instructions used in the function.
+        The function must not be used after it is destroyed."""
+        self.module.functions.remove(self)
+        for basic_block in reversed(self.basic_blocks[:]):
+            basic_block.destroy()
+        for inst in self.parameters:
+            inst.destroy()
+        self.end_inst.destroy()
+        self.inst.destroy()
+        self.module = None
+        self.parameters = None
+        self.basic_blocks = None
+        self.inst = None
+        self.end_inst = None
 
     def dump(self, stream=sys.stdout):
         """Write debug dump to stream."""
@@ -466,12 +487,10 @@ class Instruction(object):
                     inst.op_name in DEBUG_INSTRUCTIONS):
                 if self.result_id in inst.operands:
                     inst.destroy()
-        if self.basic_block is None:
-            if self not in self.module.global_insts:
-                raise IRError('Instruction is not in basic block or module')
+        if self.is_global_inst():
             self.module.global_insts.remove(self)
-            return
-        self.basic_block.insts.remove(self)
+        if self.basic_block is not None:
+            self.basic_block.insts.remove(self)
         if self.result_id is not None:
             self.result_id.inst = None
         self.basic_block = None
