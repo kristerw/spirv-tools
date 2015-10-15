@@ -1,5 +1,4 @@
 import re
-import sys
 
 import spirv
 import ir
@@ -17,9 +16,9 @@ def id_name(module, operand):
 def format_mask(kind, mask_list):
     """Format the list of mask strings as the assembly syntax."""
     if not mask_list:
-        return filter(lambda x: spirv.spv[kind][x] == 0, spirv.spv[kind])[0]
-    spearator = ' | '
-    return spearator.join(mask_list)
+        return [val for val in spirv.spv[kind] if spirv.spv[kind][val] == 0][0]
+    separator = ' | '
+    return separator.join(mask_list)
 
 
 def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
