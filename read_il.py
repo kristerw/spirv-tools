@@ -775,7 +775,6 @@ def read_module(stream):
     try:
         parse_translation_unit(lexer, module)
         verify_ids_are_defined(module)
-        module.finalize()
         return module
     except (ParseError, ir.IRError) as err:
         raise ParseError(str(lexer.line_no) + ': error: ' + err.message)

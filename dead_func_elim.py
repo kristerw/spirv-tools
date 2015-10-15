@@ -27,5 +27,3 @@ def optimize(module):
     for func in module.functions[:]:
         if func not in reachable_funcs:
             func.destroy()
-
-    module.finalize()

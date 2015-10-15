@@ -6,15 +6,15 @@ def optimize_variable(module, func, var_inst):
     if not uses:
         var_inst.destroy()
         return
-    ordered_uses = [inst for inst in func.instructions() if inst in uses]
 
-    usage_bb = ordered_uses[0].basic_block
-    for inst in ordered_uses:
+    usage_bb = uses[0].basic_block
+    for inst in uses:
         if inst.basic_block != usage_bb:
             return
         if inst.op_name not in ['OpLoad', 'OpStore']:
             return
 
+    ordered_uses = [inst for inst in func.instructions() if inst in uses]
     stored_inst = None
     for inst in ordered_uses:
         if inst.op_name == 'OpLoad':

@@ -92,6 +92,7 @@ def output_header(stream, module):
 
 
 def write_module(stream, module):
+    module.renumber_temp_ids()
     output_header(stream, module)
     for inst in module.instructions():
         output_instruction(stream, inst)

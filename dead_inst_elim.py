@@ -6,7 +6,7 @@ does not have side effects."""
 import ir
 
 
-def remove_debug_if_dead(module, inst):
+def remove_debug_if_dead(inst):
     """Remove debug instruction if it is not used."""
     assert inst.op_name in ir.DEBUG_INSTRUCTIONS
     if inst.op_name != 'OpString':
@@ -14,7 +14,7 @@ def remove_debug_if_dead(module, inst):
             inst.destroy()
 
 
-def remove_decoration_if_dead(module, inst):
+def remove_decoration_if_dead(inst):
     """Remove decoration instruction if it is not used."""
     assert inst.op_name in ir.DECORATION_INSTRUCTIONS
     if inst.op_name != 'OpDecorationGroup':
@@ -36,12 +36,11 @@ def optimize(module):
     # point to is removed.
     for inst in reversed(module.global_insts[:]):
         if inst.op_name in ir.DEBUG_INSTRUCTIONS:
-            remove_debug_if_dead(module, inst)
+            remove_debug_if_dead(inst)
         elif inst.op_name in ir.DECORATION_INSTRUCTIONS:
-            remove_decoration_if_dead(module, inst)
+            remove_decoration_if_dead(inst)
 
     # Remove unused instructions.
     for inst in module.instructions_reversed():
         if not inst.has_side_effect() and not inst.uses():
             inst.destroy()
-    module.finalize()

@@ -207,4 +207,3 @@ def optimize(module):
             optimized_inst = optimize_inst(module, inst)
             if optimized_inst != inst:
                 inst.replace_uses_with(optimized_inst)
-    module.finalize()

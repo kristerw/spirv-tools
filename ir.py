@@ -21,7 +21,7 @@ class IRError(Exception):
 
 class Module(object):
     def __init__(self):
-        self.bound = None
+        self.bound = 1
         self.functions = []
         self.global_insts = []
         self._value_to_id = {}
@@ -171,47 +171,38 @@ class Module(object):
         else:
             raise IRError('Invalid type for constant')
 
-    def finalize(self):
+    def renumber_temp_ids(self):
         self._sort_global_insts()
 
-        # Determine ID bound, and collect all temporary IDs.
+        # Collect all temporary IDs.
+        # The temporary IDs are placed in a list (rather than e.g. a set)
+        # so that we get determinisic result when we renumber by iterating
+        # over the temporary IDs.
         temp_ids = []
-        self.bound = 0
         for inst in self.instructions():
             if inst.result_id is not None:
                 if inst.result_id.is_temp:
                     temp_ids.append(inst.result_id)
-                else:
-                    self.bound = max(self.bound, inst.result_id.value)
-        self.bound += 1
 
-        # Create a new ID for each temporary ID.
-        id_rename = {}
-        for temp_id in temp_ids:
-            id_rename[temp_id] = self.get_id(self.bound)
-            id_rename[temp_id].uses = temp_id.uses
-            self.bound += 1
-
-        # Update all uses of temporary ID to use the new values.
-        for inst in self.instructions():
-            if inst.result_id in id_rename:
-                new_id = id_rename[inst.result_id]
-                old_id = inst.result_id
-                inst.result_id = new_id
-                new_id.inst = inst
-                old_id.inst = None
-            if inst.type_id in id_rename:
-                inst.type_id = id_rename[inst.type_id]
-            for i in range(len(inst.operands)):
-                if isinstance(inst.operands[i], Id):
-                    if inst.operands[i] in id_rename:
-                        inst.operands[i] = id_rename[inst.operands[i]]
-
-        # Rebuild ID mapping table to get rid of obsolete entries.
-        for value in self._value_to_id.keys():
-            if self._value_to_id[value].inst is None:
-                self._value_to_id[value].destroy()
-                del self._value_to_id[value]
+        # Create a new ID for each temporary ID, and update the instructions.
+        # The code modifies the instructions, which is "wrong" -- the correct
+        # way of handling this is to replace the old instruction with a
+        # cloned instruction having the new ID. But the API does currently
+        # not handle cloning/replacing OpFunction, OpFunctionParameter, or
+        # OpLabel (and you could argue it does not need to, as no application
+        # should do this kind of modification).
+        for old_id in temp_ids:
+            new_id = self.get_id(self.bound)
+            old_id.inst.result_id = new_id
+            new_id.inst = old_id.inst
+            old_id.inst = None
+            for inst in old_id.uses:
+                if inst.type_id == old_id:
+                    inst.type_id = new_id
+                for i in range(len(inst.operands)):
+                    if inst.operands[i] == old_id:
+                        inst.operands[i] = new_id
+            new_id.uses = old_id.uses
 
 
 class Function(object):
@@ -482,10 +473,11 @@ class Instruction(object):
         instructions, from the module. The instruction must not be used
         after it is destroyed."""
         _remove_use_from_id(self)
-        for inst in self.module.global_insts[:]:
-            if (inst.op_name in DECORATION_INSTRUCTIONS or
-                    inst.op_name in DEBUG_INSTRUCTIONS):
-                if self.result_id in inst.operands:
+        if self.result_id is not None:
+            uses = list(self.result_id.uses)
+            for inst in uses:
+                if (inst.op_name in DECORATION_INSTRUCTIONS or
+                        inst.op_name in DEBUG_INSTRUCTIONS):
                     inst.destroy()
         if self.is_global_inst():
             self.module.global_insts.remove(self)
@@ -575,12 +567,14 @@ class Instruction(object):
 
 class Id(object):
     def __init__(self, module, value, is_temp=False):
-        assert 0 < value <= 0xffffffff
+        assert 0 < value < 0xffffffff
         assert is_temp or value not in module._value_to_id
         self.value = -value if is_temp else value
         self.is_temp = is_temp
         self.inst = None
         self.uses = set()
+        if not is_temp:
+            module.bound = max(module.bound, value + 1)
 
     def destroy(self):
         """Destroy the ID."""

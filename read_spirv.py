@@ -112,7 +112,7 @@ def expand_mask(kind, value):
     if value != 0:
         mask_values = zip(spirv.spv[kind].values(), spirv.spv[kind].keys())
         mask_values = sorted(mask_values, key=itemgetter(0))
-        for mask_number,mask_token in mask_values:
+        for mask_number, mask_token in mask_values:
             if (mask_number & value) != 0:
                 result.append(mask_token)
                 value = value ^ mask_number
@@ -282,5 +282,4 @@ def read_module(stream):
     parse_global_instructions(binary, module)
     parse_functions(binary, module)
 
-    module.finalize()
     return module

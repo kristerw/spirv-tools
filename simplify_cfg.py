@@ -118,4 +118,3 @@ def optimize(module):
     remove_unused_basic_blocks(module)
     merge_basic_blocks(module)
     eliminate_phi_nodes(module)
-    module.finalize()
