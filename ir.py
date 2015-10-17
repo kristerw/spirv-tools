@@ -23,14 +23,13 @@ class Module(object):
     def __init__(self):
         self.bound = 1
         self.functions = []
-        self.global_insts = []
         self._value_to_id = {}
         self._tmp_id_counter = 0
+        self.global_instructions = _GlobalInstructions(self)
 
     def dump(self, stream=sys.stdout):
         """Write debug dump to stream."""
-        for inst in self.global_insts:
-            stream.write(str(inst) + '\n')
+        self.global_instructions.dump()
         for function in self.functions:
             stream.write('\n')
             function.dump(stream)
@@ -52,7 +51,7 @@ class Module(object):
 
     def instructions(self):
         """Iterate over all instructions in the module."""
-        for inst in self.global_insts[:]:
+        for inst in self.global_instructions.instructions():
             yield inst
         for function in self.functions[:]:
             for inst in function.instructions():
@@ -60,10 +59,10 @@ class Module(object):
 
     def instructions_reversed(self):
         """Iterate in reverse order over all instructions in the module."""
-        for function in reversed(self.functions[:]):
+        for function in reversed(self.functions):
             for inst in function.instructions_reversed():
                 yield inst
-        for inst in reversed(self.global_insts[:]):
+        for inst in self.global_instructions.instructions_reversed():
             yield inst
 
     def new_id(self):
@@ -79,34 +78,9 @@ class Module(object):
         self._value_to_id[value] = new_id
         return new_id
 
-    def _copy_global_insts(self, dest, names):
-        """Copy global insts with the provided operation names to dest."""
-        for inst in self.global_insts:
-            if inst.op_name in names:
-                dest.append(inst)
-
-    def _sort_global_insts(self):
-        """Sort self.global_insts as required by the SPIR-V specification."""
-        sorted_insts = []
-        for name in INITIAL_INSTRUCTIONS:
-            self._copy_global_insts(sorted_insts, [name])
-        self._copy_global_insts(sorted_insts, ['OpString'])
-        self._copy_global_insts(sorted_insts, ['OpName', 'OpMemberName'])
-        self._copy_global_insts(sorted_insts, ['OpLine'])
-        self._copy_global_insts(sorted_insts, DECORATION_INSTRUCTIONS)
-        self._copy_global_insts(sorted_insts,
-                                TYPE_DECLARATION_INSTRUCTIONS +
-                                CONSTANT_INSTRUCTIONS +
-                                SPECCONSTANT_INSTRUCTIONS +
-                                GLOBAL_VARIABLE_INSTRUCTIONS)
-        assert len(self.global_insts) == len(sorted_insts)
-        self.global_insts = sorted_insts
-
     def add_global_inst(self, inst):
         """Add instruction to the module's global instructions."""
-        if not inst.is_global_inst():
-            raise IRError(inst.op_name + ' is not a valid global instruction')
-        self.global_insts.append(inst)
+        self.global_instructions.append_inst(inst)
         _add_use_to_id(inst)
 
     def add_function(self, function):
@@ -134,7 +108,7 @@ class Module(object):
                 operands = [value & 0xffffffff, value >> 32]
             else:
                 operands = [value]
-            for inst in self.global_insts:
+            for inst in self.global_instructions.type_insts:
                 if (inst.op_name == 'OpConstant' and
                         inst.type_id == type_id and
                         inst.operands == operands):
@@ -151,7 +125,7 @@ class Module(object):
             for elem in value:
                 instr = self.get_constant(type_id.inst.operands[0], elem)
                 operands.append(instr.result_id)
-            for inst in self.global_insts:
+            for inst in self.global_instructions.type_insts:
                 if (inst.op_name == 'OpConstantComposite' and
                         inst.type_id == type_id and
                         inst.operands == operands):
@@ -162,7 +136,7 @@ class Module(object):
             return inst
         elif type_id.inst.op_name == 'OpTypeBool':
             op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
-            for inst in self.global_insts:
+            for inst in self.global_instructions.type_insts:
                 if inst.op_name == op_name:
                     return inst
             inst = Instruction(self, op_name, self.new_id(), type_id, [])
@@ -172,8 +146,7 @@ class Module(object):
             raise IRError('Invalid type for constant')
 
     def renumber_temp_ids(self):
-        self._sort_global_insts()
-
+        """Convert temp IDs to real IDs.."""
         # Collect all temporary IDs.
         # The temporary IDs are placed in a list (rather than e.g. a set)
         # so that we get determinisic result when we renumber by iterating
@@ -205,6 +178,226 @@ class Module(object):
             new_id.uses = old_id.uses
 
 
+class _GlobalInstructions(object):
+    def __init__(self, module):
+        self.module = module
+        self.op_source_insts = []
+        self.op_source_extension_insts = []
+        self.op_capability_insts = []
+        self.op_extension_insts = []
+        self.op_extinstimport_insts = []
+        self.op_memory_model_insts = []
+        self.op_entry_point_insts = []
+        self.op_execution_mode_insts = []
+        self.op_string_insts = []
+        self.name_insts = []
+        self.op_line_insts = []
+        self.decoration_insts = []
+        self.type_insts = []
+
+    def __str__(self):
+        return 'global instructions pseudo-BB'
+
+    def __hash__(self):
+        return id(self)
+
+    def __eq__(self, other):
+        return other is self
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def dump(self, stream=sys.stdout):
+        """Write debug dump to stream."""
+        for inst in self.instructions():
+            stream.write('  ' + str(inst) + '\n')
+
+    def _get_insts_list(self, inst):
+        """Get the list containing instructions of inst's kind."""
+        if inst.op_name == 'OpSource':
+            insts_list = self.op_source_insts
+        elif inst.op_name == 'OpSourceExtension':
+            insts_list = self.op_source_extension_insts
+        elif inst.op_name == 'OpCapability':
+            insts_list = self.op_capability_insts
+        elif inst.op_name == 'OpExtension':
+            insts_list = self.op_extension_insts
+        elif inst.op_name == 'OpExtInstImport':
+            insts_list = self.op_extinstimport_insts
+        elif inst.op_name == 'OpMemoryModel':
+            insts_list = self.op_memory_model_insts
+        elif inst.op_name == 'OpEntryPoint':
+            insts_list = self.op_entry_point_insts
+        elif inst.op_name == 'OpExecutionMode':
+            insts_list = self.op_execution_mode_insts
+        elif inst.op_name == 'OpString':
+            insts_list = self.op_string_insts
+        elif inst.op_name in ['OpName', 'OpMemberName']:
+            insts_list = self.name_insts
+        elif inst.op_name == 'OpLine':
+            insts_list = self.op_line_insts
+        elif inst.op_name in DECORATION_INSTRUCTIONS:
+            insts_list = self.decoration_insts
+        elif inst.op_name in (TYPE_DECLARATION_INSTRUCTIONS +
+                              CONSTANT_INSTRUCTIONS +
+                              SPECCONSTANT_INSTRUCTIONS +
+                              GLOBAL_VARIABLE_INSTRUCTIONS):
+            insts_list = self.type_insts
+        else:
+            raise IRError(inst.op_name + ' is not a valid global instruction')
+        return insts_list
+
+    def _get_insts_list_ord(self, inst):
+        """Get the ordinal number for inst's kind in the output order."""
+        if inst.op_name == 'OpSource':
+            insts_list_ord = 0
+        elif inst.op_name == 'OpSourceExtension':
+            insts_list_ord = 1
+        elif inst.op_name == 'OpCapability':
+            insts_list_ord = 2
+        elif inst.op_name == 'OpExtension':
+            insts_list_ord = 3
+        elif inst.op_name == 'OpExtInstImport':
+            insts_list_ord = 4
+        elif inst.op_name == 'OpMemoryModel':
+            insts_list_ord = 5
+        elif inst.op_name == 'OpEntryPoint':
+            insts_list_ord = 6
+        elif inst.op_name == 'OpExecutionMode':
+            insts_list_ord = 7
+        elif inst.op_name == 'OpString':
+            insts_list_ord = 8
+        elif inst.op_name in ['OpName', 'OpMemberName']:
+            insts_list_ord = 9
+        elif inst.op_name == 'OpLine':
+            insts_list_ord = 10
+        elif inst.op_name in DECORATION_INSTRUCTIONS:
+            insts_list_ord = 11
+        elif inst.op_name in (TYPE_DECLARATION_INSTRUCTIONS +
+                              CONSTANT_INSTRUCTIONS +
+                              SPECCONSTANT_INSTRUCTIONS +
+                              GLOBAL_VARIABLE_INSTRUCTIONS):
+            insts_list_ord = 12
+        else:
+            raise IRError(inst.op_name + ' is not a valid global instruction')
+        return insts_list_ord
+
+    def instructions(self):
+        """Iterate over all global instructions."""
+        for inst in self.op_source_insts[:]:
+            yield inst
+        for inst in self.op_source_extension_insts[:]:
+            yield inst
+        for inst in self.op_capability_insts[:]:
+            yield inst
+        for inst in self.op_extension_insts[:]:
+            yield inst
+        for inst in self.op_extinstimport_insts[:]:
+            yield inst
+        for inst in self.op_memory_model_insts[:]:
+            yield inst
+        for inst in self.op_entry_point_insts[:]:
+            yield inst
+        for inst in self.op_execution_mode_insts[:]:
+            yield inst
+        for inst in self.op_string_insts[:]:
+            yield inst
+        for inst in self.name_insts[:]:
+            yield inst
+        for inst in self.op_line_insts[:]:
+            yield inst
+        for inst in self.decoration_insts[:]:
+            yield inst
+        for inst in self.type_insts[:]:
+            yield inst
+
+    def instructions_reversed(self):
+        """Iterate in reverse order over all global instructions."""
+        for inst in reversed(self.type_insts):
+            yield inst
+        for inst in reversed(self.decoration_insts):
+            yield inst
+        for inst in reversed(self.op_line_insts):
+            yield inst
+        for inst in reversed(self.name_insts):
+            yield inst
+        for inst in reversed(self.op_string_insts):
+            yield inst
+        for inst in reversed(self.op_execution_mode_insts):
+            yield inst
+        for inst in reversed(self.op_entry_point_insts):
+            yield inst
+        for inst in reversed(self.op_memory_model_insts):
+            yield inst
+        for inst in reversed(self.op_extinstimport_insts):
+            yield inst
+        for inst in reversed(self.op_extension_insts):
+            yield inst
+        for inst in reversed(self.op_capability_insts):
+            yield inst
+        for inst in reversed(self.op_source_extension_insts):
+            yield inst
+        for inst in reversed(self.op_source_insts):
+            yield inst
+
+    def append_inst(self, inst):
+        """Add inst at the end of the global instructions of its kind."""
+        insts_list = self._get_insts_list(inst)
+        insts_list.append(inst)
+        inst.basic_block = self
+        _add_use_to_id(inst)
+
+    def prepend_inst(self, inst):
+        """Add inst at the top of the global instructions of its kind."""
+        insts_list = self._get_insts_list(inst)
+        insts_list.insert(0, inst)
+        inst.basic_block = self
+        _add_use_to_id(inst)
+
+    def insert_inst_after(self, inst, insert_pos_inst):
+        """Add instruction after an existing instruction."""
+        insert_pos_list = self._get_insts_list(insert_pos_inst)
+        insts_list = self._get_insts_list(inst)
+        if insert_pos_list == insts_list:
+            idx = insert_pos_list.index(insert_pos_inst)
+            insert_pos_list.insert(idx + 1, inst)
+            inst.basic_block = self
+            _add_use_to_id(inst)
+        else:
+            insert_ord = self._get_insts_list_ord(insert_pos_inst)
+            inst_ord = self._get_insts_list_ord(inst)
+            if inst_ord > insert_ord:
+                self.prepend_inst(inst)
+            else:
+                raise IRError(inst.op_name + ' cannot be inserted after ' +
+                              insert_pos_inst.op_name)
+
+    def insert_inst_before(self, inst, insert_pos_inst):
+        """Add instruction before an existing instruction."""
+        insert_pos_list = self._get_insts_list(insert_pos_inst)
+        insts_list = self._get_insts_list(inst)
+        if insert_pos_list == insts_list:
+            idx = insert_pos_list.index(insert_pos_inst)
+            insert_pos_list.insert(idx, inst)
+            inst.basic_block = self
+            _add_use_to_id(inst)
+        else:
+            insert_ord = self._get_insts_list_ord(insert_pos_inst)
+            inst_ord = self._get_insts_list_ord(inst)
+            if inst_ord < insert_ord:
+                self.append_inst(inst)
+            else:
+                raise IRError(inst.op_name + ' cannot be inserted before ' +
+                              insert_pos_inst.op_name)
+
+    def remove_inst(self, inst):
+        """Remove the inst instruction from global instructions."""
+        _remove_use_from_id(inst)
+        insts_list = self._get_insts_list(inst)
+        insts_list.remove(inst)
+        inst.basic_block = None
+
+
 class Function(object):
     def __init__(self, module, function_id, function_control, function_type_id):
         self.module = module
@@ -227,7 +420,7 @@ class Function(object):
         This destroys all basic blocks and instructions used in the function.
         The function must not be used after it is destroyed."""
         self.module.functions.remove(self)
-        for basic_block in reversed(self.basic_blocks[:]):
+        for basic_block in reversed(self.basic_blocks):
             basic_block.destroy()
         for inst in self.parameters:
             inst.destroy()
@@ -261,12 +454,12 @@ class Function(object):
     def instructions_reversed(self):
         """Iterate in reverse order over all instructions in the function."""
         yield self.end_inst
-        for basic_block in reversed(self.basic_blocks[:]):
+        for basic_block in reversed(self.basic_blocks):
             if basic_block.function is not None:
-                for inst in reversed(basic_block.insts[:]):
+                for inst in reversed(basic_block.insts):
                     yield inst
                 yield basic_block.inst
-        for inst in reversed(self.parameters[:]):
+        for inst in reversed(self.parameters):
             yield inst
         yield self.inst
 
@@ -341,17 +534,37 @@ class BasicBlock(object):
         """Add instruction at the end of the basic block."""
         if inst.is_global_inst():
             raise IRError(inst.op_name + ' is a global instruction')
-        inst.basic_block = self
         self.insts.append(inst)
+        inst.basic_block = self
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
         """Add instruction at the top of the basic block."""
         if inst.is_global_inst():
             raise IRError(inst.op_name + ' is a global instruction')
-        inst.basic_block = self
         self.insts = [inst] + self.insts
+        inst.basic_block = self
         _add_use_to_id(inst)
+
+    def insert_inst_after(self, inst, insert_pos_inst):
+        """Add instruction after an existing instruction."""
+        idx = self.insts.index(insert_pos_inst)
+        self.insts.insert(idx + 1, inst)
+        inst.basic_block = self
+        _add_use_to_id(inst)
+
+    def insert_inst_before(self, inst, insert_pos_inst):
+        """Add instruction before an existing instruction."""
+        idx = self.insts.index(insert_pos_inst)
+        self.insts.insert(idx, inst)
+        inst.basic_block = self
+        _add_use_to_id(inst)
+
+    def remove_inst(self, inst):
+        """Remove the inst instruction from this basic block."""
+        _remove_use_from_id(inst)
+        self.insts.remove(inst)
+        inst.basic_block = None
 
     def remove(self):
         """Remove basic block from function."""
@@ -367,7 +580,7 @@ class BasicBlock(object):
         basic block from the function (if it is attached to a function).
         The basic block must not be used after it is destroyed."""
         self.remove()
-        for inst in reversed(self.insts[:]):
+        for inst in reversed(self.insts):
             uses = inst.uses()
             for tmp_inst in uses:
                 if tmp_inst.op_name == 'OpPhi':
@@ -430,41 +643,26 @@ class Instruction(object):
 
     def insert_after(self, insert_pos_inst):
         """Add instruction after an existing instruction."""
-        if self.is_global_inst():
-            raise IRError(self.op_name + ' is a global instruction')
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
-            raise IRError('Instruction is not in basic block')
-        idx = basic_block.insts.index(insert_pos_inst)
-        self.basic_block = basic_block
-        basic_block.insts.insert(idx + 1, self)
-        _add_use_to_id(self)
+            raise IRError('Instruction is not in a basic block')
+        basic_block.insert_inst_after(self, insert_pos_inst)
 
     def insert_before(self, insert_pos_inst):
         """Add instruction before an existing instruction."""
-        if self.is_global_inst():
-            raise IRError(self.op_name + ' is a global instruction')
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
-            raise IRError('Instruction is not in basic block')
-        idx = basic_block.insts.index(insert_pos_inst)
-        self.basic_block = basic_block
-        basic_block.insts.insert(idx, self)
-        _add_use_to_id(self)
+            raise IRError('Instruction is not in a basic block')
+        basic_block.insert_inst_before(self, insert_pos_inst)
 
     def remove(self):
         """Remove instruction from basic block or global instruction list.
 
         The instruction's debug and decoration instructions are unaffected,
         so that it is possible to re-insert the instruction again."""
-        _remove_use_from_id(self)
         if self.basic_block is None:
-            if self not in self.module.global_insts:
-                raise IRError('Instruction is not in basic block or module')
-            self.module.global_insts.remove(self)
-            return
-        self.basic_block.insts.remove(self)
-        self.basic_block = None
+            raise IRError('Instruction is not in basic block or module')
+        self.basic_block.remove_inst(self)
 
     def destroy(self):
         """Destroy instruction.
@@ -472,17 +670,14 @@ class Instruction(object):
         This removes the instruction, together with its debug and decoration
         instructions, from the module. The instruction must not be used
         after it is destroyed."""
-        _remove_use_from_id(self)
         if self.result_id is not None:
-            uses = list(self.result_id.uses)
+            uses = [inst for inst in self.result_id.uses
+                    if (inst.op_name in DECORATION_INSTRUCTIONS or
+                        inst.op_name in DEBUG_INSTRUCTIONS)]
             for inst in uses:
-                if (inst.op_name in DECORATION_INSTRUCTIONS or
-                        inst.op_name in DEBUG_INSTRUCTIONS):
-                    inst.destroy()
-        if self.is_global_inst():
-            self.module.global_insts.remove(self)
+                inst.destroy()
         if self.basic_block is not None:
-            self.basic_block.insts.remove(self)
+            self.basic_block.remove_inst(self)
         if self.result_id is not None:
             self.result_id.inst = None
         self.basic_block = None
@@ -496,20 +691,22 @@ class Instruction(object):
 
         Debug and decoration instructions are not considered using
         any instruction."""
-        res = []
         if self.result_id is not None:
             res = [inst for inst in self.result_id.uses
                    if (inst.op_name not in DECORATION_INSTRUCTIONS and
                        inst.op_name not in DEBUG_INSTRUCTIONS)]
+        else:
+            res = []
         return res
 
     def get_decorations(self):
         """Return all decorations for this instruction."""
-        res = []
         if self.result_id is not None:
             res = [inst for inst in self.result_id.uses
                    if inst.op_name in DECORATION_INSTRUCTIONS]
             res.sort(key=_decoration_key)
+        else:
+            res = []
         return res
 
     def replace_uses_with(self, new_inst):

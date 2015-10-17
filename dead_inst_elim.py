@@ -34,11 +34,14 @@ def optimize(module):
     # Note: the debug and decoration instructions that are live at the start
     # of this pass is handled by the real pass when the instruction they
     # point to is removed.
-    for inst in reversed(module.global_insts[:]):
-        if inst.op_name in ir.DEBUG_INSTRUCTIONS:
-            remove_debug_if_dead(inst)
-        elif inst.op_name in ir.DECORATION_INSTRUCTIONS:
-            remove_decoration_if_dead(inst)
+    for inst in module.global_instructions.op_line_insts:
+        remove_debug_if_dead(inst)
+    for inst in module.global_instructions.name_insts:
+        remove_debug_if_dead(inst)
+    for inst in module.global_instructions.op_string_insts:
+        remove_debug_if_dead(inst)
+    for inst in reversed(module.global_instructions.decoration_insts):
+        remove_decoration_if_dead(inst)
 
     # Remove unused instructions.
     for inst in module.instructions_reversed():

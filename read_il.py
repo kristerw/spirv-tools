@@ -361,7 +361,7 @@ def get_or_create_function_type(module, return_type, parameters):
     An already existing type instruction is returned if it exists, otherwise
     a new instruction is created and added to the global instructions.
     """
-    for inst in module.global_insts:
+    for inst in module.global_instructions.type_insts:
         if inst.op_name == 'OpTypeFunction':
             if inst.operands[0] == return_type:
                 if [param[0] for param in parameters] == inst.operands[1:]:

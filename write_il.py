@@ -97,7 +97,7 @@ def get_symbol_name(module, symbol_id):
     if symbol_id in module.id_to_symbol_name:
         return module.id_to_symbol_name[symbol_id]
 
-    for inst in module.global_insts:
+    for inst in module.global_instructions.name_insts:
         if inst.op_name == 'OpName' and inst.operands[0] == symbol_id:
             name = inst.operands[1]
 
@@ -175,7 +175,7 @@ def get_needed_types(module):
 
 
 def output_global_instructions(stream, module, is_raw_mode, names, newline=True):
-    for inst in module.global_insts:
+    for inst in module.global_instructions.instructions():
         if inst.op_name in names:
             if newline:
                 stream.write('\n')
@@ -238,7 +238,7 @@ def generate_global_symbols(module):
     """Add function/global varible names to the symbol table."""
     for func in module.functions:
         get_symbol_name(module, func.inst.result_id)
-    for inst in module.global_insts:
+    for inst in module.global_instructions.type_insts:
         if inst.op_name == 'OpVariable':
             get_symbol_name(module, inst.result_id)
 
@@ -277,7 +277,7 @@ def add_type_name(module, inst):
 
 
 def add_type_names(module):
-    for inst in module.global_insts:
+    for inst in module.global_instructions.type_insts:
         if inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_name(module, inst)
 
@@ -323,7 +323,7 @@ def write_module(stream, module, is_raw_mode=False):
             needed_types = get_needed_types(module)
             if needed_types:
                 stream.write('\n')
-                for inst in module.global_insts:
+                for inst in module.global_instructions.type_insts:
                     if inst in needed_types:
                         output_instruction(stream, module, inst, is_raw_mode,
                                            indent='')
