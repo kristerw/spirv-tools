@@ -213,74 +213,55 @@ class _GlobalInstructions(object):
             stream.write('  ' + str(inst) + '\n')
 
     def _get_insts_list(self, inst):
-        """Get the list containing instructions of inst's kind."""
+        """Get the list containing instructions of inst's kind.
+
+        The function returns both the list and the list's position in the
+        order the lists are written in the binary."""
         if inst.op_name == 'OpSource':
             insts_list = self.op_source_insts
+            order = 0
         elif inst.op_name == 'OpSourceExtension':
             insts_list = self.op_source_extension_insts
+            order = 1
         elif inst.op_name == 'OpCapability':
             insts_list = self.op_capability_insts
+            order = 2
         elif inst.op_name == 'OpExtension':
             insts_list = self.op_extension_insts
+            order = 3
         elif inst.op_name == 'OpExtInstImport':
             insts_list = self.op_extinstimport_insts
+            order = 4
         elif inst.op_name == 'OpMemoryModel':
             insts_list = self.op_memory_model_insts
+            order = 5
         elif inst.op_name == 'OpEntryPoint':
             insts_list = self.op_entry_point_insts
+            order = 6
         elif inst.op_name == 'OpExecutionMode':
             insts_list = self.op_execution_mode_insts
+            order = 7
         elif inst.op_name == 'OpString':
             insts_list = self.op_string_insts
+            order = 8
         elif inst.op_name in ['OpName', 'OpMemberName']:
             insts_list = self.name_insts
+            order = 9
         elif inst.op_name == 'OpLine':
             insts_list = self.op_line_insts
+            order = 10
         elif inst.op_name in DECORATION_INSTRUCTIONS:
             insts_list = self.decoration_insts
+            order = 11
         elif inst.op_name in (TYPE_DECLARATION_INSTRUCTIONS +
                               CONSTANT_INSTRUCTIONS +
                               SPECCONSTANT_INSTRUCTIONS +
                               GLOBAL_VARIABLE_INSTRUCTIONS):
             insts_list = self.type_insts
+            order = 12
         else:
             raise IRError(inst.op_name + ' is not a valid global instruction')
-        return insts_list
-
-    def _get_insts_list_ord(self, inst):
-        """Get the ordinal number for inst's kind in the output order."""
-        if inst.op_name == 'OpSource':
-            insts_list_ord = 0
-        elif inst.op_name == 'OpSourceExtension':
-            insts_list_ord = 1
-        elif inst.op_name == 'OpCapability':
-            insts_list_ord = 2
-        elif inst.op_name == 'OpExtension':
-            insts_list_ord = 3
-        elif inst.op_name == 'OpExtInstImport':
-            insts_list_ord = 4
-        elif inst.op_name == 'OpMemoryModel':
-            insts_list_ord = 5
-        elif inst.op_name == 'OpEntryPoint':
-            insts_list_ord = 6
-        elif inst.op_name == 'OpExecutionMode':
-            insts_list_ord = 7
-        elif inst.op_name == 'OpString':
-            insts_list_ord = 8
-        elif inst.op_name in ['OpName', 'OpMemberName']:
-            insts_list_ord = 9
-        elif inst.op_name == 'OpLine':
-            insts_list_ord = 10
-        elif inst.op_name in DECORATION_INSTRUCTIONS:
-            insts_list_ord = 11
-        elif inst.op_name in (TYPE_DECLARATION_INSTRUCTIONS +
-                              CONSTANT_INSTRUCTIONS +
-                              SPECCONSTANT_INSTRUCTIONS +
-                              GLOBAL_VARIABLE_INSTRUCTIONS):
-            insts_list_ord = 12
-        else:
-            raise IRError(inst.op_name + ' is not a valid global instruction')
-        return insts_list_ord
+        return insts_list, order
 
     def instructions(self):
         """Iterate over all global instructions."""
@@ -342,30 +323,28 @@ class _GlobalInstructions(object):
 
     def append_inst(self, inst):
         """Add inst at the end of the global instructions of its kind."""
-        insts_list = self._get_insts_list(inst)
+        insts_list, _ = self._get_insts_list(inst)
         insts_list.append(inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
         """Add inst at the top of the global instructions of its kind."""
-        insts_list = self._get_insts_list(inst)
+        insts_list, _ = self._get_insts_list(inst)
         insts_list.insert(0, inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def insert_inst_after(self, inst, insert_pos_inst):
         """Add instruction after an existing instruction."""
-        insert_pos_list = self._get_insts_list(insert_pos_inst)
-        insts_list = self._get_insts_list(inst)
+        insert_pos_list, insert_ord = self._get_insts_list(insert_pos_inst)
+        insts_list, inst_ord = self._get_insts_list(inst)
         if insert_pos_list == insts_list:
             idx = insert_pos_list.index(insert_pos_inst)
             insert_pos_list.insert(idx + 1, inst)
             inst.basic_block = self
             _add_use_to_id(inst)
         else:
-            insert_ord = self._get_insts_list_ord(insert_pos_inst)
-            inst_ord = self._get_insts_list_ord(inst)
             if inst_ord > insert_ord:
                 self.prepend_inst(inst)
             else:
@@ -374,16 +353,14 @@ class _GlobalInstructions(object):
 
     def insert_inst_before(self, inst, insert_pos_inst):
         """Add instruction before an existing instruction."""
-        insert_pos_list = self._get_insts_list(insert_pos_inst)
-        insts_list = self._get_insts_list(inst)
+        insert_pos_list, insert_ord = self._get_insts_list(insert_pos_inst)
+        insts_list, inst_ord = self._get_insts_list(inst)
         if insert_pos_list == insts_list:
             idx = insert_pos_list.index(insert_pos_inst)
             insert_pos_list.insert(idx, inst)
             inst.basic_block = self
             _add_use_to_id(inst)
         else:
-            insert_ord = self._get_insts_list_ord(insert_pos_inst)
-            inst_ord = self._get_insts_list_ord(inst)
             if inst_ord < insert_ord:
                 self.append_inst(inst)
             else:
@@ -393,7 +370,7 @@ class _GlobalInstructions(object):
     def remove_inst(self, inst):
         """Remove the inst instruction from global instructions."""
         _remove_use_from_id(inst)
-        insts_list = self._get_insts_list(inst)
+        insts_list, _ = self._get_insts_list(inst)
         insts_list.remove(inst)
         inst.basic_block = None
 
