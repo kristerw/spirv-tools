@@ -5,11 +5,24 @@ be run after."""
 import ir
 
 
-def optimize_OpCompositeConstruct(module, inst):
+def get_or_create_const_composite(module, type_id, operands):
+    """Get an OpConstantComposite instruction with given type/operands.
+
+    An existing instruction is returned, or a new one is created if there
+    is no such instruction already."""
+    for inst in module.global_instructions.type_insts:
+        if (inst.op_name == 'OpConstantComposite' and
+                inst.type_id == type_id and
+                inst.operands == operands):
+            return inst
     new_inst = ir.Instruction(module, 'OpConstantComposite', module.new_id(),
-                              inst.type_id, inst.operands[:])
+                              type_id, operands[:])
     module.add_global_inst(new_inst)
     return new_inst
+
+
+def optimize_OpCompositeConstruct(module, inst):
+    return get_or_create_const_composite(module, inst.type_id, inst.operands)
 
 
 def optimize_OpCompositeExtract(inst):
@@ -33,10 +46,7 @@ def optimize_OpVectorShuffle(module, inst):
             components.append(vec1_inst.operands[component])
         else:
             components.append(vec2_inst.operands[component - vec1_len])
-    new_inst = ir.Instruction(module, 'OpConstantComposite', module.new_id(),
-                              inst.type_id, components)
-    module.add_global_inst(new_inst)
-    return new_inst
+    return get_or_create_const_composite(module, inst.type_id, components)
 
 
 def optimize_inst(module, inst):
