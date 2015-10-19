@@ -1,3 +1,4 @@
+"""Create a module from a SPIR-V binary read from a stream."""
 import array
 from operator import itemgetter
 
@@ -8,10 +9,6 @@ import ir
 class ParseError(Exception):
     def __init__(self, message):
         super(ParseError, self).__init__(message)
-        self.message = message
-
-    def __str__(self):
-        return repr(self.message)
 
 
 class SpirvBinary(object):
@@ -272,6 +269,7 @@ def parse_functions(binary, module):
 
 
 def read_module(stream):
+    """Create a module from a SPIR-V binary read from stream."""
     data = stream.read()
     if len(data) % 4 != 0:
         raise ParseError('File length is not divisible by 4')

@@ -1,3 +1,4 @@
+"""Write module to a stream as a SPIR-V binary."""
 import array
 
 import spirv
@@ -10,6 +11,34 @@ def mask_to_value(kind, mask_list):
     for mask in mask_list:
         value = value | spirv.spv[kind][mask]
     return value
+
+
+def format_var_operand(inst_data, kind, operands):
+    """Add a var/optional operand to inst_data.
+
+    A var operand may contain of several operands in the instruction.
+    The provided operands list contains the instruction operands for
+    this operand."""
+    if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+        for operand in operands:
+            inst_data.append(operand)
+    elif kind == 'VariableIds':
+        for operand in operands:
+            inst_data.append(operand.value)
+    elif kind == 'OptionalImage':
+        inst_data.append(operands[0])
+        for operand in operands[1:]:
+            inst_data.append(operand.value)
+    elif kind == 'VariableIdLiteral':
+        while operands:
+            target_id = operands.pop(0)
+            inst_data.append(target_id.value)
+            inst_data.append(operands.pop(0))
+    elif kind == 'VariableLiteralId':
+        while operands:
+            inst_data.append(operands.pop(0))
+            target_id = operands.pop(0)
+            inst_data.append(target_id.value)
 
 
 def output_instruction(stream, inst):
@@ -44,40 +73,14 @@ def output_instruction(stream, inst):
                       'VariableIdLiteral',
                       'VariableLiteralId']:
             # The variable kind must be the last (as rest of the operands
-            # are included in them.  But loop will only give us one.
-            # Handle these after the loop.
-            break
+            # are included in them.
+            operands = inst.operands[(len(op_format['operands'])-1):]
+            format_var_operand(inst_data, kind, operands)
         elif kind in spirv.spv:
             constants = spirv.spv[kind]
             inst_data.append(constants[operand])
         else:
             raise Exception('Unhandled kind ' + kind)
-
-    if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
-        operands = inst.operands[(len(op_format['operands'])-1):]
-        for operand in operands:
-            inst_data.append(operand)
-    elif kind == 'VariableIds':
-        operands = inst.operands[(len(op_format['operands'])-1):]
-        for operand in operands:
-            inst_data.append(operand.value)
-    elif kind == 'OptionalImage':
-        operands = inst.operands[(len(op_format['operands'])-1):]
-        inst_data.append(operands[0])
-        for operand in operands[1:]:
-            inst_data.append(operand.value)
-    elif kind == 'VariableIdLiteral':
-        operands = inst.operands[(len(op_format['operands'])-1):]
-        while operands:
-            target_id = operands.pop(0)
-            inst_data.append(target_id.value)
-            inst_data.append(operands.pop(0))
-    elif kind == 'VariableLiteralId':
-        operands = inst.operands[(len(op_format['operands'])-1):]
-        while operands:
-            inst_data.append(operands.pop(0))
-            target_id = operands.pop(0)
-            inst_data.append(target_id.value)
 
     inst_data[0] = (len(inst_data) << 16) + spirv.spv['Op'][inst.op_name]
     words = array.array('I', inst_data)
@@ -92,6 +95,7 @@ def output_header(stream, module):
 
 
 def write_module(stream, module):
+    """Write module to stream as a SPIR-V binary."""
     module.renumber_temp_ids()
     output_header(stream, module)
     for inst in module.instructions():
