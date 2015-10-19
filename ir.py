@@ -151,11 +151,8 @@ class Module(object):
         # The temporary IDs are placed in a list (rather than e.g. a set)
         # so that we get determinisic result when we renumber by iterating
         # over the temporary IDs.
-        temp_ids = []
-        for inst in self.instructions():
-            if inst.result_id is not None:
-                if inst.result_id.is_temp:
-                    temp_ids.append(inst.result_id)
+        temp_ids = [inst.result_id for inst in self.instructions()
+                    if inst.result_id is not None and inst.result_id.is_temp]
 
         # Create a new ID for each temporary ID, and update the instructions.
         # The code modifies the instructions, which is "wrong" -- the correct
@@ -567,11 +564,8 @@ class BasicBlock(object):
 
     def predecessors(self):
         """Return this basic block's predecessors."""
-        predecessors = []
-        for inst in self.inst.uses():
-            if inst.op_name != 'OpPhi':
-                predecessors.append(inst.basic_block)
-        return predecessors
+        return [inst.basic_block for inst in self.inst.uses()
+                if inst.op_name != 'OpPhi']
 
 
 class Instruction(object):
@@ -700,7 +694,7 @@ class Instruction(object):
         if self.result_id is not None:
             res = [inst for inst in self.result_id.uses
                    if inst.op_name in DECORATION_INSTRUCTIONS]
-            res.sort(key=_decoration_key)
+            res.sort(key=lambda decoration_inst: decoration_inst.operands[1])
         else:
             res = []
         return res
@@ -794,11 +788,6 @@ class Id(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-
-def _decoration_key(decoration_inst):
-    """Comparision key to return decorations in deterministic order."""
-    return decoration_inst.operands[1]
 
 
 def _add_use_to_id(inst):
