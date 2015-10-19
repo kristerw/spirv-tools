@@ -59,7 +59,7 @@ class Module(object):
 
     def instructions_reversed(self):
         """Iterate in reverse order over all instructions in the module."""
-        for function in reversed(self.functions):
+        for function in reversed(self.functions[:]):
             for inst in function.instructions_reversed():
                 yield inst
         for inst in self.global_instructions.instructions_reversed():
@@ -294,31 +294,31 @@ class _GlobalInstructions(object):
 
     def instructions_reversed(self):
         """Iterate in reverse order over all global instructions."""
-        for inst in reversed(self.type_insts):
+        for inst in reversed(self.type_insts[:]):
             yield inst
-        for inst in reversed(self.decoration_insts):
+        for inst in reversed(self.decoration_insts[:]):
             yield inst
-        for inst in reversed(self.op_line_insts):
+        for inst in reversed(self.op_line_insts[:]):
             yield inst
-        for inst in reversed(self.name_insts):
+        for inst in reversed(self.name_insts[:]):
             yield inst
-        for inst in reversed(self.op_string_insts):
+        for inst in reversed(self.op_string_insts[:]):
             yield inst
-        for inst in reversed(self.op_execution_mode_insts):
+        for inst in reversed(self.op_execution_mode_insts[:]):
             yield inst
-        for inst in reversed(self.op_entry_point_insts):
+        for inst in reversed(self.op_entry_point_insts[:]):
             yield inst
-        for inst in reversed(self.op_memory_model_insts):
+        for inst in reversed(self.op_memory_model_insts[:]):
             yield inst
-        for inst in reversed(self.op_extinstimport_insts):
+        for inst in reversed(self.op_extinstimport_insts[:]):
             yield inst
-        for inst in reversed(self.op_extension_insts):
+        for inst in reversed(self.op_extension_insts[:]):
             yield inst
-        for inst in reversed(self.op_capability_insts):
+        for inst in reversed(self.op_capability_insts[:]):
             yield inst
-        for inst in reversed(self.op_source_extension_insts):
+        for inst in reversed(self.op_source_extension_insts[:]):
             yield inst
-        for inst in reversed(self.op_source_insts):
+        for inst in reversed(self.op_source_insts[:]):
             yield inst
 
     def append_inst(self, inst):
@@ -397,9 +397,9 @@ class Function(object):
         This destroys all basic blocks and instructions used in the function.
         The function must not be used after it is destroyed."""
         self.module.functions.remove(self)
-        for basic_block in reversed(self.basic_blocks):
+        for basic_block in reversed(self.basic_blocks[:]):
             basic_block.destroy()
-        for inst in self.parameters:
+        for inst in self.parameters[:]:
             inst.destroy()
         self.end_inst.destroy()
         self.inst.destroy()
@@ -431,12 +431,12 @@ class Function(object):
     def instructions_reversed(self):
         """Iterate in reverse order over all instructions in the function."""
         yield self.end_inst
-        for basic_block in reversed(self.basic_blocks):
+        for basic_block in reversed(self.basic_blocks[:]):
             if basic_block.function is not None:
-                for inst in reversed(basic_block.insts):
+                for inst in reversed(basic_block.insts[:]):
                     yield inst
                 yield basic_block.inst
-        for inst in reversed(self.parameters):
+        for inst in reversed(self.parameters[:]):
             yield inst
         yield self.inst
 
@@ -561,7 +561,7 @@ class BasicBlock(object):
         for tmp_inst in uses:
             if tmp_inst.op_name == 'OpPhi':
                 tmp_inst.remove_from_phi(self)
-        for inst in reversed(self.insts):
+        for inst in reversed(self.insts[:]):
             inst.destroy()
         self.module = None
 
