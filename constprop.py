@@ -1,6 +1,6 @@
 """Change instructions having only constant operands to a constant.
 
-This pass tends to leave dead instructions, so dead_code_elim should
+This pass tends to leave dead instructions, so dead_inst_elim should
 be run after."""
 import ir
 
