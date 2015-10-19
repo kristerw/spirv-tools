@@ -557,11 +557,11 @@ class BasicBlock(object):
         basic block from the function (if it is attached to a function).
         The basic block must not be used after it is destroyed."""
         self.remove()
+        uses = self.inst.uses()
+        for tmp_inst in uses:
+            if tmp_inst.op_name == 'OpPhi':
+                tmp_inst.remove_from_phi(self)
         for inst in reversed(self.insts):
-            uses = inst.uses()
-            for tmp_inst in uses:
-                if tmp_inst.op_name == 'OpPhi':
-                    IRError('Not implemented: remove from phi node') # XXX
             inst.destroy()
         self.module = None
 
@@ -662,6 +662,25 @@ class Instruction(object):
         self.result_id = None
         self.type_id = None
         self.operands = None
+
+    def add_to_phi(self, variable_inst, parent_inst):
+        """Add a variable/parent to a phi-node"""
+        assert self.op_name == 'OpPhi'
+        self.operands.append(variable_inst.result_id)
+        variable_inst.result_id.uses.add(self)
+        self.operands.append(parent_inst.result_id)
+        parent_inst.result_id.uses.add(self)
+
+    def remove_from_phi(self, parent_id):
+        """Remove a parent (and corresponding variable) from a phi-node."""
+        assert self.op_name == 'OpPhi'
+        idx = self.operands.index(parent_id)
+        variable_id = self.operands[idx - 1]
+        del self.operands[idx - 1 : idx + 1]
+        self.operands.append(variable_id)
+        variable_id.operand.uses.remove(self)
+        self.operands.append(parent_id)
+        parent_id.operand.uses.remove(self)
 
     def uses(self):
         """Return all instructions using this instruction.
