@@ -7,11 +7,11 @@ import ir
 
 
 class ParseError(Exception):
-    def __init__(self, message):
-        super(ParseError, self).__init__(message)
+    """Raised when encountering invalid SPIR-V constructs while parsing."""
 
 
 class SpirvBinary(object):
+    """This class represent the SPIR-V binary being parsed."""
     def __init__(self, words):
         if len(words) < 5:
             raise ParseError('File length shorter than header size')
@@ -30,21 +30,30 @@ class SpirvBinary(object):
         self.idx = 5
         self.length = 0
 
-    def discard_inst(self):
-        self.idx += self.words[self.idx] >> 16
-        # Ensure we do not read past end of file (i.e. if the instruction's
-        # length field is corrupt).  It is OK for idx to point to the word
-        # after the binary (which happens if we discard the last instruction
-        # in the file).
-        if self.idx > len(self.words):
-            raise ParseError('Unexpected end of file')
+    def get_next_opcode(self, peek=False, accept_eol=False):
+        """Start parsing one instruction and return the opcode.
 
-    def get_next_opcode(self, peek=False, throw_on_eol=False):
+        Args:
+          peek (bool, optional): If True, return the opcode, but do not
+            advance to the next position. Defaults to False.
+
+          accept_eol (bool, optional): If False, raise an exception if
+            reading past the end of the file. Defaults to False
+
+        Returns:
+          The opcode as a pair:
+          - a string containing the operation name
+          - a dictionary describing the format of the instruction
+
+        Raises:
+          ParseError: If reading past the end of the instruction (and
+          accept_eol is False)
+        """
         if self.idx == len(self.words):
-            if throw_on_eol:
-                raise ParseError('Unexpected end of file')
-            else:
+            if accept_eol:
                 return None, None
+            else:
+                raise ParseError('Unexpected end of file')
 
         opcode = self.words[self.idx] & 0xFFFF
         self.length = (self.words[self.idx] >> 16) - 1
@@ -58,18 +67,35 @@ class SpirvBinary(object):
         op_name = ir.OPCODE_TO_OPNAME[opcode]
         return op_name, ir.INST_FORMAT[op_name]
 
-    def get_next_word(self, peek=False, throw_on_eol=True):
+    def get_next_word(self, peek=False, accept_eol=False):
+        """Return the next word of the instruction.
+
+        Args:
+          peek (bool, optional): If True, return the word, but do not
+            advance to the next position. Defaults to False.
+
+          accept_eol (bool, optional): If False, raise an exception if
+            reading past the end of the instruction. Defaults to False
+
+        Returns:
+          The instruction word as an integer, or None if reading past the
+          end of the instruction (and accept_eol is True)
+
+        Raises:
+          ParseError: If reading past the end of the instruction (and
+          accept_eol is False)
+        """
         if self.idx == len(self.words):
-            if throw_on_eol:
-                raise ParseError('Unexpected end of file')
-            else:
+            if accept_eol:
                 return None
+            else:
+                raise ParseError('Unexpected end of file')
 
         if self.length == 0:
-            if throw_on_eol:
-                raise ParseError('Incorrect instruction length')
-            else:
+            if accept_eol:
                 return None
+            else:
+                raise ParseError('Incorrect instruction length')
 
         word = self.words[self.idx]
 
@@ -80,12 +106,17 @@ class SpirvBinary(object):
         return word
 
     def expect_eol(self):
+        """Check that all words in the instruction have been consumed.
+
+        Raises:
+          ParseError: If not all words in the instruction have been consumed.
+        """
         if self.length != 0:
             raise ParseError('Spurius words after parsing instruction')
 
 
 def parse_literal_string(binary):
-    """parse one LiteralString."""
+    """Parse one LiteralString."""
     result = []
     while True:
         word = binary.get_next_word()
@@ -99,12 +130,12 @@ def parse_literal_string(binary):
 
 
 def parse_id(binary, module):
-    """parse one Id."""
+    """Parse one Id."""
     return module.get_id(binary.get_next_word())
 
 
 def expand_mask(kind, value):
-    """Convert the mask to a list of mask strings."""
+    """Convert the mask value to a list of mask strings."""
     result = []
     if value != 0:
         mask_values = zip(spirv.spv[kind].values(), spirv.spv[kind].keys())
@@ -129,32 +160,32 @@ def parse_operand(binary, module, kind):
     elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
         operands = []
         while True:
-            word = binary.get_next_word(throw_on_eol=False)
+            word = binary.get_next_word(accept_eol=True)
             if word is None:
                 return operands
             operands.append(word)
     elif kind == 'OptionalImage':
         operands = []
-        word = binary.get_next_word(throw_on_eol=False)
+        word = binary.get_next_word(accept_eol=True)
         if word is None:
             return operands
         operands.append(word)
         while True:
-            word = binary.get_next_word(throw_on_eol=False)
+            word = binary.get_next_word(accept_eol=True)
             if word is None:
                 return operands
             operands.append(module.get_id(word))
     elif kind in ['VariableIds', 'OptionalId']:
         operands = []
         while True:
-            word = binary.get_next_word(throw_on_eol=False)
+            word = binary.get_next_word(accept_eol=True)
             if word is None:
                 return operands
             operands.append(module.get_id(word))
     elif kind == 'VariableIdLiteral':
         operands = []
         while True:
-            word = binary.get_next_word(throw_on_eol=False)
+            word = binary.get_next_word(accept_eol=True)
             if word is None:
                 return operands
             operands.append(module.get_id(word))
@@ -163,7 +194,7 @@ def parse_operand(binary, module, kind):
     elif kind == 'VariableLiteralId':
         operands = []
         while True:
-            word = binary.get_next_word(throw_on_eol=False)
+            word = binary.get_next_word(accept_eol=True)
             if word is None:
                 return operands
             operands.append(word)
@@ -206,9 +237,9 @@ def parse_instruction(binary, module):
 
 
 def parse_global_instructions(binary, module):
-    """Parse all global instructions (i.e. up to the first function). """
+    """Parse all global instructions (i.e. up to the first function)."""
     while True:
-        op_name, _ = binary.get_next_opcode(peek=True)
+        op_name, _ = binary.get_next_opcode(peek=True, accept_eol=True)
         if op_name is None:
             return
         if op_name == 'OpFunction':
@@ -246,7 +277,8 @@ def parse_function(binary, module):
         if op_name == 'OpLabel':
             parse_basic_block(binary, module, function)
         elif op_name == 'OpFunctionEnd':
-            binary.discard_inst()
+            binary.get_next_opcode()
+            binary.expect_eol()
             return function
         elif op_name == 'OpFunctionParameter':
             inst = parse_instruction(binary, module)
@@ -258,7 +290,7 @@ def parse_function(binary, module):
 def parse_functions(binary, module):
     """Parse all functions (i.e. rest of the module)."""
     while True:
-        op_name, _ = binary.get_next_opcode(peek=True, throw_on_eol=False)
+        op_name, _ = binary.get_next_opcode(peek=True, accept_eol=True)
         if op_name is None:
             return
         if op_name != 'OpFunction':
