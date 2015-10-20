@@ -1,3 +1,4 @@
+"""Write module to a stream as high-level assembler."""
 import re
 
 import spirv
@@ -5,6 +6,7 @@ import ir
 
 
 def id_name(module, operand):
+    """Return a pretty-printed name for the ID."""
     if operand in module.id_to_symbol_name:
         return module.id_to_symbol_name[operand]
     elif operand in module.type_id_to_name:
@@ -94,6 +96,16 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
 
 
 def get_symbol_name(module, symbol_id):
+    """Return a pretty printed name for the symbol_id if available.
+
+    The pretty printed name is created from OpName decorations for the
+    symbol_id if available, otherwise a numerical ID (e.g. '%23') is
+    returned.
+
+    Names are not unique in SPIR-V, so it is possible that several IDs
+    have the same name in their OpName decoration. This function will
+    return that name for the first ID found, and the rest will get a
+    numerical name."""
     if symbol_id in module.id_to_symbol_name:
         return module.id_to_symbol_name[symbol_id]
 
@@ -112,7 +124,7 @@ def get_symbol_name(module, symbol_id):
             symbol_name = '%' + new_name
             if symbol_name in module.symbol_name_to_id:
                 # This name is already used for another ID (which is
-                # possible, as the decorations we are ussing for symbol
+                # possible, as the decorations we are using for symbol
                 # names are not guaranteed to be unique). Let the first
                 # ID use this name, and use a numerical name for this ID.
                 symbol_name = '%' + str(symbol_id.value)
@@ -127,6 +139,7 @@ def get_symbol_name(module, symbol_id):
 
 
 def format_decoration(decoration_inst):
+    """Return a string of a pretty-printed decoration instruction."""
     res = decoration_inst.operands[1]
     if decoration_inst.operands[2:]:
         res = res + '('
@@ -137,6 +150,7 @@ def format_decoration(decoration_inst):
 
 
 def format_decorations_for_inst(inst):
+    """Return a string of the decorations for inst."""
     line = ''
     if inst.result_id is not None:
         decorations = inst.get_decorations()
@@ -146,12 +160,12 @@ def format_decorations_for_inst(inst):
 
 
 def add_type_if_needed(module, inst, needed_types):
-    """Add this type id to the needed_types set if it is needed.
+    """Add this type inst to the needed_types set if it is needed.
 
-    The type instruction is needed if it is not pretty-printed, and is used
-    by a normal instruction or by a needed type instruction.
+    The type instruction is needed if it is used by the module, and it
+    cannot be pretty-printed.
 
-    The types needed by this type is added recursively."""
+    The types needed by this type are added recursively."""
     if inst not in needed_types:
         if inst.op_name != 'OpTypeFunction':
             if module.type_id_to_name[inst.result_id] == str(inst.result_id):
@@ -163,10 +177,10 @@ def add_type_if_needed(module, inst, needed_types):
 
 
 def get_needed_types(module):
-    """Determine the type instruction needed in a prety-printed IL.
+    """Determine the type instruction needed in a pretty-printed IL.
 
-    The type instruction is needed if it is not pretty-printed, and is used
-    by a normal instruction, or used by a needed type instruction."""
+    The type instruction is needed if it is used by the module, and it
+    cannot be pretty-printed."""
     needed_types = set()
     for inst in module.instructions():
         if inst.type_id is not None:
@@ -174,13 +188,12 @@ def get_needed_types(module):
     return needed_types
 
 
-def output_global_instructions(stream, module, is_raw_mode, names, newline=True):
-    for inst in module.global_instructions.instructions():
-        if inst.op_name in names:
-            if newline:
-                stream.write('\n')
-                newline = False
-            output_instruction(stream, module, inst, is_raw_mode, indent='')
+def output_instructions(stream, module, insts, is_raw_mode, newline=True):
+    """Output instructions."""
+    if insts and newline:
+        stream.write('\n')
+    for inst in insts:
+        output_instruction(stream, module, inst, is_raw_mode, indent='')
 
 
 def output_basic_block(stream, module, basic_block):
@@ -235,7 +248,7 @@ def output_functions(stream, module, is_raw_mode):
 
 
 def generate_global_symbols(module):
-    """Add function/global varible names to the symbol table."""
+    """Add function/global variable names to the symbol table."""
     for func in module.functions:
         get_symbol_name(module, func.inst.result_id)
     for inst in module.global_instructions.type_insts:
@@ -243,7 +256,8 @@ def generate_global_symbols(module):
             get_symbol_name(module, inst.result_id)
 
 
-def add_type_name(module, inst):
+def format_type_name(module, inst):
+    """Format type as a pretty-printed type name."""
     if inst.op_name == 'OpTypeVoid':
         type_name = 'void'
     elif inst.op_name == 'OpTypeBool':
@@ -272,23 +286,25 @@ def add_type_name(module, inst):
         type_name = '<' + str(count) + ' x ' + component_type + '>'
     else:
         type_name = str(inst.result_id)
+    return type_name
 
-    module.type_id_to_name[inst.result_id] = type_name
 
-
-def add_type_names(module):
+def generate_type_names(module):
+    """Populate type_id_to_name table with pretty-printed type names."""
     for inst in module.global_instructions.type_insts:
         if inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
-            add_type_name(module, inst)
+            type_name = format_type_name(module, inst)
+            module.type_id_to_name[inst.result_id] = type_name
 
 
 def write_module(stream, module, is_raw_mode=False):
+    """Write module to stream as high-level assembler."""
     module.symbol_name_to_id = {}
     module.id_to_symbol_name = {}
     module.type_id_to_name = {}
     try:
         module.renumber_temp_ids()
-        add_type_names(module)
+        generate_type_names(module)
         if not is_raw_mode:
             generate_global_symbols(module)
 
@@ -299,40 +315,50 @@ def write_module(stream, module, is_raw_mode=False):
         # types of instructions split into sections (and with unneeded
         # instructions eliminated for non-raw mode), so we need to do some
         # extra work here...
-        for name in ir.INITIAL_INSTRUCTIONS:
-            if name != 'OpExtInstImport':
-                output_global_instructions(stream, module, is_raw_mode, [name],
-                                           newline=False)
-        output_global_instructions(stream, module, is_raw_mode,
-                                   ['OpExtInstImport'])
+        globals = module.global_instructions
+        output_instructions(stream, module, globals.op_source_insts,
+                            is_raw_mode,newline=False)
+        output_instructions(stream, module, globals.op_source_extension_insts,
+                            is_raw_mode, newline=False)
+        output_instructions(stream, module, globals.op_capability_insts,
+                            is_raw_mode, newline=False)
+        output_instructions(stream, module, globals.op_extension_insts,
+                            is_raw_mode, newline=False)
+        output_instructions(stream, module, globals.op_memory_model_insts,
+                            is_raw_mode, newline=False)
+        output_instructions(stream, module, globals.op_entry_point_insts,
+                            is_raw_mode, newline=False)
+        output_instructions(stream, module, globals.op_execution_mode_insts,
+                            is_raw_mode, newline=False)
+
+        output_instructions(stream, module, globals.op_extinstimport_insts,
+                            is_raw_mode)
         if is_raw_mode:
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ['OpString'])
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ['OpName', 'OpMemberName'])
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ['OpLine'])
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ir.DECORATION_INSTRUCTIONS)
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ir.TYPE_DECLARATION_INSTRUCTIONS +
-                                       ir.CONSTANT_INSTRUCTIONS +
-                                       ir.SPECCONSTANT_INSTRUCTIONS +
-                                       ir.GLOBAL_VARIABLE_INSTRUCTIONS)
+            output_instructions(stream, module, globals.op_string_insts,
+                                is_raw_mode)
+            output_instructions(stream, module, globals.name_insts,
+                                is_raw_mode)
+            output_instructions(stream, module, globals.op_line_insts,
+                                is_raw_mode)
+            output_instructions(stream, module, globals.decoration_insts,
+                                is_raw_mode)
+            output_instructions(stream, module, globals.type_insts,
+                                is_raw_mode)
         else:
             needed_types = get_needed_types(module)
-            if needed_types:
-                stream.write('\n')
-                for inst in module.global_instructions.type_insts:
-                    if inst in needed_types:
-                        output_instruction(stream, module, inst, is_raw_mode,
-                                           indent='')
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ir.CONSTANT_INSTRUCTIONS)
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ir.SPECCONSTANT_INSTRUCTIONS)
-            output_global_instructions(stream, module, is_raw_mode,
-                                       ir.GLOBAL_VARIABLE_INSTRUCTIONS)
+            type_insts = []
+            for inst in globals.type_insts:
+                if (inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS and
+                        inst in needed_types):
+                    type_insts.append(inst)
+                if (inst.op_name in ir.CONSTANT_INSTRUCTIONS or
+                        inst.op_name in ir.SPECCONSTANT_INSTRUCTIONS):
+                    type_insts.append(inst)
+            output_instructions(stream, module, type_insts, is_raw_mode)
+
+            global_vars = [inst for inst in globals.type_insts
+                           if inst.op_name in ir.GLOBAL_VARIABLE_INSTRUCTIONS]
+            output_instructions(stream, module, global_vars, is_raw_mode)
 
         # Output rest of the module.
         output_functions(stream, module, is_raw_mode)
