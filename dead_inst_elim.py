@@ -44,6 +44,26 @@ def optimize(module):
         remove_decoration_if_dead(inst)
 
     # Remove unused instructions.
-    for inst in module.instructions_reversed():
-        if not inst.has_side_effect() and not inst.uses():
-            inst.destroy()
+    #
+    # We need to re-run the pass if elimination of a phi-node makes
+    # instructions dead in an already processed basic block.
+    rerun = True
+    while rerun:
+        rerun = False
+        processed_bbs = set()
+        for inst in module.instructions_reversed():
+            if inst.op_name == 'OpLabel':
+                processed_bbs.add(inst.basic_block)
+            if not inst.has_side_effect() and not inst.uses():
+                if inst.op_name == 'OpPhi':
+                    processed_bbs.add(inst.basic_block)
+                    operands = inst.operands[:]
+                    inst.destroy()
+                    for operand in operands:
+                        if (operand.inst.op_name != 'OpLabel' and
+                                operand.inst.basic_block in processed_bbs and
+                                not operand.inst.uses()):
+                            rerun = True
+                            break
+                else:
+                    inst.destroy()
