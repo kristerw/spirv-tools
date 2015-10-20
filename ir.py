@@ -397,8 +397,11 @@ class Function(object):
         for basic_block in reversed(self.basic_blocks[:]):
             basic_block.destroy()
         for inst in self.parameters[:]:
+            _remove_use_from_id(inst)
             inst.destroy()
+        _remove_use_from_id(self.end_inst)
         self.end_inst.destroy()
+        _remove_use_from_id(self.inst)
         self.inst.destroy()
         self.module = None
         self.parameters = None
