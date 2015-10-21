@@ -355,24 +355,6 @@ def parse_type(lexer, module):
     return type_id
 
 
-def get_or_create_function_type(module, return_type, parameters):
-    """Return the function type inst for the return type/parameter list.
-
-    An already existing type instruction is returned if it exists, otherwise
-    a new instruction is created and added to the global instructions.
-    """
-    for inst in module.global_instructions.type_insts:
-        if inst.op_name == 'OpTypeFunction':
-            if inst.operands[0] == return_type:
-                if [param[0] for param in parameters] == inst.operands[1:]:
-                    return inst.result_id
-    operands = [return_type] + [param[0] for param in parameters]
-    new_id = module.new_id()
-    inst = ir.Instruction(module, 'OpTypeFunction', new_id, None, operands)
-    module.add_global_inst(inst)
-    return new_id
-
-
 def parse_var_operand(lexer, module, kind, type_id):
     """Parse one instruction operand of the specified var/optional kind.
 
@@ -689,9 +671,11 @@ def parse_function_definition(lexer, module):
         id_name = get_id_name(module, function_id)
         raise ParseError(id_name + ' is already defined')
 
-    function_type = get_or_create_function_type(module, return_type,
-                                                parameters)
-    function = ir.Function(module, function_id, [], function_type) # XXX
+    operands = [return_type] + [param[0] for param in parameters]
+    function_type_inst = module.get_global_inst('OpTypeFunction', None,
+                                                operands)
+    function = ir.Function(module, function_id, [],
+                           function_type_inst.result_id) # XXX
     for (param_type, param_id) in parameters:
         param_inst = ir.Instruction(module, 'OpFunctionParameter', param_id,
                                     param_type, [])

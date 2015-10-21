@@ -15,10 +15,7 @@ def get_or_create_const_composite(module, type_id, operands):
                 inst.type_id == type_id and
                 inst.operands == operands):
             return inst
-    new_inst = ir.Instruction(module, 'OpConstantComposite', module.new_id(),
-                              type_id, operands[:])
-    module.add_global_inst(new_inst)
-    return new_inst
+    return module.get_global_inst('OpConstantComposite', type_id, operands[:])
 
 
 def optimize_OpCompositeConstruct(module, inst):

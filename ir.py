@@ -83,6 +83,15 @@ class Module(object):
         self.global_instructions.append_inst(inst)
         _add_use_to_id(inst)
 
+    def get_global_inst(self, op_name, type_id, operands):
+        """Return a global instruction.
+
+        An already existing instruction is returned if possible. A new
+        global instruction is created and inserted in the module if no
+        such instruction is available."""
+        return self.global_instructions.get_inst(self, op_name, type_id,
+                                                 operands)
+
     def add_function(self, function):
         """Add function to the module."""
         self.functions.append(function)
@@ -108,15 +117,7 @@ class Module(object):
                 operands = [value & 0xffffffff, value >> 32]
             else:
                 operands = [value]
-            for inst in self.global_instructions.type_insts:
-                if (inst.op_name == 'OpConstant' and
-                        inst.type_id == type_id and
-                        inst.operands == operands):
-                    return inst
-            inst = Instruction(self, 'OpConstant', self.new_id(),
-                               type_id, operands)
-            self.add_global_inst(inst)
-            return inst
+            return self.get_global_inst('OpConstant', type_id, operands)
         elif type_id.inst.op_name == 'OpTypeVector':
             nof_elements = type_id.inst.operands[1]
             if not isinstance(value, (list, tuple)):
@@ -125,23 +126,11 @@ class Module(object):
             for elem in value:
                 instr = self.get_constant(type_id.inst.operands[0], elem)
                 operands.append(instr.result_id)
-            for inst in self.global_instructions.type_insts:
-                if (inst.op_name == 'OpConstantComposite' and
-                        inst.type_id == type_id and
-                        inst.operands == operands):
-                    return inst
-            inst = Instruction(self, 'OpConstantComposite', self.new_id(),
-                               type_id, operands)
-            self.add_global_inst(inst)
-            return inst
+            return self.get_global_inst('OpConstantComposite', type_id,
+                                        operands)
         elif type_id.inst.op_name == 'OpTypeBool':
             op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
-            for inst in self.global_instructions.type_insts:
-                if inst.op_name == op_name:
-                    return inst
-            inst = Instruction(self, op_name, self.new_id(), type_id, [])
-            self.add_global_inst(inst)
-            return inst
+            return self.get_global_inst(op_name, type_id, [])
         else:
             raise IRError('Invalid type for constant')
 
@@ -209,55 +198,55 @@ class _GlobalInstructions(object):
         for inst in self.instructions():
             stream.write('  ' + str(inst) + '\n')
 
-    def _get_insts_list(self, inst):
+    def _get_insts_list(self, op_name):
         """Get the list containing instructions of inst's kind.
 
         The function returns both the list and the list's position in the
         order the lists are written in the binary."""
-        if inst.op_name == 'OpSource':
+        if op_name == 'OpSource':
             insts_list = self.op_source_insts
             order = 0
-        elif inst.op_name == 'OpSourceExtension':
+        elif op_name == 'OpSourceExtension':
             insts_list = self.op_source_extension_insts
             order = 1
-        elif inst.op_name == 'OpCapability':
+        elif op_name == 'OpCapability':
             insts_list = self.op_capability_insts
             order = 2
-        elif inst.op_name == 'OpExtension':
+        elif op_name == 'OpExtension':
             insts_list = self.op_extension_insts
             order = 3
-        elif inst.op_name == 'OpExtInstImport':
+        elif op_name == 'OpExtInstImport':
             insts_list = self.op_extinstimport_insts
             order = 4
-        elif inst.op_name == 'OpMemoryModel':
+        elif op_name == 'OpMemoryModel':
             insts_list = self.op_memory_model_insts
             order = 5
-        elif inst.op_name == 'OpEntryPoint':
+        elif op_name == 'OpEntryPoint':
             insts_list = self.op_entry_point_insts
             order = 6
-        elif inst.op_name == 'OpExecutionMode':
+        elif op_name == 'OpExecutionMode':
             insts_list = self.op_execution_mode_insts
             order = 7
-        elif inst.op_name == 'OpString':
+        elif op_name == 'OpString':
             insts_list = self.op_string_insts
             order = 8
-        elif inst.op_name in ['OpName', 'OpMemberName']:
+        elif op_name in ['OpName', 'OpMemberName']:
             insts_list = self.name_insts
             order = 9
-        elif inst.op_name == 'OpLine':
+        elif op_name == 'OpLine':
             insts_list = self.op_line_insts
             order = 10
-        elif inst.op_name in DECORATION_INSTRUCTIONS:
+        elif op_name in DECORATION_INSTRUCTIONS:
             insts_list = self.decoration_insts
             order = 11
-        elif inst.op_name in (TYPE_DECLARATION_INSTRUCTIONS +
-                              CONSTANT_INSTRUCTIONS +
-                              SPECCONSTANT_INSTRUCTIONS +
-                              GLOBAL_VARIABLE_INSTRUCTIONS):
+        elif (op_name in TYPE_DECLARATION_INSTRUCTIONS or
+              op_name in CONSTANT_INSTRUCTIONS or
+              op_name in SPECCONSTANT_INSTRUCTIONS or
+              op_name in  GLOBAL_VARIABLE_INSTRUCTIONS):
             insts_list = self.type_insts
             order = 12
         else:
-            raise IRError(inst.op_name + ' is not a valid global instruction')
+            raise IRError(op_name + ' is not a valid global instruction')
         return insts_list, order
 
     def instructions(self):
@@ -318,16 +307,38 @@ class _GlobalInstructions(object):
         for inst in reversed(self.op_source_insts[:]):
             yield inst
 
+    def get_inst(self, module, op_name, type_id, operands):
+        """Return a global instruction.
+
+        An already existing instruction is returned if possible. A new
+        global instruction is created and inserted in the module if no
+        such instruction is available."""
+        insts_list, _ = self._get_insts_list(op_name)
+        for inst in insts_list:
+            if (inst.op_name == op_name and
+                    inst.type_id == type_id and
+                    inst.operands == operands):
+                return inst
+        if op_name not in INST_FORMAT:
+            raise IRError('Invalid op_name ' + str(op_name))
+        if INST_FORMAT[op_name]['result']:
+            result_id = module.new_id()
+        else:
+            result_id = None
+        inst = Instruction(module, op_name, result_id, type_id, operands)
+        self.append_inst(inst)
+        return inst
+
     def append_inst(self, inst):
         """Add inst at the end of the global instructions of its kind."""
-        insts_list, _ = self._get_insts_list(inst)
+        insts_list, _ = self._get_insts_list(inst.op_name)
         insts_list.append(inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
         """Add inst at the top of the global instructions of its kind."""
-        insts_list, _ = self._get_insts_list(inst)
+        insts_list, _ = self._get_insts_list(inst.op_name)
         insts_list.insert(0, inst)
         inst.basic_block = self
         _add_use_to_id(inst)
@@ -335,7 +346,7 @@ class _GlobalInstructions(object):
     def insert_inst_after(self, inst, insert_pos_inst):
         """Add instruction after an existing instruction."""
         insert_pos_list, insert_ord = self._get_insts_list(insert_pos_inst)
-        insts_list, inst_ord = self._get_insts_list(inst)
+        insts_list, inst_ord = self._get_insts_list(inst.op_name)
         if insert_pos_list == insts_list:
             idx = insert_pos_list.index(insert_pos_inst)
             insert_pos_list.insert(idx + 1, inst)
@@ -350,11 +361,11 @@ class _GlobalInstructions(object):
 
     def insert_inst_before(self, inst, insert_pos_inst):
         """Add instruction before an existing instruction."""
-        insert_pos_list, insert_ord = self._get_insts_list(insert_pos_inst)
-        insts_list, inst_ord = self._get_insts_list(inst)
-        if insert_pos_list == insts_list:
-            idx = insert_pos_list.index(insert_pos_inst)
-            insert_pos_list.insert(idx, inst)
+        insert_list, insert_ord = self._get_insts_list(insert_pos_inst.op_name)
+        insts_list, inst_ord = self._get_insts_list(inst.op_name)
+        if insert_list == insts_list:
+            idx = insert_list.index(insert_pos_inst)
+            insert_list.insert(idx, inst)
             inst.basic_block = self
             _add_use_to_id(inst)
         else:
@@ -367,7 +378,7 @@ class _GlobalInstructions(object):
     def remove_inst(self, inst):
         """Remove the inst instruction from global instructions."""
         _remove_use_from_id(inst)
-        insts_list, _ = self._get_insts_list(inst)
+        insts_list, _ = self._get_insts_list(inst.op_name)
         insts_list.remove(inst)
         inst.basic_block = None
 
@@ -739,7 +750,12 @@ class Instruction(object):
 
     def is_global_inst(self):
         """Return true if this is a global instruction, false otherwise."""
-        if (self.op_name in GLOBAL_INSTRUCTIONS and
+        if ((self.op_name in INITIAL_INSTRUCTIONS or
+             self.op_name in DEBUG_INSTRUCTIONS or
+             self.op_name in DECORATION_INSTRUCTIONS or
+             self.op_name in TYPE_DECLARATION_INSTRUCTIONS or
+             self.op_name in CONSTANT_INSTRUCTIONS or
+             self.op_name in GLOBAL_VARIABLE_INSTRUCTIONS) and
                 not (self.op_name == 'OpVariable' and
                      self.operands[0] == 'Function')):
             return True
@@ -850,7 +866,7 @@ OPCODE_TO_OPNAME = dict(zip(spirv.spv['Op'].values(), spirv.spv['Op'].keys()))
 
 MASKS = set([_name for _name in spirv.spv if _name[-4:] == 'Mask'])
 
-BRANCH_INSTRUCTIONS = [
+BRANCH_INSTRUCTIONS = set([
     'OpReturnValue',
     'OpBranch',
     'OpBranchConditional',
@@ -858,11 +874,11 @@ BRANCH_INSTRUCTIONS = [
     'OpKill',
     'OpUnreachable',
     'OpSwitch'
-]
+])
 
-# The order of the instructions in the first part of the binary (before
-# the debug and annotation instructions).
-INITIAL_INSTRUCTIONS = [
+# The instructions in the first part of the binary (before debug and
+# annotation instructions).
+INITIAL_INSTRUCTIONS = set([
     'OpSource',
     'OpSourceExtension',
     'OpCapability',
@@ -871,24 +887,24 @@ INITIAL_INSTRUCTIONS = [
     'OpMemoryModel',
     'OpEntryPoint',
     'OpExecutionMode'
-]
+])
 
-DEBUG_INSTRUCTIONS = [
+DEBUG_INSTRUCTIONS = set([
     'OpString',
     'OpName',
     'OpMemberName',
     'OpLine',
-]
+])
 
-DECORATION_INSTRUCTIONS = [
+DECORATION_INSTRUCTIONS = set([
     'OpDecorate',
     'OpMemberDecorate',
     'OpGroupDecorate',
     'OpGroupMemberDecorate',
     'OpDecorationGroup'
-]
+])
 
-TYPE_DECLARATION_INSTRUCTIONS = [
+TYPE_DECLARATION_INSTRUCTIONS = set([
     'OpTypeVoid',
     'OpTypeBool',
     'OpTypeInt',
@@ -909,35 +925,28 @@ TYPE_DECLARATION_INSTRUCTIONS = [
     'OpTypeReserveId',
     'OpTypeQueue',
     'OpTypePipe'
-]
+])
 
-CONSTANT_INSTRUCTIONS = [
+CONSTANT_INSTRUCTIONS = set([
     'OpConstantTrue',
     'OpConstantFalse',
     'OpConstant',
     'OpConstantComposite',
     'OpConstantSampler',
     'OpConstantNull',
-]
+])
 
-SPECCONSTANT_INSTRUCTIONS = [
+SPECCONSTANT_INSTRUCTIONS = set([
     'OpSpecConstantTrue',
     'OpSpecConstantFalse',
     'OpSpecConstant',
     'OpSpecConstantComposite',
     'OpSpecConstantOp'
-]
+])
 
-GLOBAL_VARIABLE_INSTRUCTIONS = [
+GLOBAL_VARIABLE_INSTRUCTIONS = set([
     'OpVariable'
-]
-
-GLOBAL_INSTRUCTIONS = set(INITIAL_INSTRUCTIONS +
-                          DEBUG_INSTRUCTIONS +
-                          DECORATION_INSTRUCTIONS +
-                          TYPE_DECLARATION_INSTRUCTIONS +
-                          CONSTANT_INSTRUCTIONS +
-                          GLOBAL_VARIABLE_INSTRUCTIONS)
+])
 
 HAS_SIDE_EFFECT = set([
     'OpFunction',
