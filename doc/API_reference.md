@@ -12,7 +12,7 @@ one function, that is, all instructions from an `OpFunction` to the
 `OpFunctionEnd`. The instructions are grouped in the `BasicBlock` class,
 which consists of all instructions from an `OpLabel` to the branch or return
 instruction. Finally the instructions are represented by the `Instruction`
-class.
+class, where the SPIR-V IDs are represented by the `Id` class
 
 Most class attributes (such as lists of functions, basic blocks,
 instructions) are meant to be read by applications, but applications must
@@ -27,7 +27,8 @@ high level assembly language used by the `spirv-as`/`spirv-dis`; the IDs
 are represented as objects of the `Id` class that contains the value of the ID,
 and a link to the instruction that defines the ID. An application should in general
 never create ID values itself; the only exception is when implementing an assembler.
-All other IDs should be created by calling `module.new_id()`. The opcode is represented by
+All other IDs should be created implicitly by creating the instructions without
+providing an ID. The opcode is represented by
 the operation name (such as `'OpFAdd'`). The operands for the enumerated constants (such as
 the Storage Class) are represented as strings of the values (such as
 `'Input'`), and masks are represented as a list of enumerated constants.
@@ -42,7 +43,7 @@ instruction. For example, to switch the order of two operands of
 `inst`:
 
 ```
-new_inst = ir.Instruction(module, inst.op_name, module.new_id(), inst.type_id,
+new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
                           [inst.operands[1], inst.operands[0]]
 inst.replace_with(new_inst)
 ```
@@ -54,9 +55,9 @@ is not directly supported in the API, but it can be accomplished
 by inserting a temporary instruction
 
 ```
-tmp_inst = ir.Instruction(module, 'OpUndef', module.new_id(), inst.type_id, [])
+tmp_inst = ir.Instruction(module, 'OpUndef', inst.type_id, [])
 inst.replace_with(tmp_inst)
-new_inst = ir.Instruction(module, inst.op_name, module.new_id(), inst.type_id,
+new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
                           [inst.operands[1], inst.operands[0]]
 tmp_inst.replace_with(new_inst)
 ```
