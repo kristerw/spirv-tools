@@ -17,7 +17,7 @@ def update_conditional_branch(module, inst, dest_id):
     """Change the OpBranchConditional or OpSwitch to a branch to dest_id."""
     assert inst.op_name == 'OpBranchConditional' or inst.op_name == 'OpSwitch'
     basic_block = inst.basic_block
-    branch_inst = ir.Instruction(module, 'OpBranch', None, None, [dest_id])
+    branch_inst = ir.Instruction(module, 'OpBranch', None, [dest_id])
     inst.replace_with(branch_inst)
     if basic_block.insts[-2].op_name in ['OpSelectionMerge', 'OpLoopMerge']:
         basic_block.insts[-2].destroy()

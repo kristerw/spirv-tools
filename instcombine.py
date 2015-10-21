@@ -13,8 +13,8 @@ def optimize_OpBitcast(module, inst):
         if inst.type_id == operand_inst.operands[0].inst.type_id:
             return operand_inst.operands[0].inst
         else:
-            new_inst = ir.Instruction(module, 'OpBitcast', module.new_id(),
-                                      inst.type_id, [operand_inst.operands[0]])
+            new_inst = ir.Instruction(module, 'OpBitcast', inst.type_id,
+                                      [operand_inst.operands[0]])
             new_inst.copy_decorations(inst)
             new_inst.insert_before(inst)
             return new_inst
@@ -52,7 +52,6 @@ def optimize_OpCompositeConstruct(module, inst):
                     idx = idx + vec1_len
                 vecshuffle_operands.append(idx)
             new_inst = ir.Instruction(module, 'OpVectorShuffle',
-                                      module.new_id(),
                                       inst.type_id, vecshuffle_operands)
             new_inst.copy_decorations(inst)
             new_inst.insert_before(inst)
@@ -116,8 +115,7 @@ def optimize_OpVectorShuffle(module, inst):
             else:
                 using_vec2 = True
     if not using_vec1 and not using_vec2:
-        new_inst = ir.Instruction(module, 'OpUndef', module.new_id(),
-                                  inst.type_id, [])
+        new_inst = ir.Instruction(module, 'OpUndef', inst.type_id, [])
         new_inst.insert_before(inst)
         return new_inst
     elif not using_vec2:
@@ -149,8 +147,8 @@ def optimize_OpVectorShuffle(module, inst):
     # Create new inst if we have changed the instruction.
     operands = [vec1_inst.result_id, vec2_inst.result_id] + components
     if operands != inst.operands:
-        new_inst = ir.Instruction(module, 'OpVectorShuffle', module.new_id(),
-                                  inst.type_id, operands)
+        new_inst = ir.Instruction(module, 'OpVectorShuffle', inst.type_id,
+                                  operands)
         new_inst.copy_decorations(inst)
         new_inst.insert_before(inst)
         return new_inst

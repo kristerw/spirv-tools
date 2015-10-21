@@ -6,8 +6,7 @@ import ir
 
 
 class ParseError(Exception):
-    def __init__(self, message):
-        super(ParseError, self).__init__(message)
+    """Raised when encountering invalid constructs while parsing."""
 
 
 class VerificationError(Exception):
@@ -130,15 +129,18 @@ def create_id(module, token, tag, type_id=None):
     elif tag == 'ID':
         assert token[0] == '%'
         if not token[1].isdigit():
-            new_id = module.new_id()
+            new_id = ir.Id(module)
             module.symbol_name_to_id[token] = new_id
             name = token[1:]
-            inst = ir.Instruction(module, 'OpName', None, None,
-                                  [new_id, name])
+            inst = ir.Instruction(module, 'OpName', None, [new_id, name])
             module.add_global_inst(inst)
-            return new_id
         else:
-            return module.get_id(int(token[1:]))
+            value = int(token[1:])
+            if value in module.value_to_id:
+                return module.value_to_id[value]
+            new_id = ir.Id(module, value)
+            module.value_to_id[value] = new_id
+        return new_id
     elif tag == 'INT' or token in ['true', 'false']:
         value = get_scalar_value(token, tag, type_id)
         inst = module.get_constant(type_id, value)
@@ -245,7 +247,7 @@ def parse_mask(lexer, kind):
     return expand_mask(kind, value)
 
 
-def add_vector_type(module, token, new_id):
+def add_vector_type(module, token):
     """Create a vector type inst corresponding to the token."""
     orig_token = token
     if token[0] != '<' or token[-1] != '>':
@@ -264,7 +266,7 @@ def add_vector_type(module, token, new_id):
         raise ParseError('Not a valid type: ' + orig_token)
 
     base_type_id = get_or_create_type(module, base_type)
-    return ir.Instruction(module, 'OpTypeVector', new_id, None,
+    return ir.Instruction(module, 'OpTypeVector', None,
                           [base_type_id, nof_elem])
 
 
@@ -275,25 +277,21 @@ def get_or_create_type(module, token):
     a new instruction is created and added to the global instructions.
     """
     if not token in module.type_name_to_id:
-        new_id = module.new_id()
         if token == 'void':
-            inst = ir.Instruction(module, 'OpTypeVoid', new_id, None, [])
+            inst = ir.Instruction(module, 'OpTypeVoid', None, [])
         elif token == 'bool':
-            inst = ir.Instruction(module, 'OpTypeBool', new_id, None, [])
+            inst = ir.Instruction(module, 'OpTypeBool', None, [])
         elif token in ['s8', 's16', 's32', 's64']:
             width = int(token[1:])
-            inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
-                                  [width, 1])
+            inst = ir.Instruction(module, 'OpTypeInt', None, [width, 1])
         elif token in ['u8', 'u16', 'u32', 'u64']:
             width = int(token[1:])
-            inst = ir.Instruction(module, 'OpTypeInt', new_id, None,
-                                  [width, 0])
+            inst = ir.Instruction(module, 'OpTypeInt', None, [width, 0])
         elif token in ['f16', 'f32', 'f64']:
             width = int(token[1:])
-            inst = ir.Instruction(module, 'OpTypeFloat', new_id, None,
-                                  [width])
+            inst = ir.Instruction(module, 'OpTypeFloat', None, [width])
         elif token[0] == '<':
-            inst = add_vector_type(module, token, new_id)
+            inst = add_vector_type(module, token)
         else:
             raise ParseError('Not a valid type: ' + token)
 
@@ -497,7 +495,8 @@ def parse_instruction(lexer, module):
         module.inst_to_line[basic_block.inst] = lexer.line_no
         return basic_block
     else:
-        inst = ir.Instruction(module, op_name, result_id, type_id, operands)
+        inst = ir.Instruction(module, op_name, type_id, operands,
+                              result_id=result_id)
         module.inst_to_line[inst] = lexer.line_no
         if op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
             add_type_name(module, inst)
@@ -538,7 +537,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
                     break
                 if token != ',':
                     raise ParseError('Syntax error in decoration')
-        inst = ir.Instruction(module, 'OpDecorate', None, None, operands)
+        inst = ir.Instruction(module, 'OpDecorate', None, operands)
         module.add_global_inst(inst)
 
 
@@ -677,8 +676,8 @@ def parse_function_definition(lexer, module):
     function = ir.Function(module, function_id, [],
                            function_type_inst.result_id) # XXX
     for (param_type, param_id) in parameters:
-        param_inst = ir.Instruction(module, 'OpFunctionParameter', param_id,
-                                    param_type, [])
+        param_inst = ir.Instruction(module, 'OpFunctionParameter', param_type,
+                                    [], result_id=param_id)
         function.append_parameter(param_inst)
 
     return function
@@ -755,6 +754,7 @@ def read_module(stream):
     module.id_to_type_name = {}
     module.symbol_name_to_id = {}
     module.inst_to_line = {}
+    module.value_to_id = {}
     lexer = Lexer(stream)
     try:
         parse_translation_unit(lexer, module)
@@ -765,6 +765,7 @@ def read_module(stream):
     except VerificationError as err:
         raise ParseError(str(err.line_no) + ': error: ' + err.message)
     finally:
+        del module.value_to_id
         del module.inst_to_line
         del module.symbol_name_to_id
         del module.id_to_type_name

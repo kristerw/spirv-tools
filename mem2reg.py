@@ -48,9 +48,7 @@ def optimize_variable(module, func, var_inst):
         elif len(pred[basic_block]) == 1:
             stored_inst = exit_value[pred[basic_block][0]]
         else:
-            stored_inst = ir.Instruction(module, 'OpPhi',
-                                         module.new_id(),
-                                         var_type_id, [])
+            stored_inst = ir.Instruction(module, 'OpPhi', var_type_id, [])
             basic_block.prepend_inst(stored_inst)
             phi_nodes.append(stored_inst)
 
@@ -61,7 +59,6 @@ def optimize_variable(module, func, var_inst):
             if inst.op_name == 'OpLoad':
                 if stored_inst is None:
                     stored_inst = ir.Instruction(module, 'OpUndef',
-                                                 module.new_id(),
                                                  inst.type_id, [])
                     undef_insts.append(stored_inst)
                     stored_inst.insert_before(inst)
@@ -78,9 +75,7 @@ def optimize_variable(module, func, var_inst):
     for inst in phi_nodes:
         for pred_bb in pred[inst.basic_block]:
             if exit_value[pred_bb] is None:
-                undef_inst = ir.Instruction(module, 'OpUndef',
-                                            module.new_id(),
-                                            var_type_id, [])
+                undef_inst = ir.Instruction(module, 'OpUndef', var_type_id, [])
                 undef_insts.append(undef_inst)
                 last_insts = pred_bb.insts[-2:]
                 if (last_insts[0].op_name in ['OpLoopMerge',

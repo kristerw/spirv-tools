@@ -129,9 +129,17 @@ def parse_literal_string(binary):
     raise ParseError('bad encoding')
 
 
-def parse_id(binary, module):
+def parse_id(binary, module, accept_eol=False):
     """Parse one Id."""
-    return module.get_id(binary.get_next_word())
+    word = binary.get_next_word(accept_eol=accept_eol)
+    if word is not None:
+        if word in module.value_to_id:
+            return module.value_to_id[word]
+        new_id = ir.Id(module, word)
+        module.value_to_id[word] = new_id
+        return new_id
+    else:
+        return None
 
 
 def expand_mask(kind, value):
@@ -171,24 +179,24 @@ def parse_operand(binary, module, kind):
             return operands
         operands.append(word)
         while True:
-            word = binary.get_next_word(accept_eol=True)
-            if word is None:
+            tmp_id = parse_id(binary, module, accept_eol=True)
+            if tmp_id is None:
                 return operands
-            operands.append(module.get_id(word))
+            operands.append(tmp_id)
     elif kind in ['VariableIds', 'OptionalId']:
         operands = []
         while True:
-            word = binary.get_next_word(accept_eol=True)
-            if word is None:
+            tmp_id = parse_id(binary, module, accept_eol=True)
+            if tmp_id is None:
                 return operands
-            operands.append(module.get_id(word))
+            operands.append(tmp_id)
     elif kind == 'VariableIdLiteral':
         operands = []
         while True:
-            word = binary.get_next_word(accept_eol=True)
-            if word is None:
+            tmp_id = parse_id(binary, module, accept_eol=True)
+            if tmp_id is None:
                 return operands
-            operands.append(module.get_id(word))
+            operands.append(tmp_id)
             word = binary.get_next_word()
             operands.append(word)
     elif kind == 'VariableLiteralId':
@@ -198,8 +206,8 @@ def parse_operand(binary, module, kind):
             if word is None:
                 return operands
             operands.append(word)
-            word = binary.get_next_word()
-            operands.append(module.get_id(word))
+            tmp_id = parse_id(binary, module)
+            operands.append(tmp_id)
     elif kind in ir.MASKS:
         val = binary.get_next_word()
         return [expand_mask(kind, val)]
@@ -218,22 +226,23 @@ def parse_instruction(binary, module):
     """Parse one instruction."""
     op_name, op_format = binary.get_next_opcode()
     operands = []
-    inst_type = None
+    inst_type_id = None
     if op_format['type']:
-        inst_type = parse_id(binary, module)
-    result = None
+        inst_type_id = parse_id(binary, module)
+    result_id = None
     if op_format['result']:
-        result = parse_id(binary, module)
-        if result.inst is not None:
-            raise ParseError('ID ' + str(result) + ' is already defined')
+        result_id = parse_id(binary, module)
+        if result_id.inst is not None:
+            raise ParseError('ID ' + str(result_id) + ' is already defined')
     for kind in op_format['operands']:
         operands = operands + parse_operand(binary, module, kind)
     binary.expect_eol()
 
     if op_name == 'OpFunction':
-        return ir.Function(module, result, operands[0], operands[1])
+        return ir.Function(module, result_id, operands[0], operands[1])
     else:
-        return ir.Instruction(module, op_name, result, inst_type, operands)
+        return ir.Instruction(module, op_name, inst_type_id, operands,
+                              result_id=result_id)
 
 
 def parse_global_instructions(binary, module):
@@ -309,7 +318,10 @@ def read_module(stream):
     binary = SpirvBinary(words)
 
     module = ir.Module()
-    parse_global_instructions(binary, module)
-    parse_functions(binary, module)
-
-    return module
+    module.value_to_id = {}
+    try:
+        parse_global_instructions(binary, module)
+        parse_functions(binary, module)
+        return module
+    finally:
+        del module.value_to_id

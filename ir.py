@@ -11,19 +11,13 @@ import spirv
 
 
 class IRError(Exception):
-    def __init__(self, message):
-        super(IRError, self).__init__(message)
-        self.message = message
-
-    def __str__(self):
-        return repr(self.message)
+    """Raised when incorrect IR is created/detected."""
 
 
 class Module(object):
     def __init__(self):
         self.bound = 1
         self.functions = []
-        self._value_to_id = {}
         self._tmp_id_counter = 0
         self.global_instructions = _GlobalInstructions(self)
 
@@ -64,19 +58,6 @@ class Module(object):
                 yield inst
         for inst in self.global_instructions.instructions_reversed():
             yield inst
-
-    def new_id(self):
-        """Generate a new ID."""
-        self._tmp_id_counter += 1
-        return Id(self, self._tmp_id_counter, True)
-
-    def get_id(self, value):
-        """Get or create the ID having the specied value."""
-        if value in self._value_to_id:
-            return self._value_to_id[value]
-        new_id = Id(self, value)
-        self._value_to_id[value] = new_id
-        return new_id
 
     def add_global_inst(self, inst):
         """Add instruction to the module's global instructions."""
@@ -151,7 +132,7 @@ class Module(object):
         # OpLabel (and you could argue it does not need to, as no application
         # should do this kind of modification).
         for old_id in temp_ids:
-            new_id = self.get_id(self.bound)
+            new_id = Id(self, self.bound)
             old_id.inst.result_id = new_id
             new_id.inst = old_id.inst
             old_id.inst = None
@@ -319,13 +300,7 @@ class _GlobalInstructions(object):
                     inst.type_id == type_id and
                     inst.operands == operands):
                 return inst
-        if op_name not in INST_FORMAT:
-            raise IRError('Invalid op_name ' + str(op_name))
-        if INST_FORMAT[op_name]['result']:
-            result_id = module.new_id()
-        else:
-            result_id = None
-        inst = Instruction(module, op_name, result_id, type_id, operands)
+        inst = Instruction(module, op_name, type_id, operands)
         self.append_inst(inst)
         return inst
 
@@ -389,11 +364,11 @@ class Function(object):
         self.parameters = []
         self.basic_blocks = []
         self.inst = Instruction(self.module, 'OpFunction',
-                                function_id, function_type_id.inst.operands[0],
-                                [function_control, function_type_id])
+                                function_type_id.inst.operands[0],
+                                [function_control, function_type_id],
+                                result_id=function_id)
         _add_use_to_id(self.inst)
-        self.end_inst = Instruction(self.module, 'OpFunctionEnd',
-                                    None, None, [])
+        self.end_inst = Instruction(self.module, 'OpFunctionEnd', None, [])
         _add_use_to_id(self.end_inst)
 
     def __str__(self):
@@ -476,7 +451,8 @@ class BasicBlock(object):
     def __init__(self, module, label_id):
         self.function = None
         self.module = module
-        self.inst = Instruction(self.module, 'OpLabel', label_id, None, [])
+        self.inst = Instruction(self.module, 'OpLabel', None, [],
+                                result_id=label_id)
         _add_use_to_id(self.inst)
         self.inst.basic_block = self
         self.insts = []
@@ -583,7 +559,12 @@ class BasicBlock(object):
 
 
 class Instruction(object):
-    def __init__(self, module, op_name, result_id, type_id, operands):
+    def __init__(self, module, op_name, type_id, operands, result_id=None):
+        if result_id is None:
+            if op_name not in INST_FORMAT:
+                raise IRError('Invalid op_name ' + str(op_name))
+            if INST_FORMAT[op_name]['result']:
+                result_id = Id(module)
         self.module = module
         self.op_name = op_name
         self.result_id = result_id
@@ -619,11 +600,7 @@ class Instruction(object):
         The new instruction is identical to this instruction, except that
         it has a new result_id (if the instruction type has a result_id),
         and it is not bound to any basic block."""
-        if self.result_id is not None:
-            new_id = self.module.new_id()
-        else:
-            new_id = None
-        return Instruction(self.module, self.op_name, new_id, self.type_id,
+        return Instruction(self.module, self.op_name, self.type_id,
                            self.operands[:])
 
     def insert_after(self, insert_pos_inst):
@@ -767,20 +744,23 @@ class Instruction(object):
             new_operands = inst.operands[:]
             new_operands[0] = self.result_id
             new_inst = Instruction(self.module, inst.op_name,
-                                   None, None, new_operands)
+                                   None, new_operands)
             self.module.add_global_inst(new_inst)
 
 
 class Id(object):
-    def __init__(self, module, value, is_temp=False):
-        assert 0 < value < 0xffffffff
-        assert is_temp or value not in module._value_to_id
-        self.value = -value if is_temp else value
-        self.is_temp = is_temp
+    def __init__(self, module, value=None):
+        if value is None:
+            module._tmp_id_counter += 1
+            self.value = -module._tmp_id_counter
+            self.is_temp = True
+        else:
+            assert 0 < value < 0xffffffff
+            self.value = value
+            self.is_temp = False
+            module.bound = max(module.bound, value + 1)
         self.inst = None
         self.uses = set()
-        if not is_temp:
-            module.bound = max(module.bound, value + 1)
 
     def destroy(self):
         """Destroy the ID."""
