@@ -1,7 +1,6 @@
 ##Bugs and Limitations
 Known bugs and limitations in the API include:
 * The CFG is not updated when adding basic blocks
-* `Module.get_constant()` need to handle more types. At least Booleans, NULL pointers, etc. But probably "all" constants.
 * Need an API similar to 'Module.get_constant()' for creating types
 
 Known bugs and limitations in the assembler/disassembler include:

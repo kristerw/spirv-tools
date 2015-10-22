@@ -59,11 +59,86 @@ def optimize_OpCompositeConstruct(module, inst):
     return inst
 
 
+def optimize_OpIAdd(module, inst):
+    # x + 0 -> x
+    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
+        if module.is_constant_value(inst.operands[1].inst, 0):
+            return inst.operands[0].inst
+    return inst
+
+
+def optimize_OpIMul(module, inst):
+    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
+        # x * 0 -> 0
+        if module.is_constant_value(inst.operands[1].inst, 0):
+            return inst.operands[1].inst
+        # x * 1 -> 1
+        if module.is_constant_value(inst.operands[1].inst, 1):
+            return inst.operands[0].inst
+        # x * -1 -> -x
+        if module.is_constant_value(inst.operands[1].inst, -1):
+            new_inst = ir.Instruction(module, 'OpSNegate', inst.type_id,
+                                      [inst.operands[0]])
+            new_inst.insert_before(inst)
+            return new_inst
+    return inst
+
+
+def optimize_OpLogicalAnd(module, inst):
+    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
+        # x and true -> x
+        if module.is_constant_value(inst.operands[1].inst, True):
+            return inst.operands[0].inst
+        # x and false -> false
+        if module.is_constant_value(inst.operands[1].inst, False):
+            return inst.operands[1].inst
+    return inst
+
+
+def optimize_OpLogicalEqual(module, inst):
+    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
+        # Equal(x, true) -> x
+        if module.is_constant_value(inst.operands[1].inst, True):
+            return inst.operands[0].inst
+        # Equal(x, false) -> not(x)
+        if module.is_constant_value(inst.operands[1].inst, False):
+            new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
+                                      [inst.operands[0]])
+            new_inst.insert_before(inst)
+            return new_inst
+    return inst
+
+
 def optimize_OpLogicalNot(inst):
     # not(not(x)) -> x
     operand_inst = inst.operands[0].inst
     if operand_inst.op_name == 'OpLogicalNot':
         return operand_inst.operands[0].inst
+    return inst
+
+
+def optimize_OpLogicalNotEqual(module, inst):
+    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
+        # Equal(x, false) -> x
+        if module.is_constant_value(inst.operands[1].inst, False):
+            return inst.operands[0].inst
+        # Equal(x, true) -> not(x)
+        if module.is_constant_value(inst.operands[1].inst, True):
+            new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
+                                      [inst.operands[0]])
+            new_inst.insert_before(inst)
+            return new_inst
+    return inst
+
+
+def optimize_OpLogicalOr(module, inst):
+    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
+        # x or true -> true
+        if module.is_constant_value(inst.operands[1].inst, True):
+            return inst.operands[1].inst
+        # x or false -> x
+        if module.is_constant_value(inst.operands[1].inst, False):
+            return inst.operands[0].inst
     return inst
 
 
@@ -162,8 +237,20 @@ def peephole_inst(module, inst):
         inst = optimize_OpBitcast(module, inst)
     if inst.op_name == 'OpCompositeConstruct':
         inst = optimize_OpCompositeConstruct(module, inst)
+    elif inst.op_name == 'OpIAdd':
+        inst = optimize_OpIAdd(module, inst)
+    elif inst.op_name == 'OpIMul':
+        inst = optimize_OpIMul(module, inst)
+    elif inst.op_name == 'OpLogicalAnd':
+        inst = optimize_OpLogicalAnd(module, inst)
+    elif inst.op_name == 'OpLogicalEqual':
+        inst = optimize_OpLogicalEqual(module, inst)
     elif inst.op_name == 'OpLogicalNot':
         inst = optimize_OpLogicalNot(inst)
+    elif inst.op_name == 'OpLogicalNotEqual':
+        inst = optimize_OpLogicalNotEqual(module, inst)
+    elif inst.op_name == 'OpLogicalOr':
+        inst = optimize_OpLogicalOr(module, inst)
     elif inst.op_name == 'OpNot':
         inst = optimize_OpNot(inst)
     elif inst.op_name == 'OpSNegate':
@@ -176,8 +263,24 @@ def peephole_inst(module, inst):
     return inst
 
 
+def canonicalize_inst(module, inst):
+    """Canonicalize operand order if instruction is commutative.
+
+    The canonical form is that a commutative instruction with one constant
+    operand always has the constant as its second operand."""
+    if (inst.is_commutative() and
+            inst.operands[0].inst.op_name in ir.CONSTANT_INSTRUCTIONS and
+            inst.operands[1].inst.op_name not in ir.CONSTANT_INSTRUCTIONS):
+        new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
+                                  [inst.operands[1], inst.operands[0]])
+        new_inst.insert_before(inst)
+        return new_inst
+    return inst
+
+
 def optimize_inst(module, inst):
     """Simplify one instruction"""
+    inst = canonicalize_inst(module, inst)
 
     # Do peephole kind of optimization. It is possible that the transformed
     # instruction trigger a new optimization rule, so this is iterated until

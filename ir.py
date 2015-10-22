@@ -83,7 +83,12 @@ class Module(object):
         The constant is created if not already existing.
         For vector types, the value need to be a list of the same length
         as the vector size, or a scalar, in which case the value is
-        replicated for all elements."""
+        replicated for all elements.
+
+        For matrix types, the value need to be a list of the same length
+        as the column count (where each element is a list of the column with
+        or a scalar), or a scalar, in which case the value is replicated for
+        all elements."""
         if (type_id.inst.op_name == 'OpTypeInt' or
                 type_id.inst.op_name == 'OpTypeFloat'):
             min_val, max_val = get_int_type_range(type_id)
@@ -99,7 +104,8 @@ class Module(object):
             else:
                 operands = [value]
             return self.get_global_inst('OpConstant', type_id, operands)
-        elif type_id.inst.op_name == 'OpTypeVector':
+        elif (type_id.inst.op_name == 'OpTypeVector' or
+              type_id.inst.op_name == 'OpTypeMatrix'):
             nof_elements = type_id.inst.operands[1]
             if not isinstance(value, (list, tuple)):
                 value = [value] * nof_elements
@@ -112,6 +118,51 @@ class Module(object):
         elif type_id.inst.op_name == 'OpTypeBool':
             op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
             return self.get_global_inst(op_name, type_id, [])
+        else:
+            raise IRError('Invalid type for constant')
+
+    def is_constant_value(self, inst, value):
+        """Return true if the instruction is a constant with value.
+
+        For vector types, the value need to be a list of the same length
+        as the vector size, or a scalar, in which case the value is
+        replicated for all elements.
+
+        For matrix types, the value need to be a list of the same length
+        as the column count (where each element is a list of the column with
+        or a scalar), or a scalar, in which case the value is replicated for
+        all elements."""
+        if inst.op_name not in CONSTANT_INSTRUCTIONS:
+            return False
+        type_id = inst.type_id
+        if (type_id.inst.op_name == 'OpTypeInt' or
+                type_id.inst.op_name == 'OpTypeFloat'):
+            min_val, max_val = get_int_type_range(type_id)
+            if value < 0:
+                if value < min_val:
+                    raise IRError('Value out of range')
+                value = value & max_val
+            else:
+                if value > max_val:
+                    raise IRError('Value out of range')
+            if type_id.inst.operands[0] == 64:
+                operands = [value & 0xffffffff, value >> 32]
+            else:
+                operands = [value]
+            return inst.operands == operands
+        elif (type_id.inst.op_name == 'OpTypeVector' or
+              type_id.inst.op_name == 'OpTypeMatrix'):
+            nof_elements = type_id.inst.operands[1]
+            if not isinstance(value, (list, tuple)):
+                value = [value] * nof_elements
+            operands = []
+            for operand, val in zip(inst.operands, value):
+                if not self.is_constant_value(operand.inst, val):
+                    return False
+            return True
+        elif type_id.inst.op_name == 'OpTypeBool':
+            op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
+            return inst.op_name == op_name
         else:
             raise IRError('Invalid type for constant')
 
@@ -723,7 +774,11 @@ class Instruction(object):
         # XXX Need to handle OpExtInst correctly (it is conservative now)
         if self.result_id is None and self.result_id != 'OpNop':
             return True
-        return self.op_name in HAS_SIDE_EFFECT
+        return self.op_name in _HAS_SIDE_EFFECT
+
+    def is_commutative(self):
+        """True if the instruction is commutative."""
+        return self.op_name in _IS_COMMUTATIVE
 
     def is_global_inst(self):
         """Return true if this is a global instruction, false otherwise."""
@@ -928,7 +983,7 @@ GLOBAL_VARIABLE_INSTRUCTIONS = set([
     'OpVariable'
 ])
 
-HAS_SIDE_EFFECT = set([
+_HAS_SIDE_EFFECT = set([
     'OpFunction',
     'OpFunctionParameter',
     'OpFunctionCall',
@@ -971,4 +1026,18 @@ HAS_SIDE_EFFECT = set([
     'OpEnqueueMarker',
     'OpEnqueueKernel',
     'OpCreateUserEvent'
+])
+
+_IS_COMMUTATIVE = set([
+    'OpLogicalAnd',
+    'OpFAdd',
+    'OpIMul',
+    'OpBitwiseOr',
+    'OpFMul',
+    'OpBitwiseAnd',
+    'OpLogicalOr',
+    'OpBitwiseXor',
+    'OpIAdd',
+    'OpLogicalEqual',
+    'OpLogicalNotEqual'
 ])
