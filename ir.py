@@ -18,7 +18,6 @@ class Module(object):
     def __init__(self):
         self.bound = 1
         self.functions = []
-        self._tmp_id_counter = 0
         self.global_instructions = _GlobalInstructions(self)
 
     def dump(self, stream=sys.stdout):
@@ -804,10 +803,12 @@ class Instruction(object):
 
 
 class Id(object):
+    _temp_id_counter = 0
+
     def __init__(self, module, value=None):
         if value is None:
-            module._tmp_id_counter += 1
-            self.value = -module._tmp_id_counter
+            self._temp_id_counter += 1
+            self.value = self._temp_id_counter
             self.is_temp = True
         else:
             assert 0 < value < 0xffffffff
