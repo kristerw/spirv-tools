@@ -1,3 +1,4 @@
+"""Create a module from high-level assembly read from a stream."""
 import re
 from operator import itemgetter
 
@@ -10,30 +11,28 @@ class ParseError(Exception):
 
 
 class VerificationError(Exception):
+    """Raised when encountering invalid SPIR-V when sanity checking module."""
     def __init__(self, line_no, message):
         super(VerificationError, self).__init__(message)
         self.line_no = line_no
 
 
 class Lexer(object):
+    """This class represents the assembly file being parsed."""
     def __init__(self, stream):
         token_exprs = [
-            (r'%[1-9][0-9]*:', 'LABEL'),
-            (r'%[a-zA-Z_][a-zA-Z0-9_]*:', 'LABEL'),
-            (r'%[1-9][0-9]*', 'ID'),
-            (r'%[a-zA-Z_][a-zA-Z0-9_]*', 'ID'),
+            (r'%([1-9][0-9]*|[a-zA-Z_][a-zA-Z0-9_]*):', 'LABEL'),
+            (r'%([1-9][0-9]*|[a-zA-Z_][a-zA-Z0-9_]*)', 'ID'),
             (r'[a-zA-Z][a-zA-Z0-9.]*', 'NAME'),
             (r'[,={}\(\)|]', None),
             (r'<[1-9]+ x [a-zA-Z0-9]*>', 'VEC_TYPE'),
-            (r'-?0b[01]+', 'INT'),
-            (r'-?0x[0-9a-fA-F]+', 'INT'),
-            (r'-?[1-9][0-9]*', 'INT'),
-            (r'-?0', 'INT'),
+            (r'-?(0b[01]+|0x[0-9a-fA-F]+|[1-9][0-9]*|0)', 'INT'),
             (r'".*"', 'STRING')
         ]
         self.stream = stream
         self.line = None
         self.line_no = 0
+        self.peeked_value = (None, None)
         self.compiled_token_exprs = []
         for pattern, tag in token_exprs:
             regex = re.compile(pattern)
@@ -65,6 +64,14 @@ class Lexer(object):
           or when a token does not match the expected token (if the
           expect parameter is provided)
         """
+        token, tag = self.peeked_value
+        if token is not None:
+            if not peek:
+                self.peeked_value = (None, None)
+            if expect is not None and token != expect:
+                raise ParseError('Expected ' + expect)
+            return token, tag
+
         if self.line is None:
             self.line = self.stream.readline()
             if not self.line:
@@ -82,8 +89,9 @@ class Lexer(object):
             match = regex.match(self.line)
             if match:
                 token = match.group(0)
-                if not peek:
-                    self.line = self.line[match.end(0):]
+                self.line = self.line[match.end(0):]
+                if peek:
+                    self.peeked_value = (token, tag)
                 if expect is not None and token != expect:
                     raise ParseError('Expected ' + expect)
                 return token, tag
@@ -247,29 +255,6 @@ def parse_mask(lexer, kind):
     return expand_mask(kind, value)
 
 
-def add_vector_type(module, token):
-    """Create a vector type inst corresponding to the token."""
-    orig_token = token
-    if token[0] != '<' or token[-1] != '>':
-        raise ParseError('Not a valid type: ' + orig_token)
-    token = token[1:-1]
-    if token[-6:-3] == ' x ':
-        base_type = token[-3:]
-        nof_elem = int(token[:-6])
-    elif token[-5:-2] == ' x ':
-        base_type = token[-2:]
-        nof_elem = int(token[:-5])
-    elif token[-7:-4] == ' x ':
-        base_type = token[-4:]
-        nof_elem = int(token[:-7])
-    else:
-        raise ParseError('Not a valid type: ' + orig_token)
-
-    base_type_id = get_or_create_type(module, base_type)
-    return ir.Instruction(module, 'OpTypeVector', None,
-                          [base_type_id, nof_elem])
-
-
 def get_or_create_type(module, token):
     """Return a type inst corresponding to the token.
 
@@ -278,66 +263,30 @@ def get_or_create_type(module, token):
     """
     if not token in module.type_name_to_id:
         if token == 'void':
-            inst = ir.Instruction(module, 'OpTypeVoid', None, [])
+            inst = module.get_global_inst('OpTypeVoid', None, [])
         elif token == 'bool':
-            inst = ir.Instruction(module, 'OpTypeBool', None, [])
+            inst = module.get_global_inst('OpTypeBool', None, [])
         elif token in ['s8', 's16', 's32', 's64']:
             width = int(token[1:])
-            inst = ir.Instruction(module, 'OpTypeInt', None, [width, 1])
+            inst = module.get_global_inst('OpTypeInt', None, [width, 1])
         elif token in ['u8', 'u16', 'u32', 'u64']:
             width = int(token[1:])
-            inst = ir.Instruction(module, 'OpTypeInt', None, [width, 0])
+            inst = module.get_global_inst('OpTypeInt', None, [width, 0])
         elif token in ['f16', 'f32', 'f64']:
             width = int(token[1:])
-            inst = ir.Instruction(module, 'OpTypeFloat', None, [width])
+            inst = module.get_global_inst('OpTypeFloat', None, [width])
         elif token[0] == '<':
-            inst = add_vector_type(module, token)
+            assert token[-1] == '>'
+            nof_elem, _, base_type = token[1:-1].partition(' x ')
+            base_type_id = get_or_create_type(module, base_type)
+            inst = module.get_global_inst('OpTypeVector', None,
+                                          [base_type_id, int(nof_elem)])
         else:
             raise ParseError('Not a valid type: ' + token)
 
-        module.add_global_inst(inst)
         module.type_name_to_id[token] = inst.result_id
-        module.id_to_type_name[inst.result_id] = token
 
     return module.type_name_to_id[token]
-
-
-def add_type_name(module, inst):
-    """Create a name for the type instruction.
-
-    This is the "inverse" of get_or_create_type() and adds a name for
-    a given type instruction. This is needed when assembling "raw" IL,
-    as all of the original type instructions are present.
-
-    This function must handle exactly the same types as get_or_create_type().
-    """
-    assert inst.op_name in ir.TYPE_DECLARATION_INSTRUCTIONS
-    if inst.result_id in module.id_to_type_name:
-        return
-
-    if inst.op_name == 'OpTypeVoid':
-        type_name = 'void'
-    elif inst.op_name == 'OpTypeBool':
-        type_name = 'bool'
-    elif inst.op_name == 'OpTypeInt':
-        if inst.operands[1] == 1:
-            type_name = 's' + str(inst.operands[0])
-        else:
-            type_name = 'u' + str(inst.operands[0])
-    elif inst.op_name == 'OpTypeFloat':
-        type_name = 'f' + str(inst.operands[0])
-    elif inst.op_name == 'OpTypeVector':
-        base_type_id = inst.operands[0]
-        if base_type_id not in module.id_to_type_name:
-            return
-        base_name = module.id_to_type_name[base_type_id]
-        nof_elem = inst.operands[1]
-        type_name = '<' + str(nof_elem) + ' x ' +  base_name + '>'
-    else:
-        return
-
-    module.type_name_to_id[type_name] = inst.result_id
-    module.id_to_type_name[inst.result_id] = type_name
 
 
 def parse_type(lexer, module):
@@ -498,8 +447,6 @@ def parse_instruction(lexer, module):
         inst = ir.Instruction(module, op_name, type_id, operands,
                               result_id=result_id)
         module.inst_to_line[inst] = lexer.line_no
-        if op_name in ir.TYPE_DECLARATION_INSTRUCTIONS:
-            add_type_name(module, inst)
         return inst
 
 
@@ -751,7 +698,6 @@ def read_module(stream):
     """Create a module from the IL read from the stream."""
     module = ir.Module()
     module.type_name_to_id = {}
-    module.id_to_type_name = {}
     module.symbol_name_to_id = {}
     module.inst_to_line = {}
     module.value_to_id = {}
@@ -768,5 +714,4 @@ def read_module(stream):
         del module.value_to_id
         del module.inst_to_line
         del module.symbol_name_to_id
-        del module.id_to_type_name
         del module.type_name_to_id
