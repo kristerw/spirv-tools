@@ -435,7 +435,8 @@ def parse_instruction(lexer, module):
     lexer.done_with_line()
 
     if op_name == 'OpFunction':
-        function = ir.Function(module, result_id, operands[0], operands[1])
+        function = ir.Function(module, operands[0], operands[1],
+                               result_id=result_id)
         module.inst_to_line[function.inst] = lexer.line_no
         module.inst_to_line[function.end_inst] = lexer.line_no
         return function
@@ -610,18 +611,18 @@ def parse_function_definition(lexer, module):
     """Parse the 'definition' line of a pretty-printed function."""
     lexer.get_next_token('define')
     return_type = parse_type(lexer, module)
-    function_id = parse_id(lexer, module)
+    result_id = parse_id(lexer, module)
     parameters = parse_parameters(lexer, module)
 
-    if function_id.inst is not None:
-        id_name = get_id_name(module, function_id)
+    if result_id.inst is not None:
+        id_name = get_id_name(module, result_id)
         raise ParseError(id_name + ' is already defined')
 
     operands = [return_type] + [param[0] for param in parameters]
     function_type_inst = module.get_global_inst('OpTypeFunction', None,
                                                 operands)
-    function = ir.Function(module, function_id, [],
-                           function_type_inst.result_id) # XXX
+    function = ir.Function(module, [], function_type_inst.result_id,
+                           result_id=result_id) # XXX
     for (param_type, param_id) in parameters:
         param_inst = ir.Instruction(module, 'OpFunctionParameter', param_type,
                                     [], result_id=param_id)

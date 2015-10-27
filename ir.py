@@ -409,14 +409,14 @@ class _GlobalInstructions(object):
 
 
 class Function(object):
-    def __init__(self, module, function_id, function_control, function_type_id):
+    def __init__(self, module, function_control, type_id, result_id=None):
         self.module = module
         self.parameters = []
         self.basic_blocks = []
         self.inst = Instruction(self.module, 'OpFunction',
-                                function_type_id.inst.operands[0],
-                                [function_control, function_type_id],
-                                result_id=function_id)
+                                type_id.inst.operands[0],
+                                [function_control, type_id],
+                                result_id=result_id)
         _add_use_to_id(self.inst)
         self.end_inst = Instruction(self.module, 'OpFunctionEnd', None, [])
         _add_use_to_id(self.end_inst)

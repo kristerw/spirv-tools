@@ -239,7 +239,8 @@ def parse_instruction(binary, module):
     binary.expect_eol()
 
     if op_name == 'OpFunction':
-        return ir.Function(module, result_id, operands[0], operands[1])
+        return ir.Function(module, operands[0], operands[1],
+                           result_id=result_id)
     else:
         return ir.Instruction(module, op_name, inst_type_id, operands,
                               result_id=result_id)
