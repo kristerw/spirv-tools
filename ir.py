@@ -283,60 +283,86 @@ class _GlobalInstructions(object):
     def instructions(self):
         """Iterate over all global instructions."""
         for inst in self.op_source_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_source_extension_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_capability_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_extension_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_extinstimport_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_memory_model_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_entry_point_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_execution_mode_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_string_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.name_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.op_line_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.decoration_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in self.type_insts[:]:
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
 
     def instructions_reversed(self):
         """Iterate in reverse order over all global instructions."""
         for inst in reversed(self.type_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.decoration_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_line_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.name_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_string_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_execution_mode_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_entry_point_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_memory_model_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_extinstimport_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_extension_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_capability_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_source_extension_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
         for inst in reversed(self.op_source_insts[:]):
-            yield inst
+            if inst.basic_block is not None:
+                yield inst
 
     def get_inst(self, module, op_name, type_id, operands):
         """Return a global instruction.
@@ -456,11 +482,12 @@ class Function(object):
         """Iterate over all instructions in the function."""
         yield self.inst
         for inst in self.parameters[:]:
-            yield inst
+            if inst in self.parameters:
+                yield inst
         for basic_block in self.basic_blocks[:]:
-            if basic_block.function is not None:
-                yield basic_block.inst
-                for inst in basic_block.insts[:]:
+            yield basic_block.inst
+            for inst in basic_block.insts[:]:
+                if inst.basic_block is not None:
                     yield inst
         yield self.end_inst
 
@@ -468,12 +495,13 @@ class Function(object):
         """Iterate in reverse order over all instructions in the function."""
         yield self.end_inst
         for basic_block in reversed(self.basic_blocks[:]):
-            if basic_block.function is not None:
-                for inst in reversed(basic_block.insts[:]):
+            for inst in reversed(basic_block.insts[:]):
+                if inst.basic_block is not None:
                     yield inst
-                yield basic_block.inst
+            yield basic_block.inst
         for inst in reversed(self.parameters[:]):
-            yield inst
+            if inst in self.parameters:
+                yield inst
         yield self.inst
 
     def append_parameter(self, inst):
