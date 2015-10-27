@@ -83,6 +83,58 @@ TBD - Global instructions
 ## IR
 TBD
 
+###Module methods
+######`add_global_inst(inst)`
+Add instruction `inst` to the module's global instructions.
+
+The instruction is appended to its section in the module (For example, adding an `OpExtInstImport` instruction will be added after the existing `OpExtInstImport` instructions, but before the `OpMemoryModel` instruction).
+
+**Note**: Applications should in general use `get_global_inst()` instead of `add_global_inst()`.
+
+######`add_function(function)`
+Add a function to the module.
+
+######`dump(stream=sys.stdout)`
+Write a debug dump of the module to stream.
+
+The format of the dump is similar to the high level assembly syntax used by `read_il` and `write_il`
+
+######`get_constant()`
+**TODO**
+
+######`get_global_inst(op_name, type_id, operands)`
+Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
+
+This method is the preferred way of creating global instructions. For example, creating a type instruction is done as
+```
+get_global_inst('OpTypeInt', 32, 1)
+```
+
+######`is_constant_value()`
+**TODO**
+
+######`instructions()`
+Iterator for iterating over the module's instructions in the order they are located in the SPIR-V binary.
+
+It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+
+It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
+
+######`instructions_reversed()`
+Iterator for iterating over the module's instructions in reversed order.
+
+It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+
+It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
+
+######`optimize()`
+Run basic optimization passes.
+
+The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously needless code (such as `-(-a)` is changed to `a`), and promoting function-local `OpVariable` to registers.
+
+######`renumber_temp_ids()`
+**TODO**
+
 ## Input/Output
 TBD
 
