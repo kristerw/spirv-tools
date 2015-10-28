@@ -140,6 +140,49 @@ TBD
   <dd><b>TODO</b></dd>
 </dl>
 
+###BasicBlock methods
+<dl>
+  <dt><code>append_inst(inst)</code></dt>
+  <dd>Insert instruction <code>inst</code> at the end of the basic block.</dd>
+
+  <dt><code>destroy()</code></dt>
+  <dd>Destroy this basic block.
+  <br><br>
+  This removes the basic block from the function (if it is attached to a function), and destroys all instructions used in the basic block.
+  <br><br>
+  The basic block must not be used after it is destroyed.
+  </dd>
+
+  <dt><code>dump(stream=sys.stdout)</code></dt>
+  <dd>Write a debug dump of the module to stream.
+  <br><br>
+  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  </dd>
+
+  <dt><code>get_successors()</code></dt>
+  <dd>Return list of successor basic blocks.</dd>
+
+  <dt><code>insert_inst_after(inst, insert_pos_inst)</code></dt>
+  <dd>Insert instruction <code>inst</code> after an instruction <code>insert_pos_inst</code>.</dd>
+
+  <dt><code>insert_inst_before(inst, insert_pos_inst)</code></dt>
+  <dd>Insert instruction <code>inst</code> before an instruction <code>insert_pos_inst</code>.</dd>
+
+  <dt><code>predecessors()</code></dt>
+  <dd>Return the predecessor basic blocks.
+  <br><br>
+  <b>Note</b>: The predecessors are returned in arbitrary order.
+  </dd>
+
+  <dt><code>prepend_inst(inst)</code></dt>
+  <dd>Insert instruction <code>inst</code> at the top of the basic block.</dd>
+
+  <dt><code>remove()</code></dt>
+  <dd>Remove this basic block from function.</dd>
+
+  <dt><code>remove_inst(inst)</code></dt>
+  <dd>Remove instruction <code>inst</code> from the basic block.</dd>
+</dl>
 ## Input/Output
 TBD
 
