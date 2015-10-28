@@ -84,56 +84,61 @@ TBD - Global instructions
 TBD
 
 ###Module methods
-######`add_global_inst(inst)`
-Add instruction `inst` to the module's global instructions.
+<dl>
+  <dt><code>add_global_inst(inst)</code></dt>
+  <dd>Add instruction <code>inst</code> to the module's global instructions.
+  <br><br>
+  The instruction is appended to its section in the module (For example, adding an <code>OpExtInstImport</code> instruction will be added after the existing <code>OpExtInstImport</code> instructions, but before the <code>OpMemoryModel</code> instruction).
+  <br><br>
+  <b>Note</b>: Applications should in general use <code>get_global_inst()</code> instead of <code>add_global_inst()</code>.
+  </dd>
 
-The instruction is appended to its section in the module (For example, adding an `OpExtInstImport` instruction will be added after the existing `OpExtInstImport` instructions, but before the `OpMemoryModel` instruction).
+  <dt><code>add_function(function)</code></dt>
+  <dd>Add a function to the module.</dd>
 
-**Note**: Applications should in general use `get_global_inst()` instead of `add_global_inst()`.
+  <dt><code>dump(stream=sys.stdout)</code></dt>
+  <dd>Write a debug dump of the module to stream.
+  <br><br>
+  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  </dd>
 
-######`add_function(function)`
-Add a function to the module.
+  <dt><code>get_constant()</code></dt>
+  <dd><b>TODO</b></dd>
 
-######`dump(stream=sys.stdout)`
-Write a debug dump of the module to stream.
+  <dt><code>get_global_inst(op_name, type_id, operands)</code></dt>
+  <dd>Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
+  <br><br>
+  This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <code>get_global_inst('OpTypeInt', 32, 1)</code>
+  </dd>
 
-The format of the dump is similar to the high level assembly syntax used by `read_il` and `write_il`
+  <dt><code>is_constant_value()</code></dt>
+  <dd><b>TODO</b></dd>
 
-######`get_constant()`
-**TODO**
+  <dt><code>instructions()</code></dt>
+  <dd>Iterator for iterating over the module's instructions in the order they are located in the SPIR-V binary.
+  <br><br>
+  It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  <br><br>
+  It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
+  </dd>
 
-######`get_global_inst(op_name, type_id, operands)`
-Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
+  <dt><code>instructions_reversed()</code></dt>
+  <dd>Iterator for iterating over the module's instructions in reversed order.
+  <br><br>
+  It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  <br><br>
+  It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
+  </dd>
 
-This method is the preferred way of creating global instructions. For example, creating a type instruction is done as
-```
-get_global_inst('OpTypeInt', 32, 1)
-```
-
-######`is_constant_value()`
-**TODO**
-
-######`instructions()`
-Iterator for iterating over the module's instructions in the order they are located in the SPIR-V binary.
-
-It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
-
-It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
-
-######`instructions_reversed()`
-Iterator for iterating over the module's instructions in reversed order.
-
-It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
-
-It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
-
-######`optimize()`
-Run basic optimization passes.
-
-The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously needless code (such as `-(-a)` is changed to `a`), and promoting function-local `OpVariable` to registers.
-
-######`renumber_temp_ids()`
-**TODO**
+  <dt><code>optimize()</code></dt>
+  <dd>Run basic optimization passes.
+  <br><br>
+  The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously needless code (such as <code>-(-a)</code> is changed to <code>a</code>), and promoting function-local <code>OpVariable</code> to registers.
+  </dd>
+  
+  <dt><code>renumber_temp_ids()</code></dt>
+  <dd><b>TODO</b></dd>
+</dl>
 
 ## Input/Output
 TBD
