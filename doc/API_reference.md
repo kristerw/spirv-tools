@@ -86,55 +86,61 @@ TBD
 ###Module methods
 <dl>
   <dt><code>add_global_inst(inst)</code></dt>
-  <dd>Add instruction <code>inst</code> to the module's global instructions.
-  <br><br>
+  <dd><p>
+  Add instruction <code>inst</code> to the module's global instructions.
+  </p><p>
   The instruction is appended to its section in the module (For example, adding an <code>OpExtInstImport</code> instruction will be added after the existing <code>OpExtInstImport</code> instructions, but before the <code>OpMemoryModel</code> instruction).
-  <br><br>
+  </p><p>
   <b>Note</b>: Applications should in general use <code>get_global_inst()</code> instead of <code>add_global_inst()</code>.
-  </dd>
+  </p></dd>
 
   <dt><code>add_function(function)</code></dt>
   <dd>Add a function to the module.</dd>
 
   <dt><code>dump(stream=sys.stdout)</code></dt>
-  <dd>Write a debug dump of the module to stream.
-  <br><br>
+  <dd><p>
+  Write a debug dump of the module to stream.
+  </p><p>
   The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
-  </dd>
+  </p></dd>
 
   <dt><code>get_constant()</code></dt>
   <dd><b>TODO</b></dd>
 
   <dt><code>get_global_inst(op_name, type_id, operands)</code></dt>
-  <dd>Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
-  <br><br>
+  <dd><p>
+  Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
+  </p><p>
   This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <pre><code>get_global_inst('OpTypeInt', 32, 1)</code></pre>
-  </dd>
+  </p></dd>
 
   <dt><code>is_constant_value()</code></dt>
   <dd><b>TODO</b></dd>
 
   <dt><code>instructions()</code></dt>
-  <dd>Iterator for iterating over the module's instructions in the order they are located in the SPIR-V binary.
-  <br><br>
+  <dd><p>
+  Iterator for iterating over the module's instructions in the order they are located in the SPIR-V binary.
+  </p><p>
   It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
-  <br><br>
+  </p><p>
   It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
-  </dd>
+  </p></dd>
 
   <dt><code>instructions_reversed()</code></dt>
-  <dd>Iterator for iterating over the module's instructions in reversed order.
-  <br><br>
+  <dd><p>
+  Iterator for iterating over the module's instructions in reversed order.
+  </p><p>
   It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
-  <br><br>
+  </p><p>
   It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
-  </dd>
+  </p></dd>
 
   <dt><code>optimize()</code></dt>
-  <dd>Run basic optimization passes.
-  <br><br>
+  <dd><p>
+  Run basic optimization passes.
+  </p><p>
   The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously needless code (such as <code>-(-a)</code> is changed to <code>a</code>), and promoting function-local <code>OpVariable</code> to registers.
-  </dd>
+  </p></dd>
   
   <dt><code>renumber_temp_ids()</code></dt>
   <dd><b>TODO</b></dd>
@@ -146,18 +152,19 @@ TBD
   <dd>Insert instruction <code>inst</code> at the end of the basic block.</dd>
 
   <dt><code>destroy()</code></dt>
-  <dd>Destroy this basic block.
-  <br><br>
+  <dd><p>
+  Destroy this basic block.
+  </p><p>
   This removes the basic block from the function (if it is attached to a function), and destroys all instructions used in the basic block.
-  <br><br>
+  </p><p>
   The basic block must not be used after it is destroyed.
-  </dd>
+  </p></dd>
 
   <dt><code>dump(stream=sys.stdout)</code></dt>
-  <dd>Write a debug dump of the module to stream.
-  <br><br>
+  <dd><p>Write a debug dump of the module to stream.
+  </p><p>
   The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
-  </dd>
+  </p></dd>
 
   <dt><code>get_successors()</code></dt>
   <dd>Return list of successor basic blocks.</dd>
@@ -169,10 +176,10 @@ TBD
   <dd>Insert instruction <code>inst</code> before an instruction <code>insert_pos_inst</code>.</dd>
 
   <dt><code>predecessors()</code></dt>
-  <dd>Return the predecessor basic blocks.
-  <br><br>
+  <dd><p>Return the predecessor basic blocks.
+  </p><p>
   <b>Note</b>: The predecessors are returned in arbitrary order.
-  </dd>
+  </p></dd>
 
   <dt><code>prepend_inst(inst)</code></dt>
   <dd>Insert instruction <code>inst</code> at the top of the basic block.</dd>
