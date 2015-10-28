@@ -108,7 +108,7 @@ TBD
   <dt><code>get_global_inst(op_name, type_id, operands)</code></dt>
   <dd>Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
   <br><br>
-  This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <code>get_global_inst('OpTypeInt', 32, 1)</code>
+  This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <pre><code>get_global_inst('OpTypeInt', 32, 1)</code></pre>
   </dd>
 
   <dt><code>is_constant_value()</code></dt>
