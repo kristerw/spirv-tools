@@ -85,17 +85,8 @@ TBD
 
 ###Module methods
 <dl>
-  <dt><code>add_global_inst(inst)</code></dt>
-  <dd><p>
-  Add instruction <code>inst</code> to the module's global instructions.
-  </p><p>
-  The instruction is appended to its section in the module (For example, adding an <code>OpExtInstImport</code> instruction will be added after the existing <code>OpExtInstImport</code> instructions, but before the <code>OpMemoryModel</code> instruction).
-  </p><p>
-  <b>Note</b>: Applications should in general use <code>get_global_inst()</code> instead of <code>add_global_inst()</code>.
-  </p></dd>
-
-  <dt><code>add_function(function)</code></dt>
-  <dd>Add a function to the module.</dd>
+  <dt><code>append_function(function)</code></dt>
+  <dd>Insert function at the end of the module.</dd>
 
   <dt><code>dump(stream=sys.stdout)</code></dt>
   <dd><p>
@@ -116,6 +107,21 @@ TBD
 
   <dt><code>is_constant_value()</code></dt>
   <dd><b>TODO</b></dd>
+
+  <dt><code>insert_global_inst(inst)</code></dt>
+  <dd><p>
+  Insert the global instruction <code>inst</code> into the module.
+  </p><p>
+  The instruction is appended to its section in the module (for example, adding an <code>OpExtInstImport</code> instruction will be added after the existing <code>OpExtInstImport</code> instructions, but before the <code>OpMemoryModel</code> instruction).
+  </p><p>
+  <b>Note</b>: Applications should in general use <code>get_global_inst()</code> instead of <code>insert_global_inst()</code>.
+  </p></dd>
+
+  <dt><code>insert_function_after(function, insert_pos_function)</code></dt>
+  <dd>Insert function <code>function</code> after the function <code>insert_pos_function</code>.</dd>
+
+  <dt><code>insert_function_before(function, insert_pos_function)</code></dt>
+  <dd>Insert function <code>function</code> before the function <code>insert_pos_function</code>.</dd>
 
   <dt><code>instructions()</code></dt>
   <dd><p>
@@ -141,7 +147,10 @@ TBD
   </p><p>
   The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously needless code (such as <code>-(-a)</code> is changed to <code>a</code>), and promoting function-local <code>OpVariable</code> to registers.
   </p></dd>
-  
+
+  <dt><code>prepend_function(function)</code></dt>
+  <dd>Insert function at the top of the module.</dd>
+
   <dt><code>renumber_temp_ids()</code></dt>
   <dd><b>TODO</b></dd>
 </dl>
