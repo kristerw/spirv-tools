@@ -169,7 +169,7 @@ class Module(object):
         """Convert temp IDs to real IDs.."""
         # Collect all temporary IDs.
         # The temporary IDs are placed in a list (rather than e.g. a set)
-        # so that we get determinisic result when we renumber by iterating
+        # so that we get deterministic result when we renumber by iterating
         # over the temporary IDs.
         temp_ids = [inst.result_id for inst in self.instructions()
                     if inst.result_id is not None and inst.result_id.is_temp]
@@ -548,7 +548,7 @@ class BasicBlock(object):
         return not self.__eq__(other)
 
     def get_successors(self):
-        """Return the list of successor basic blocks."""
+        """Return list of successor basic blocks."""
         branch_inst = self.insts[-1]
         assert branch_inst.op_name in BRANCH_INSTRUCTIONS
         if branch_inst.op_name == 'OpBranch':
@@ -573,7 +573,7 @@ class BasicBlock(object):
             stream.write('  ' + str(inst) + '\n')
 
     def append_inst(self, inst):
-        """Add instruction at the end of the basic block."""
+        """Insert instruction at the end of the basic block."""
         if inst.is_global_inst():
             raise IRError(inst.op_name + ' is a global instruction')
         self.insts.append(inst)
@@ -581,7 +581,7 @@ class BasicBlock(object):
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
-        """Add instruction at the top of the basic block."""
+        """Insert instruction at the top of the basic block."""
         if inst.is_global_inst():
             raise IRError(inst.op_name + ' is a global instruction')
         self.insts = [inst] + self.insts
@@ -589,21 +589,21 @@ class BasicBlock(object):
         _add_use_to_id(inst)
 
     def insert_inst_after(self, inst, insert_pos_inst):
-        """Add instruction after an existing instruction."""
+        """Insert instruction after an existing instruction."""
         idx = self.insts.index(insert_pos_inst)
         self.insts.insert(idx + 1, inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def insert_inst_before(self, inst, insert_pos_inst):
-        """Add instruction before an existing instruction."""
+        """Insert instruction before an existing instruction."""
         idx = self.insts.index(insert_pos_inst)
         self.insts.insert(idx, inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def remove_inst(self, inst):
-        """Remove the inst instruction from this basic block."""
+        """Remove instruction from basic block."""
         _remove_use_from_id(inst)
         self.insts.remove(inst)
         inst.basic_block = None
@@ -618,8 +618,10 @@ class BasicBlock(object):
     def destroy(self):
         """Destroy the basic block.
 
-        This removes all instructions from the basic block, and removes the
-        basic block from the function (if it is attached to a function).
+        This destroys all instructions used in the basic block, and
+        removes the basic block from the function (if it is attached
+        to a function).
+
         The basic block must not be used after it is destroyed."""
         self.remove()
         uses = self.inst.uses()
@@ -629,9 +631,12 @@ class BasicBlock(object):
         for inst in reversed(self.insts[:]):
             inst.destroy()
         self.module = None
+        self.insts = None
 
     def predecessors(self):
-        """Return this basic block's predecessors."""
+        """Return the predecessor basic blocks.
+
+        Note: The predecessors are returned in arbitrary order."""
         return [inst.basic_block for inst in self.inst.uses()
                 if inst.op_name != 'OpPhi']
 
@@ -853,7 +858,7 @@ class Id(object):
         self.uses = None
         # Change the value to be out of range so that it will be caught
         # if the ID escapes and is written to a binary, and so that the
-        # orginal value can be retrieved by subtracting 0x200000000, which
+        # original value can be retrieved by subtracting 0x200000000, which
         # should be helpful during debugging.
         self.value = self.value + 0x200000000
 
