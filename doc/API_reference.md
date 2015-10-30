@@ -83,7 +83,8 @@ TBD - Global instructions
 ## IR
 TBD
 
-###Module methods
+###Module
+####Methods
 <dl>
   <dt><code>append_function(function)</code></dt>
   <dd>Insert function at the end of the module.</dd>
@@ -134,7 +135,7 @@ TBD
 
   <dt><code>instructions_reversed()</code></dt>
   <dd><p>
-  Iterator for iterating over the module's instructions in reversed order.
+  Iterator for iterating over the module's instructions in reverse order.
   </p><p>
   It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
   </p><p>
@@ -155,7 +156,60 @@ TBD
   <dd><b>TODO</b></dd>
 </dl>
 
-###BasicBlock methods
+###Function
+####Methods
+<dl>
+  <dt><code>append_basic_block(basic_block)</code></dt>
+  <dd>Insert basic block <code>basic_block</code> at the end of the function.</dd>
+
+  <dt><code>append_parameter(inst)</code></dt>
+  <dd>Insert the <code>OpFunctionParameter</code> <code>inst</code> at the end of the function's parameter list.</dd>
+
+  <dt><code>destroy()</code></dt>
+  <dd><p>
+  Destroy this function.
+  </p><p>
+  This removes the function from the module (if it is attached to a module), and destroys all basic blocks and instructions used in the function.
+  </p><p>
+  The function must not be used after it is destroyed.
+  </p></dd>
+
+  <dt><code>dump(stream=sys.stdout)</code></dt>
+  <dd><p>Write a debug dump of the function to stream.
+  </p><p>
+  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  </p></dd>
+
+  <dt><code>insert_basic_block_after(basic_block, insert_pos_basic_block)</code></dt>
+  <dd>Insert basic block <code>basic_block</code> after the basic_block <code>insert_pos_basic_block</code>.</dd>
+
+  <dt><code>insert_basic_block_before(basic_block, insert_pos_basic_block)</code></dt>
+  <dd>Insert basic block <code>basic_block</code> before the basic_block <code>insert_pos_basic_block</code>.</dd>
+
+  <dt><code>instructions()</code></dt>
+  <dd><p>
+  Iterator for iterating over the function's instructions in the order they are located in the SPIR-V binary.
+  </p><p>
+  It is allowed to insert or remove instructions while iterating over the function, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  </p><p>
+  It is not allowed to insert/remove basic blocks while iterating over the instructions.
+  </p></dd>
+
+  <dt><code>instructions_reversed()</code></dt>
+  <dd><p>
+  Iterator for iterating over the function's instructions in reverse order.
+  </p><p>
+  It is allowed to insert or remove instructions while iterating over the function, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  </p><p>
+  It is not allowed to insert/remove basic blocks while iterating over the instructions.
+  </p></dd>
+
+  <dt><code>prepend_basic_block(basic_block)</code></dt>
+  <dd>Insert basic block <code>basic_block</code> at the top of the function.</dd>
+</dl>
+
+###BasicBlock
+####Methods
 <dl>
   <dt><code>append_inst(inst)</code></dt>
   <dd>Insert instruction <code>inst</code> at the end of the basic block.</dd>
@@ -179,10 +233,10 @@ TBD
   <dd>Return list of successor basic blocks.</dd>
 
   <dt><code>insert_inst_after(inst, insert_pos_inst)</code></dt>
-  <dd>Insert instruction <code>inst</code> after an instruction <code>insert_pos_inst</code>.</dd>
+  <dd>Insert instruction <code>inst</code> after the instruction <code>insert_pos_inst</code>.</dd>
 
   <dt><code>insert_inst_before(inst, insert_pos_inst)</code></dt>
-  <dd>Insert instruction <code>inst</code> before an instruction <code>insert_pos_inst</code>.</dd>
+  <dd>Insert instruction <code>inst</code> before the instruction <code>insert_pos_inst</code>.</dd>
 
   <dt><code>predecessors()</code></dt>
   <dd><p>Return the predecessor basic blocks.
@@ -199,6 +253,84 @@ TBD
   <dt><code>remove_inst(inst)</code></dt>
   <dd>Remove instruction <code>inst</code> from the basic block.</dd>
 </dl>
+
+###Instruction
+####Methods
+<dl>
+  <dt><code>clone()</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>insert_after(insert_pos_inst)</code></dt>
+  <dd>Insert this instruction after the instruction <code>insert_pos_inst</code>.</dd>
+
+  <dt><code>insert_before(insert_pos_inst)</code></dt>
+  <dd>Insert this instruction before the instruction <code>insert_pos_inst</code>.</dd>
+
+  <dt><code>remove()</code></dt>
+  <dd>Remove this instruction from its basic block.</dd>
+
+  <dt><code>destroy()</code></dt>
+  <dd><p>
+  Destroy this instruction.
+  </p><p>
+  This removes the instruction from the basic block (if it is attached to a basic block), and destroys the ID representing this function (if its <code>result_id</code> is not <code>None</code>).
+  </p><p>
+  The instruction must not be used after it is destroyed.
+  </p></dd>
+
+  <dt><code>add_to_phi(variable_inst, parent_inst)</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>remove_from_phi(parent_id)</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>uses()</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>get_decorations()</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>replace_uses_with(new_inst)</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>replace_with(new_inst)</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>substitute_type_and_operands(old_inst, new_inst)</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>has_side_effect()</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>is_commutative()</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>is_global_inst()</code></dt>
+  <dd><b>TODO</b></dd>
+
+  <dt><code>copy_decorations(src_inst)</code></dt>
+  <dd><b>TODO</b></dd>
+</dl>
+
+###Id
+####Methods
+<dl>
+  <dt><code>destroy()</code></dt>
+  <dd><p>
+  Destroy this ID.
+  </p><p>
+  The ID must not be used after it is destroyed.
+  </p></dd>
+</dl>
+
+###_GlobalInstructions
+####Methods
+<dl>
+  <dt><code>TODO</code></dt>
+  <dd><b>TODO</b></dd>
+
+</dl>
+
 ## Input/Output
 TBD
 
