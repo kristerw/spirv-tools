@@ -63,7 +63,7 @@ def optimize_inst(module, inst):
     return inst
 
 
-def optimize(module):
+def run(module):
     """Simple constant propagation and merging"""
     for function in module.functions:
         for inst in function.instructions():

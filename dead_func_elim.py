@@ -11,7 +11,7 @@ def reachable(func, reachable_funcs, id_to_func):
                 reachable(called_func, reachable_funcs, id_to_func)
 
 
-def optimize(module):
+def run(module):
     """Remove all unused functions."""
     id_to_func = {}
     for func in module.functions:

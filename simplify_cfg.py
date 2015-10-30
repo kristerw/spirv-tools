@@ -112,7 +112,7 @@ def eliminate_phi_nodes(module):
                     inst.replace_uses_with(first_variable.inst)
 
 
-def optimize(module):
+def run(module):
     """Perform dead code elimination and basic block merging."""
     simplify_cond_branches(module)
     remove_unused_basic_blocks(module)

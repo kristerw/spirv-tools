@@ -97,7 +97,7 @@ def optimize_variable(module, func, var_inst):
     var_inst.destroy()
 
 
-def optimize(module):
+def run(module):
     """Change OpVariable (of Function storage class) to registers."""
     for function in module.functions:
         for inst in function.basic_blocks[0].insts[:]:

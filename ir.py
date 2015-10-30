@@ -32,15 +32,15 @@ class Module(object):
 
         This only runs optimization passes that are likely to be profitable
         on all architectures (such as removing dead code)."""
-        instcombine.optimize(self)
-        simplify_cfg.optimize(self)
-        dead_inst_elim.optimize(self)
-        dead_func_elim.optimize(self)
-        mem2reg.optimize(self)
-        instcombine.optimize(self)
-        simplify_cfg.optimize(self)
-        dead_inst_elim.optimize(self)
-        dead_func_elim.optimize(self)
+        instcombine.run(self)
+        simplify_cfg.run(self)
+        dead_inst_elim.run(self)
+        dead_func_elim.run(self)
+        mem2reg.run(self)
+        instcombine.run(self)
+        simplify_cfg.run(self)
+        dead_inst_elim.run(self)
+        dead_func_elim.run(self)
 
     def instructions(self):
         """Iterate over all instructions in the module."""

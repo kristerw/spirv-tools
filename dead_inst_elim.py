@@ -22,7 +22,7 @@ def remove_decoration_if_dead(inst):
             inst.destroy()
 
 
-def optimize(module):
+def run(module):
     """Remove all unused instructions."""
 
     # Garbage collect old unused debug and decoration instructions.

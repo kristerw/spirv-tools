@@ -301,7 +301,7 @@ def optimize_inst(module, inst):
     return inst
 
 
-def optimize(module):
+def run(module):
     """Combine/simplify instructions, to fewer/simpler instructions"""
     for function in module.functions:
         for inst in function.instructions():
