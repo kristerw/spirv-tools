@@ -83,7 +83,7 @@ TBD - Global instructions
 ## IR
 TBD
 
-###Module
+###class ir.Module
 ####Methods
 <dl>
   <dt><code>append_function(function)</code></dt>
@@ -156,7 +156,10 @@ TBD
   <dd><b>TODO</b></dd>
 </dl>
 
-###Function
+####Attributes
+**TODO**
+
+###class ir.Function
 ####Methods
 <dl>
   <dt><code>append_basic_block(basic_block)</code></dt>
@@ -208,7 +211,10 @@ TBD
   <dd>Insert basic block <code>basic_block</code> at the top of the function.</dd>
 </dl>
 
-###BasicBlock
+####Attributes
+**TODO**
+
+###class ir.BasicBlock
 ####Methods
 <dl>
   <dt><code>append_inst(inst)</code></dt>
@@ -254,7 +260,10 @@ TBD
   <dd>Remove instruction <code>inst</code> from the basic block.</dd>
 </dl>
 
-###Instruction
+####Attributes
+**TODO**
+
+###class ir.Instruction
 ####Methods
 <dl>
   <dt><code>clone()</code></dt>
@@ -312,7 +321,10 @@ TBD
   <dd><b>TODO</b></dd>
 </dl>
 
-###Id
+####Attributes
+**TODO**
+
+###class ir.Id
 ####Methods
 <dl>
   <dt><code>destroy()</code></dt>
@@ -323,13 +335,20 @@ TBD
   </p></dd>
 </dl>
 
-###_GlobalInstructions
+####Attributes
+**TODO**
+
+
+###class ir._GlobalInstructions
 ####Methods
 <dl>
   <dt><code>TODO</code></dt>
   <dd><b>TODO</b></dd>
 
 </dl>
+
+####Attributes
+**TODO**
 
 ## Input/Output
 TBD
