@@ -1,5 +1,5 @@
 ##API Overview
-This API is meant to be used for basic analysis and manipulation of SPIR-V 
+This API is meant to be used for basic analysis and manipulation of SPIR-V
 binaries, and it tries to keep its representation close to the real binary;
 the IR consists of the SPIR-V instructions, and iterators traverse the IR
 in the order they are stored in the binary. But there is one layer of
