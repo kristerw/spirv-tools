@@ -141,7 +141,7 @@ def create_id(module, token, tag, type_id=None):
             module.symbol_name_to_id[token] = new_id
             name = token[1:]
             inst = ir.Instruction(module, 'OpName', None, [new_id, name])
-            module.add_global_inst(inst)
+            module.insert_global_inst(inst)
         else:
             value = int(token[1:])
             if value in module.value_to_id:
@@ -486,7 +486,7 @@ def parse_decorations(lexer, module, variable_name, op_name):
                 if token != ',':
                     raise ParseError('Syntax error in decoration')
         inst = ir.Instruction(module, 'OpDecorate', None, operands)
-        module.add_global_inst(inst)
+        module.insert_global_inst(inst)
 
 
 def parse_translation_unit(lexer, module):
@@ -499,16 +499,16 @@ def parse_translation_unit(lexer, module):
             lexer.done_with_line()
         elif token == 'define':
             func = parse_function(lexer, module)
-            module.add_function(func)
+            module.append_function(func)
         else:
             inst = parse_instruction(lexer, module)
             if isinstance(inst, ir.Function):
                 func = parse_function_raw(lexer, module, inst)
-                module.add_function(func)
+                module.append_function(func)
             elif isinstance(inst, ir.BasicBlock):
                 raise ParseError('Basic block defined outside a function')
             else:
-                module.add_global_inst(inst)
+                module.insert_global_inst(inst)
 
 
 def parse_basic_block_body(lexer, module, basic_block):
@@ -550,7 +550,7 @@ def parse_basic_block(lexer, module, function):
     basic_block = ir.BasicBlock(module, basic_block_id)
 
     parse_basic_block_body(lexer, module, basic_block)
-    function.add_basic_block(basic_block)
+    function.append_basic_block(basic_block)
 
 
 def parse_function_raw(lexer, module, function):
@@ -573,7 +573,7 @@ def parse_function_raw(lexer, module, function):
 
         if isinstance(inst, ir.BasicBlock):
             parse_basic_block_body(lexer, module, inst)
-            function.add_basic_block(inst)
+            function.append_basic_block(inst)
         elif isinstance(inst, ir.Function):
             raise ParseError('OpFunction within function')
         elif inst.op_name == 'OpFunctionEnd':

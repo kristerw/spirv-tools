@@ -256,7 +256,7 @@ def parse_global_instructions(binary, module):
             return
 
         inst = parse_instruction(binary, module)
-        module.add_global_inst(inst)
+        module.insert_global_inst(inst)
 
 
 def parse_basic_block(binary, module, function):
@@ -274,7 +274,7 @@ def parse_basic_block(binary, module, function):
             raise ParseError('Invalid opcode OpLabel in basic block')
         basic_block.append_inst(inst)
         if inst.op_name in ir.BRANCH_INSTRUCTIONS:
-            function.add_basic_block(basic_block)
+            function.append_basic_block(basic_block)
             return
 
 
@@ -307,7 +307,7 @@ def parse_functions(binary, module):
             raise ParseError('Expected an "OpFunction" instruction')
 
         function = parse_function(binary, module)
-        module.add_function(function)
+        module.append_function(function)
 
 
 def read_module(stream):

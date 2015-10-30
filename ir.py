@@ -58,8 +58,8 @@ class Module(object):
         for inst in self.global_instructions.instructions_reversed():
             yield inst
 
-    def add_global_inst(self, inst):
-        """Add instruction to the module's global instructions."""
+    def insert_global_inst(self, inst):
+        """Insert a global instruction into the module."""
         self.global_instructions.append_inst(inst)
         _add_use_to_id(inst)
 
@@ -72,9 +72,23 @@ class Module(object):
         return self.global_instructions.get_inst(self, op_name, type_id,
                                                  operands)
 
-    def add_function(self, function):
-        """Add function to the module."""
+    def append_function(self, function):
+        """Insert function at the end of the module."""
         self.functions.append(function)
+
+    def prepend_function(self, function):
+        """Insert function at the top of the module."""
+        self.functions = [function] + self.functions
+
+    def insert_function_after(self, function, insert_pos_function):
+        """Insert function after an existing function."""
+        idx = self.functions.index(insert_pos_function)
+        self.functions.insert(idx + 1, function)
+
+    def insert_function_before(self, function, insert_pos_function):
+        """Insert function before an existing function."""
+        idx = self.functions.index(insert_pos_function)
+        self.functions.insert(idx, function)
 
     def get_constant(self, type_id, value):
         """Get a constant with the provided value and type.
@@ -166,7 +180,7 @@ class Module(object):
             raise IRError('Invalid type for constant')
 
     def renumber_temp_ids(self):
-        """Convert temp IDs to real IDs.."""
+        """Convert temp IDs to real IDs."""
         # Collect all temporary IDs.
         # The temporary IDs are placed in a list (rather than e.g. a set)
         # so that we get deterministic result when we renumber by iterating
@@ -381,21 +395,21 @@ class _GlobalInstructions(object):
         return inst
 
     def append_inst(self, inst):
-        """Add inst at the end of the global instructions of its kind."""
+        """Insert inst at the end of the global instructions of its kind."""
         insts_list, _ = self._get_insts_list(inst.op_name)
         insts_list.append(inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
-        """Add inst at the top of the global instructions of its kind."""
+        """Insert inst at the top of the global instructions of its kind."""
         insts_list, _ = self._get_insts_list(inst.op_name)
         insts_list.insert(0, inst)
         inst.basic_block = self
         _add_use_to_id(inst)
 
     def insert_inst_after(self, inst, insert_pos_inst):
-        """Add instruction after an existing instruction."""
+        """Insert instruction after an existing instruction."""
         insert_pos_list, insert_ord = self._get_insts_list(insert_pos_inst)
         insts_list, inst_ord = self._get_insts_list(inst.op_name)
         if insert_pos_list == insts_list:
@@ -411,7 +425,7 @@ class _GlobalInstructions(object):
                               insert_pos_inst.op_name)
 
     def insert_inst_before(self, inst, insert_pos_inst):
-        """Add instruction before an existing instruction."""
+        """Insert instruction before an existing instruction."""
         insert_list, insert_ord = self._get_insts_list(insert_pos_inst.op_name)
         insts_list, inst_ord = self._get_insts_list(inst.op_name)
         if insert_list == insts_list:
@@ -519,10 +533,25 @@ class Function(object):
         self.parameters.append(inst)
         _add_use_to_id(inst)
 
-    def add_basic_block(self, basic_block):
-        """Add one basic block to the function."""
+    def append_basic_block(self, basic_block):
+        """Insert basic block at the end of the function."""
         self.basic_blocks.append(basic_block)
         basic_block.function = self
+
+    def prepend_basic_block(self, basic_block):
+        """Insert basic block at the top of the function."""
+        self.basic_blocks = [basic_block] + self.basic_blocks
+        basic_block.function = self
+
+    def insert_basic_block_after(self, basic_block, insert_pos_basic_block):
+        """Insert basic block after an existing basic block."""
+        idx = self.basic_blocks.index(insert_pos_basic_block)
+        self.basic_blocks.insert(idx + 1, basic_block)
+
+    def insert_basic_block_before(self, basic_block, insert_pos_basic_block):
+        """Insert basic block before an existing basic block."""
+        idx = self.basic_blocks.index(insert_pos_basic_block)
+        self.basic_blocks.insert(idx, basic_block)
 
 
 class BasicBlock(object):
@@ -687,14 +716,14 @@ class Instruction(object):
                            self.operands[:])
 
     def insert_after(self, insert_pos_inst):
-        """Add instruction after an existing instruction."""
+        """Insert instruction after an existing instruction."""
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
             raise IRError('Instruction is not in a basic block')
         basic_block.insert_inst_after(self, insert_pos_inst)
 
     def insert_before(self, insert_pos_inst):
-        """Add instruction before an existing instruction."""
+        """Insert instruction before an existing instruction."""
         basic_block = insert_pos_inst.basic_block
         if basic_block is None:
             raise IRError('Instruction is not in a basic block')
@@ -832,7 +861,7 @@ class Instruction(object):
             new_operands[0] = self.result_id
             new_inst = Instruction(self.module, inst.op_name,
                                    None, new_operands)
-            self.module.add_global_inst(new_inst)
+            self.module.insert_global_inst(new_inst)
 
 
 class Id(object):
