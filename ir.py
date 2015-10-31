@@ -811,7 +811,13 @@ class Instruction(object):
         Decoration and debug instructions are not updated, as they are
         considered being a part of the instruction they reference."""
         for inst in self.uses():
-            inst.substitute_type_and_operands(self, new_inst)
+            _remove_use_from_id(inst)
+            if inst.type_id == self.result_id:
+                inst.type_id = new_inst.result_id
+            for idx in range(len(inst.operands)):
+                if inst.operands[idx] == self.result_id:
+                    inst.operands[idx] = new_inst.result_id
+            _add_use_to_id(inst)
 
     def replace_with(self, new_inst):
         """Replace this instruction with new_inst.
@@ -825,16 +831,6 @@ class Instruction(object):
         new_inst.insert_after(self)
         self.replace_uses_with(new_inst)
         self.destroy()
-
-    def substitute_type_and_operands(self, old_inst, new_inst):
-        """Change use of old_inst in this instruction to new_inst."""
-        _remove_use_from_id(self)
-        if self.type_id == old_inst.result_id:
-            self.type_id = new_inst.result_id
-        for idx in range(len(self.operands)):
-            if self.operands[idx] == old_inst.result_id:
-                self.operands[idx] = new_inst.result_id
-        _add_use_to_id(self)
 
     def has_side_effects(self):
         """Return True if the instruction may have side effects."""
