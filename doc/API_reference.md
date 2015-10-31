@@ -12,7 +12,7 @@ one function, that is, all instructions from an `OpFunction` to the
 `OpFunctionEnd`. The instructions are grouped in the `BasicBlock` class,
 which consists of all instructions from an `OpLabel` to the branch or return
 instruction. Finally the instructions are represented by the `Instruction`
-class, where the SPIR-V IDs are represented by the `Id` class
+class, where the SPIR-V IDs are represented by the `Id` class.
 
 Most class attributes (such as lists of functions, basic blocks,
 instructions) are meant to be used by applications, but applications must
@@ -32,7 +32,7 @@ providing an ID. The opcode is represented by
 the operation name (such as `'OpFAdd'`). The operands for the enumerated constants (such as
 the Storage Class) are represented as strings of the values (such as
 `'Input'`), and masks are represented as a list of enumerated constants.
-Integer and string literals are repreented as integers and strings.
+Integer and string literals are represented as integers and strings.
 
 The `result_id` and `type_id` values are `None` for operations not using
 them, and `operands` is an empty list for instructions without operands.
@@ -60,7 +60,7 @@ tmp_inst.insert_after(inst)
 inst.replace_uses_with(tmp_inst)
 new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
                           [inst.operands[1], inst.operands[0]],
-			  result_id=inst.result_id)
+                          result_id=inst.result_id)
 tmp_inst.replace_with(new_inst)
 inst.destroy()
 ```
@@ -74,9 +74,11 @@ iterator. Instructions that are moved (i.e. removed and re-inserted)
 in the current basic block may be returned as if it was in its old
 position.
 
-TBD - Decorations, debug instructions etc.
+**TBD** - Decorations, debug instructions etc.
 
-TBD - Global instructions
+**TBD** - Global instructions
+
+**TBD** - Functions and basic blocks
 
 ## IR
 ###class ir.Module
@@ -93,7 +95,23 @@ TBD - Global instructions
   </p></dd>
 
   <dt><code>get_constant()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd><p>
+  Return a constant instruction with the provided value and type. An existing
+  instruction is returned if it exists, otherwise a newly created instruction
+  is returned and inserted into the module.
+  </p><p>
+  <b>TODO</b>: Describe how the value is represented. Floats are not
+  implemented yet.
+  </p><p>
+  For vector types, the value need to be a list of the same length
+  as the vector size, or a scalar, in which case the value is
+  replicated for all elements.
+  </p><p>
+  For matrix types, the value need to be a list of the same length
+  as the column count (where each element is a list of the column with
+  or a scalar), or a scalar, in which case the value is replicated for
+  all elements.
+  </p></dd>
 
   <dt><code>get_global_inst(op_name, type_id, operands)</code></dt>
   <dd><p>
@@ -107,8 +125,23 @@ TBD - Global instructions
   <code>get_global_inst('OpTypeInt', 32, 1)</code>
   </p></dd>
 
-  <dt><code>is_constant_value()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dt><code>is_constant_value(inst, value)</code></dt>
+  <dd><p>
+  Return <code>True</code> if the instruction <code>inst</code> is a
+  constant with the value <code>value</code>, <code>False</code> otherwise.
+  </p><p>
+  <b>TODO</b>: Describe how the value is represented. Floats are not
+  implemented yet.
+  </p><p>
+  For vector types, the value need to be a list of the same length
+  as the vector size, or a scalar, in which case the value is
+  replicated for all elements.
+  </p><p>
+  For matrix types, the value need to be a list of the same length
+  as the column count (where each element is a list of the column with
+  or a scalar), or a scalar, in which case the value is replicated for
+  all elements.
+  </p></dd>
 
   <dt><code>insert_global_inst(inst)</code></dt>
   <dd><p>
@@ -161,12 +194,15 @@ TBD - Global instructions
   <dd>Insert function at the top of the module.</dd>
 
   <dt><code>renumber_temp_ids()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Convert temp IDs to real IDs.</dd>
 </dl>
 
 ####ir.Module – Attributes
 **Note**: The following attributes are read-only.
 <dl>
+  <dt><code>bound</code></dt>
+  <dd>The SPIR-V ID bound.</dd>
+
   <dt><code>global_instructions</code></dt>
   <dd>The pseudo-basic block of class <code>_GlobalInstructions</code>
   containing the module's global instructions.</dd>
@@ -590,7 +626,8 @@ TBD - Global instructions
 </dl>
 
 ## Input/Output
-TBD
+**TBD**: `read_il`, `write_il`, `read_spirv`, `write_spirv`.
 
 ## Optimizations
-TBD
+**TBD**: `instcombine`, `simplify_cfg`, `dead_inst_elim`, `dead_func_elim`,
+`mem2reg`.
