@@ -69,8 +69,7 @@ class Module(object):
         An already existing instruction is returned if possible. A new
         global instruction is created and inserted in the module if no
         such instruction is available."""
-        return self.global_instructions.get_inst(self, op_name, type_id,
-                                                 operands)
+        return self.global_instructions.get_inst(op_name, type_id, operands)
 
     def append_function(self, function):
         """Insert function at the end of the module."""
@@ -378,7 +377,7 @@ class _GlobalInstructions(object):
             if inst.basic_block is not None:
                 yield inst
 
-    def get_inst(self, module, op_name, type_id, operands):
+    def get_inst(self, op_name, type_id, operands):
         """Return a global instruction.
 
         An already existing instruction is returned if possible. A new
@@ -390,7 +389,7 @@ class _GlobalInstructions(object):
                     inst.type_id == type_id and
                     inst.operands == operands):
                 return inst
-        inst = Instruction(module, op_name, type_id, operands)
+        inst = Instruction(self.module, op_name, type_id, operands)
         self.append_inst(inst)
         return inst
 

@@ -84,7 +84,7 @@ TBD - Global instructions
 TBD
 
 ###class ir.Module
-####Methods
+####ir.Module – Methods
 <dl>
   <dt><code>append_function(function)</code></dt>
   <dd>Insert function at the end of the module.</dd>
@@ -101,9 +101,14 @@ TBD
 
   <dt><code>get_global_inst(op_name, type_id, operands)</code></dt>
   <dd><p>
-  Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
+  Return a global instruction corresponding to the <code>op_name</code>,
+  <code>type_id</code>, and <code>operations</code>. An existing instruction
+  is returned if it exist, otherwise a newly created instruction is returned
+  and inserted into the module.
   </p><p>
-  This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <code>get_global_inst('OpTypeInt', 32, 1)</code>
+  This method is the preferred way of creating global instructions. For
+  example, creating a type instruction is done as
+  <code>get_global_inst('OpTypeInt', 32, 1)</code>
   </p></dd>
 
   <dt><code>is_constant_value()</code></dt>
@@ -156,7 +161,7 @@ TBD
   <dd><b>TODO</b></dd>
 </dl>
 
-####Attributes
+####ir.Module – Attributes
 **Note**: The following attributes are read-only.
 <dl>
   <dt><code>global_instructions</code></dt>
@@ -168,7 +173,7 @@ TBD
 </dl>
 
 ###class ir.Function
-####Methods
+####ir.Function – Methods
 <dl>
   <dt><code>append_basic_block(basic_block)</code></dt>
   <dd>Insert basic block <code>basic_block</code> at the end of the function.</dd>
@@ -217,9 +222,12 @@ TBD
 
   <dt><code>prepend_basic_block(basic_block)</code></dt>
   <dd>Insert basic block <code>basic_block</code> at the top of the function.</dd>
+
+  <dt><code>remove()</code></dt>
+  <dd>Remove this function from the module.</dd>
 </dl>
 
-####Attributes
+####ir.Function – Attributes
 **Note**: The following attributes are read-only.
 <dl>
   <dt><code>parameters</code></dt>
@@ -240,7 +248,7 @@ TBD
 </dl>
 
 ###class ir.BasicBlock
-####Methods
+####ir.BasicBlock – Methods
 <dl>
   <dt><code>append_inst(inst)</code></dt>
   <dd>Insert instruction <code>inst</code> at the end of the basic block.</dd>
@@ -285,7 +293,7 @@ TBD
   <dd>Remove instruction <code>inst</code> from the basic block.</dd>
 </dl>
 
-####Attributes
+####ir.BasicBlock – Attributes
 **Note**: The following attributes are read-only.
 <dl>
   <dt><code>function</code></dt>
@@ -304,7 +312,7 @@ TBD
 </dl>
 
 ###class ir.Instruction
-####Methods
+####ir.Instruction – Methods
 <dl>
   <dt><code>clone()</code></dt>
   <dd><p>Return a copy of the instruction.
@@ -388,7 +396,7 @@ TBD
   <dd>Copy the decorations from <code>src_inst</code> to this instruction.</dd>
 </dl>
 
-####Attributes
+####ir.Instruction – Attributes
 **Note**: The following attributes are read-only.
 <dl>
   <dt><code>module</code></dt>
@@ -419,7 +427,7 @@ TBD
 </dl>
 
 ###class ir.Id
-####Methods
+####ir.Id – Methods
 <dl>
   <dt><code>destroy()</code></dt>
   <dd><p>
@@ -429,7 +437,7 @@ TBD
   </p></dd>
 </dl>
 
-####Attributes
+####ir.Id – Attributes
 <b>Note</b>: The following attributes are read-only.
 <dl>
   <dt><code>inst</code></dt>
@@ -452,18 +460,107 @@ TBD
 </dl>
 
 ###class ir._GlobalInstructions
-####Methods
+####ir._GlobalInstructions – Methods
 <dl>
-  <dt><code>TODO</code></dt>
-  <dd><b>TODO</b></dd>
+  <dt><code>dump(stream=sys.stdout)</code></dt>
+  <dd><p>Write a debug dump of the module to stream.
+  </p><p>
+  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  </p></dd>
 
+  <dt><code>instructions()</code></dt>
+  <dd><p>
+  Iterator for iterating over the global instructions in the order they are located in the SPIR-V binary.
+  </p><p>
+  It is allowed to insert or remove instructions while iterating, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  </p></dd>
+
+  <dt><code>instructions_reversed()</code></dt>
+  <dd><p>
+  Iterator for iterating over the global instructions in reverse order.
+  </p><p>
+  It is allowed to insert or remove instructions while iterating, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  </p></dd>
+
+  <dt><code>get_inst(op_name, type_id, operands)</code></dt>
+  <dd>
+  Return a global instruction corresponding to the <code>op_name</code>,
+  <code>type_id</code>, and <code>operations</code>. An existing instruction
+  is returned if it exist, otherwise a newly created instruction is returned
+  and inserted into the module.
+  </dd>
+
+  <dt><code>append_inst(inst)</code></dt>
+  <dd>Insert instruction <code>inst</code> at the end of its section among
+  the global instructions.</dd>
+
+  <dt><code>prepend_inst(inst)</code></dt>
+  <dd>Insert instruction <code>inst</code> at the top of its section among
+  the global instructions.</dd>
+
+  <dt><code>insert_inst_after(inst, insert_pos_inst)</code></dt>
+  <dd><p>Insert instruction <code>inst</code> after the instruction
+  <code>insert_pos_inst</code>.
+  </p><p>
+  The instruction is inserted at the first valid position among the global
+  instructions.
+  </p></dd>
+
+  <dt><code>insert_inst_before(inst, insert_pos_inst)</code></dt>
+  <dd><p>Insert instruction <code>inst</code> before the instruction
+  <code>insert_pos_inst</code>.
+  </p><p>
+  The instruction is inserted at the first valid position among the global
+  instructions.
+  </p></dd>
+
+  <dt><code>remove_inst(inst)</code></dt>
+  <dd>Remove instruction <code>inst</code> from the global instructions.</dd>
 </dl>
 
-####Attributes
+####ir._GlobalInstructions – Attributes
 **Note**: The following attributes are read-only.
 <dl>
-  <dt><code></code></dt>
-  <dd></dd>
+  <dt><code>decoration_insts</code></dt>
+  <dd>A list containing the decoration instructions.</dd>
+
+  <dt><code>name_insts</code></dt>
+  <dd>A list containing the <code>OpName</code> and <code>OpMemberName</code>
+  instructions.</dd>
+
+  <dt><code>op_capability_insts</code></dt>
+  <dd>A list containing the <code>OpCapability</code> instructions.</dd>
+
+  <dt><code>op_entry_point_insts</code></dt>
+  <dd>A list containing the <code>OpEntryPoint</code> instructions.</dd>
+
+  <dt><code>op_execution_mode_insts</code></dt>
+  <dd>A list containing the <code>OpExecutionMode</code> instructions.</dd>
+
+  <dt><code>op_extension_insts</code></dt>
+  <dd>A list containing the <code>OpExtension</code> instructions.</dd>
+
+  <dt><code>op_extinstimport_insts</code></dt>
+  <dd>A list containing the <code>OpExtInstImport</code> instructions.</dd>
+
+  <dt><code>op_line_insts</code></dt>
+  <dd>A list containing the <code>OpLine</code> instructions.</dd>
+
+  <dt><code>op_memory_model_insts</code></dt>
+  <dd>A list containing the <code>OpMemoryModel</code> instructions.</dd>
+
+  <dt><code>op_string_insts</code></dt>
+  <dd>A list containing the <code>OpString</code> instructions.</dd>
+
+  <dt><code>op_source_extension_insts</code></dt>
+  <dd>A list containing the <code>OpSourceExtension</code> instructions.</dd>
+
+  <dt><code>op_source_insts</code></dt>
+  <dd>A list containing the <code>OpSource</code> instructions.</dd>
+
+  <dt><code>type_insts</code></dt>
+  <dd>A list containing the type declaration, constant, spec-constant, and
+  global <code>OpVariable</code> instructions.</dd>
 </dl>
 **TODO**
 
