@@ -157,7 +157,15 @@ TBD
 </dl>
 
 ####Attributes
-**TODO**
+**Note**: The following attributes are read-only.
+<dl>
+  <dt><code>global_instructions</code></dt>
+  <dd>The pseudo-basic block of class <code>_GlobalInstructions</code>
+  containing the module's global instructions.</dd>
+
+  <dt><code>functions</code></dt>
+  <dd>A list of the functions within this module.</dd>
+</dl>
 
 ###class ir.Function
 ####Methods
@@ -212,7 +220,24 @@ TBD
 </dl>
 
 ####Attributes
-**TODO**
+**Note**: The following attributes are read-only.
+<dl>
+  <dt><code>parameters</code></dt>
+  <dd>A list of the <code>OpFunctionParameter</code> instructions for
+  the function's parameters.</dd>
+
+  <dt><code>basic_blocks</code></dt>
+  <dd>A list of the basic_blocks within this function.</dd>
+
+  <dt><code>inst</code></dt>
+  <dd>The <code>OpFunction</code> instruction defining this function.</dd>
+
+  <dt><code>end_inst</code></dt>
+  <dd>The <code>OpFunctionEnd</code> instruction ending this function.</dd>
+
+  <dt><code>module</code></dt>
+  <dd>The module this function is associated with.</dd>
+</dl>
 
 ###class ir.BasicBlock
 ####Methods
@@ -261,13 +286,34 @@ TBD
 </dl>
 
 ####Attributes
-**TODO**
+**Note**: The following attributes are read-only.
+<dl>
+  <dt><code>function</code></dt>
+  <dd>The function containing this basic block, or <code>None</code> if
+  this basic block is not inserted into a function.</dd>
+
+  <dt><code>inst</code></dt>
+  <dd>The <code>OpLabel</code> instruction defining this basic block.</dd>
+
+  <dt><code>insts</code></dt>
+  <dd>The instructions in this basic block (not including the
+  <code>OpLabel</code>)</dd>
+
+  <dt><code>module</code></dt>
+  <dd>The module this basic block is associated with.</dd>
+</dl>
 
 ###class ir.Instruction
 ####Methods
 <dl>
   <dt><code>clone()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd><p>Return a copy of the instruction.
+  </p><p>
+  The new instruction is identical to this instruction, except that
+  it has a new <code>result_id</code> (if the instruction type has a
+  <code>result_id</code>), and the new instruction is not bound to
+  any basic block.
+  </p></dd>
 
   <dt><code>insert_after(insert_pos_inst)</code></dt>
   <dd>Insert this instruction after the instruction <code>insert_pos_inst</code>.</dd>
@@ -288,41 +334,89 @@ TBD
   </p></dd>
 
   <dt><code>add_to_phi(variable_inst, parent_inst)</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Add a variable/parent to an <code>OpPhi</code> instruction.</dd>
 
   <dt><code>remove_from_phi(parent_id)</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Remove a parent (and corresponding variable) from an <code>OpPhi</code>
+  instruction.</dd>
 
   <dt><code>uses()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd><p>
+  Return all instructions using this instruction.
+  </p><p>
+  Debug and decoration instructions are not considered using
+  any instruction.
+  </p></dd>
 
   <dt><code>get_decorations()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Return all decorations for this instruction.</dd>
 
   <dt><code>replace_uses_with(new_inst)</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd><p>
+  Replace all uses of this instruction with <code>new_inst</code>.
+  </p><p>
+  Decoration and debug instructions are not updated, as they are
+  considered being a part of the instruction they reference.
+  </p></dd>
 
   <dt><code>replace_with(new_inst)</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd><p>
+  Replace this instruction with <code>new_inst</code>.
+  </p><p>
+  All uses of this instruction is replaced by <code>new_inst</code>, the
+  <code>new_inst</code> is inserted in the location of this instruction,
+  and this instruction is destroyed.
+  </p><p>
+  Decoration and debug instructions are not updated, as they are
+  considered being a part of the instruction they reference.
+  </p></dd>
 
-  <dt><code>substitute_type_and_operands(old_inst, new_inst)</code></dt>
-  <dd><b>TODO</b></dd>
-
-  <dt><code>has_side_effect()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dt><code>has_side_effects()</code></dt>
+  <dd>Return <code>True<code> if the instruction may have side effects (and
+  thus cannot be removed if its result is not used), <code>False</code>
+  otherwise.</dd>
 
   <dt><code>is_commutative()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Return <code>True<code> if the instruction is commutative,
+  <code>False</code> otherwise.</dd>
 
   <dt><code>is_global_inst()</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Return <code>True</code> if this is a global instruction,
+  <code>False</code> otherwise.</dd>
 
   <dt><code>copy_decorations(src_inst)</code></dt>
-  <dd><b>TODO</b></dd>
+  <dd>Copy the decorations from <code>src_inst</code> to this instruction.</dd>
 </dl>
 
 ####Attributes
-**TODO**
+**Note**: The following attributes are read-only.
+<dl>
+  <dt><code>module</code></dt>
+  <dd>The module this instruction is associated with.</dd>
+
+  <dt><code>op_name</code></dt>
+  <dd>The operation name for this instruction.</dd>
+
+  <dt><code>result_id</code></dt>
+  <dd>The ID for the instructions return value. <code>None</code> if the
+  instruction does not return a value.</dd>
+
+  <dt><code>type_id</code></dt>
+  <dd>The ID for the instructions type. <code>None</code> if the
+  instruction does not have a type.</dd>
+
+  <dt><code>operands</code></dt>
+  <dd>A list containing the instruction's operands. ID operands are represented
+  as <code>class Id</code> objects. Operands for enumerated constants (such as
+  the Storage Class) are represented as strings of the values (such as
+  <code>'Input'</code>). Literal strings and integers are represented as
+  strings and integers.
+  </dd>
+
+  <dt><code>basic_block</code></dt>
+  <dd>The basic block containing this instruction, or <code>None</code> if
+  this instruction is not inserted into a basic block.</dd>
+</dl>
 
 ###class ir.Id
 ####Methods
@@ -336,8 +430,26 @@ TBD
 </dl>
 
 ####Attributes
-**TODO**
+<b>Note</b>: The following attributes are read-only.
+<dl>
+  <dt><code>inst</code></dt>
+  <dd>The instruction which has this ID as <code>result_id</code>, or
+  <code>None</code></dd> if there are no such instruction.</dd>
 
+  <dt><code>is_temp</code></dt>
+  <dd><code>True</code> if this is a temporary ID (i.e. an ID that has not
+  got a real value yet), <code>False</code> otherwise.</dd>
+
+  <dt><code>uses</code></dt>
+  <dd>A set containing all instructions in the module that are using this ID
+  (excluding the instruction in <code>inst</code>). Only instructions tha
+  thave been inserted into the module are included in the set (i.e. removing
+  an instruction from a basic block will get it removed from the
+  <code>uses</code> set too).</dd>
+
+  <dt><code>value</code></dt>
+  <dd>The ID's value.</dd>
+</dl>
 
 ###class ir._GlobalInstructions
 ####Methods
@@ -348,6 +460,11 @@ TBD
 </dl>
 
 ####Attributes
+**Note**: The following attributes are read-only.
+<dl>
+  <dt><code></code></dt>
+  <dd></dd>
+</dl>
 **TODO**
 
 ## Input/Output

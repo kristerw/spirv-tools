@@ -54,7 +54,7 @@ def run(module):
         for inst in module.instructions_reversed():
             if inst.op_name == 'OpLabel':
                 processed_bbs.add(inst.basic_block)
-            if not inst.has_side_effect() and not inst.uses():
+            if not inst.has_side_effects() and not inst.uses():
                 if inst.op_name == 'OpPhi':
                     processed_bbs.add(inst.basic_block)
                     operands = inst.operands[:]

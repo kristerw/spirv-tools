@@ -761,7 +761,7 @@ class Instruction(object):
         self.operands = None
 
     def add_to_phi(self, variable_inst, parent_inst):
-        """Add a variable/parent to a phi-node"""
+        """Add a variable/parent to a phi-node."""
         assert self.op_name == 'OpPhi'
         self.operands.append(variable_inst.result_id)
         variable_inst.result_id.uses.add(self)
@@ -815,7 +815,10 @@ class Instruction(object):
 
         All uses of this instruction is replaced by new_inst, the
         new_inst is inserted in the location of this instruction,
-        and this instruction is destroyed."""
+        and this instruction is destroyed.
+
+        Decoration and debug instructions are not updated, as they are
+        considered being a part of the instruction they reference."""
         new_inst.insert_after(self)
         self.replace_uses_with(new_inst)
         self.destroy()
@@ -830,8 +833,8 @@ class Instruction(object):
                 self.operands[idx] = new_inst.result_id
         _add_use_to_id(self)
 
-    def has_side_effect(self):
-        """True if the instruction may be removed if unused."""
+    def has_side_effects(self):
+        """Return True if the instruction may have side effects."""
         # XXX Need to handle OpExtInst correctly (it is conservative now)
         if self.result_id is None and self.result_id != 'OpNop':
             return True
