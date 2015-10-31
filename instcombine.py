@@ -62,7 +62,7 @@ def optimize_OpCompositeConstruct(module, inst):
 def optimize_OpIAdd(module, inst):
     # x + 0 -> x
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        if module.is_constant_value(inst.operands[1].inst, 0):
+        if inst.operands[1].inst.is_constant_value(0):
             return inst.operands[0].inst
     return inst
 
@@ -70,13 +70,13 @@ def optimize_OpIAdd(module, inst):
 def optimize_OpIMul(module, inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # x * 0 -> 0
-        if module.is_constant_value(inst.operands[1].inst, 0):
+        if inst.operands[1].inst.is_constant_value(0):
             return inst.operands[1].inst
         # x * 1 -> 1
-        if module.is_constant_value(inst.operands[1].inst, 1):
+        if inst.operands[1].inst.is_constant_value(1):
             return inst.operands[0].inst
         # x * -1 -> -x
-        if module.is_constant_value(inst.operands[1].inst, -1):
+        if inst.operands[1].inst.is_constant_value(-1):
             new_inst = ir.Instruction(module, 'OpSNegate', inst.type_id,
                                       [inst.operands[0]])
             new_inst.insert_before(inst)
@@ -87,10 +87,10 @@ def optimize_OpIMul(module, inst):
 def optimize_OpLogicalAnd(module, inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # x and true -> x
-        if module.is_constant_value(inst.operands[1].inst, True):
+        if inst.operands[1].inst.is_constant_value(True):
             return inst.operands[0].inst
         # x and false -> false
-        if module.is_constant_value(inst.operands[1].inst, False):
+        if inst.operands[1].inst.is_constant_value(False):
             return inst.operands[1].inst
     return inst
 
@@ -98,10 +98,10 @@ def optimize_OpLogicalAnd(module, inst):
 def optimize_OpLogicalEqual(module, inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # Equal(x, true) -> x
-        if module.is_constant_value(inst.operands[1].inst, True):
+        if inst.operands[1].inst.is_constant_value(True):
             return inst.operands[0].inst
         # Equal(x, false) -> not(x)
-        if module.is_constant_value(inst.operands[1].inst, False):
+        if inst.operands[1].inst.is_constant_value(False):
             new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
                                       [inst.operands[0]])
             new_inst.insert_before(inst)
@@ -120,10 +120,10 @@ def optimize_OpLogicalNot(inst):
 def optimize_OpLogicalNotEqual(module, inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # Equal(x, false) -> x
-        if module.is_constant_value(inst.operands[1].inst, False):
+        if inst.operands[1].inst.is_constant_value(False):
             return inst.operands[0].inst
         # Equal(x, true) -> not(x)
-        if module.is_constant_value(inst.operands[1].inst, True):
+        if inst.operands[1].inst.is_constant_value(True):
             new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
                                       [inst.operands[0]])
             new_inst.insert_before(inst)
@@ -134,10 +134,10 @@ def optimize_OpLogicalNotEqual(module, inst):
 def optimize_OpLogicalOr(module, inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # x or true -> true
-        if module.is_constant_value(inst.operands[1].inst, True):
+        if inst.operands[1].inst.is_constant_value(True):
             return inst.operands[1].inst
         # x or false -> x
-        if module.is_constant_value(inst.operands[1].inst, False):
+        if inst.operands[1].inst.is_constant_value(False):
             return inst.operands[0].inst
     return inst
 

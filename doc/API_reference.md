@@ -125,24 +125,6 @@ position.
   <code>get_global_inst('OpTypeInt', 32, 1)</code>
   </p></dd>
 
-  <dt><code>is_constant_value(inst, value)</code></dt>
-  <dd><p>
-  Return <code>True</code> if the instruction <code>inst</code> is a
-  constant with the value <code>value</code>, <code>False</code> otherwise.
-  </p><p>
-  <b>TODO</b>: Describe how the value is represented. Floats are not
-  implemented yet.
-  </p><p>
-  For vector types, the value need to be a list of the same length
-  as the vector size, or a scalar, in which case the value is
-  replicated for all elements.
-  </p><p>
-  For matrix types, the value need to be a list of the same length
-  as the column count (where each element is a list of the column with
-  or a scalar), or a scalar, in which case the value is replicated for
-  all elements.
-  </p></dd>
-
   <dt><code>insert_global_inst(inst)</code></dt>
   <dd><p>
   Insert the global instruction <code>inst</code> into the module.
@@ -439,6 +421,24 @@ position.
   <dt><code>is_commutative()</code></dt>
   <dd>Return <code>True</code> if the instruction is commutative,
   <code>False</code> otherwise.</dd>
+
+  <dt><code>is_constant_value(value)</code></dt>
+  <dd><p>
+  Return <code>True</code> if this instruction is a
+  constant with the value <code>value</code>, <code>False</code> otherwise.
+  </p><p>
+  <b>TODO</b>: Describe how the value is represented. Floats are not
+  implemented yet.
+  </p><p>
+  For vector types, the value need to be a list of the same length
+  as the vector size, or a scalar, in which case the value is
+  replicated for all elements.
+  </p><p>
+  For matrix types, the value need to be a list of the same length
+  as the column count (where each element is a list of the column with
+  or a scalar), or a scalar, in which case the value is replicated for
+  all elements.
+  </p></dd>
 
   <dt><code>is_global_inst()</code></dt>
   <dd>Return <code>True</code> if this is a global instruction,

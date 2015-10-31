@@ -133,51 +133,6 @@ class Module(object):
         else:
             raise IRError('Invalid type for constant')
 
-    def is_constant_value(self, inst, value):
-        """Return true if the instruction is a constant with value.
-
-        For vector types, the value need to be a list of the same length
-        as the vector size, or a scalar, in which case the value is
-        replicated for all elements.
-
-        For matrix types, the value need to be a list of the same length
-        as the column count (where each element is a list of the column with
-        or a scalar), or a scalar, in which case the value is replicated for
-        all elements."""
-        if inst.op_name not in CONSTANT_INSTRUCTIONS:
-            return False
-        type_id = inst.type_id
-        if (type_id.inst.op_name == 'OpTypeInt' or
-                type_id.inst.op_name == 'OpTypeFloat'):
-            min_val, max_val = get_int_type_range(type_id)
-            if value < 0:
-                if value < min_val:
-                    raise IRError('Value out of range')
-                value = value & max_val
-            else:
-                if value > max_val:
-                    raise IRError('Value out of range')
-            if type_id.inst.operands[0] == 64:
-                operands = [value & 0xffffffff, value >> 32]
-            else:
-                operands = [value]
-            return inst.operands == operands
-        elif (type_id.inst.op_name == 'OpTypeVector' or
-              type_id.inst.op_name == 'OpTypeMatrix'):
-            nof_elements = type_id.inst.operands[1]
-            if not isinstance(value, (list, tuple)):
-                value = [value] * nof_elements
-            operands = []
-            for operand, val in zip(inst.operands, value):
-                if not self.is_constant_value(operand.inst, val):
-                    return False
-            return True
-        elif type_id.inst.op_name == 'OpTypeBool':
-            op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
-            return inst.op_name == op_name
-        else:
-            raise IRError('Invalid type for constant')
-
     def renumber_temp_ids(self):
         """Convert temp IDs to real IDs."""
         # Collect all temporary IDs.
@@ -855,6 +810,51 @@ class Instruction(object):
                      self.operands[0] == 'Function')):
             return True
         return False
+
+    def is_constant_value(self, value):
+        """Return true if the instruction is a constant with value.
+
+        For vector types, the value need to be a list of the same length
+        as the vector size, or a scalar, in which case the value is
+        replicated for all elements.
+
+        For matrix types, the value need to be a list of the same length
+        as the column count (where each element is a list of the column with
+        or a scalar), or a scalar, in which case the value is replicated for
+        all elements."""
+        if self.op_name not in CONSTANT_INSTRUCTIONS:
+            return False
+        type_id = self.type_id
+        if (type_id.inst.op_name == 'OpTypeInt' or
+                type_id.inst.op_name == 'OpTypeFloat'):
+            min_val, max_val = get_int_type_range(type_id)
+            if value < 0:
+                if value < min_val:
+                    raise IRError('Value out of range')
+                value = value & max_val
+            else:
+                if value > max_val:
+                    raise IRError('Value out of range')
+            if type_id.inst.operands[0] == 64:
+                operands = [value & 0xffffffff, value >> 32]
+            else:
+                operands = [value]
+            return self.operands == operands
+        elif (type_id.inst.op_name == 'OpTypeVector' or
+              type_id.inst.op_name == 'OpTypeMatrix'):
+            nof_elements = type_id.inst.operands[1]
+            if not isinstance(value, (list, tuple)):
+                value = [value] * nof_elements
+            operands = []
+            for operand, val in zip(self.operands, value):
+                if not operand.inst.is_constant_value(val):
+                    return False
+            return True
+        elif type_id.inst.op_name == 'OpTypeBool':
+            op_name = 'OpConstantTrue' if value else 'OpConstantFalse'
+            return self.op_name == op_name
+        else:
+            raise IRError('Invalid type for constant')
 
     def copy_decorations(self, src_inst):
         """Copy the decorations from src_inst to this instruction."""
