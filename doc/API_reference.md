@@ -6,7 +6,7 @@ in the order they are stored in the binary. But there is one layer of
 abstraction on top of this to represent functions and basic blocks, in
 order to simplify implementation of analysis and transformation passes.
 
-The IR is encapsulated in a `Module`. This consists of a list of global
+The IR is encapsulated in a `Module` object. This consists of a list of global
 instructions and a list of functions. The `Function` class represents
 one function, that is, all instructions from an `OpFunction` to the
 `OpFunctionEnd`. The instructions are grouped in the `BasicBlock` class,
@@ -15,7 +15,7 @@ instruction. Finally the instructions are represented by the `Instruction`
 class, where the SPIR-V IDs are represented by the `Id` class
 
 Most class attributes (such as lists of functions, basic blocks,
-instructions) are meant to be read by applications, but applications must
+instructions) are meant to be used by applications, but applications must
 not modify the information directly. Instead, the objects have methods
 for updating the data. The reason for this is so the IR implementation
 may update data structures keeping track of various information in order to
@@ -24,7 +24,7 @@ make the API more efficient, or for validity checking.
 The `Instruction` object consists of the result ID, opcode name, type ID, and
 operands. The fields are mostly represented in the same form as in the
 high level assembly language used by the `spirv-as`/`spirv-dis`; the IDs
-are represented as objects of the `Id` class that contains the value of the ID,
+are represented as objects of the `Id` class that contains the value of the ID
 and a link to the instruction that defines the ID. An application should in general
 never create ID values itself; the only exception is when implementing an assembler.
 All other IDs should be created implicitly by creating the instructions without
@@ -32,40 +32,38 @@ providing an ID. The opcode is represented by
 the operation name (such as `'OpFAdd'`). The operands for the enumerated constants (such as
 the Storage Class) are represented as strings of the values (such as
 `'Input'`), and masks are represented as a list of enumerated constants.
+Integer and string literals are repreented as integers and strings.
 
 The `result_id` and `type_id` values are `None` for operations not using
 them, and `operands` is an empty list for instructions without operands.
 
-Instructions are immutable, so it is not possible to modify it after
-it is created. The way of modifying it is to create a new (nearly)
-identical instruction, and to substitute the original with the new
-instruction. For example, to switch the order of two operands of
-`inst`:
+Instructions are immutable, so it is not possible to modify an instruction
+after it is created. The way of modifying instructions is to create a new
+(nearly) identical instruction, and to substitute the original with the new.
+For example, to switch the order of two operands of `inst`:
 
 ```
 new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
-                          [inst.operands[1], inst.operands[0]]
+                          [inst.operands[1], inst.operands[0]])
 inst.replace_with(new_inst)
 ```
 
-This changes the ID of the instruction, and it may be argued that 
-there is a use case to modify one instruction (i.e. to keep the
+This changes the ID of the instruction, and it may be argued that
+it is useful to modify one instruction (i.e. to keep the
 original ID) in order to make minimal change in the binary. This
 is not directly supported in the API, but it can be accomplished
 by inserting a temporary instruction
 
 ```
 tmp_inst = ir.Instruction(module, 'OpUndef', inst.type_id, [])
-inst.replace_with(tmp_inst)
+tmp_inst.insert_after(inst)
+inst.replace_uses_with(tmp_inst)
 new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
-                          [inst.operands[1], inst.operands[0]]
+                          [inst.operands[1], inst.operands[0]],
+			  result_id=inst.result_id)
 tmp_inst.replace_with(new_inst)
+inst.destroy()
 ```
-
-There is one exception to instructions being immutable – it is possible to update
-the type and operands IDs to use some other ID by calling the
-`substitute_type_and_operands()` method. This is usually not done
-directly, but happens in the background of the `replace_with()` above.
 
 It is possible to iterate
 over all instructions in the module by `module.instructions()`. The
@@ -356,8 +354,7 @@ TBD - Global instructions
   Destroy this instruction.
   </p><p>
   This removes the instruction from the basic block (if it is in a basic
-  block), and destroys the ID representing this instruction (if its
-  <code>result_id</code> is not <code>None</code>).
+  block).
   </p><p>
   The instruction must not be used after it is destroyed.
   </p></dd>
