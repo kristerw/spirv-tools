@@ -863,7 +863,7 @@ class Instruction(object):
             new_operands[0] = self.result_id
             new_inst = Instruction(self.module, inst.op_name,
                                    None, new_operands)
-            self.module.insert_global_inst(new_inst)
+            new_inst.insert_after(inst)
 
 
 class Id(object):
