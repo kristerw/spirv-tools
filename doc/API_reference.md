@@ -372,12 +372,12 @@ TBD
   </p></dd>
 
   <dt><code>has_side_effects()</code></dt>
-  <dd>Return <code>True<code> if the instruction may have side effects (and
+  <dd>Return <code>True</code> if the instruction may have side effects (and
   thus cannot be removed if its result is not used), <code>False</code>
   otherwise.</dd>
 
   <dt><code>is_commutative()</code></dt>
-  <dd>Return <code>True<code> if the instruction is commutative,
+  <dd>Return <code>True</code> if the instruction is commutative,
   <code>False</code> otherwise.</dd>
 
   <dt><code>is_global_inst()</code></dt>
