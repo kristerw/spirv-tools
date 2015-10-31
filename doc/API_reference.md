@@ -103,7 +103,7 @@ TBD
   <dd><p>
   Return a global instruction. An existing instruction is returned if it exist, otherwise a newly created instruction is returned and inserted into the module.
   </p><p>
-  This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <pre><code>get_global_inst('OpTypeInt', 32, 1)</code></pre>
+  This method is the preferred way of creating global instructions. For example, creating a type instruction is done as <code>get_global_inst('OpTypeInt', 32, 1)</code>
   </p></dd>
 
   <dt><code>is_constant_value()</code></dt>
@@ -434,7 +434,7 @@ TBD
 <dl>
   <dt><code>inst</code></dt>
   <dd>The instruction which has this ID as <code>result_id</code>, or
-  <code>None</code></dd> if there are no such instruction.</dd>
+  <code>None</code> if there are no such instruction.</dd>
 
   <dt><code>is_temp</code></dt>
   <dd><code>True</code> if this is a temporary ID (i.e. an ID that has not
