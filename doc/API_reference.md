@@ -81,8 +81,6 @@ TBD - Decorations, debug instructions etc.
 TBD - Global instructions
 
 ## IR
-TBD
-
 ###class ir.Module
 ####ir.Module – Methods
 <dl>
@@ -91,7 +89,7 @@ TBD
 
   <dt><code>dump(stream=sys.stdout)</code></dt>
   <dd><p>
-  Write a debug dump of the module to stream.
+  Write a debug dump of the module to <code>stream</code>.
   </p><p>
   The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
   </p></dd>
@@ -103,11 +101,11 @@ TBD
   <dd><p>
   Return a global instruction corresponding to the <code>op_name</code>,
   <code>type_id</code>, and <code>operations</code>. An existing instruction
-  is returned if it exist, otherwise a newly created instruction is returned
+  is returned if it exists, otherwise a newly created instruction is returned
   and inserted into the module.
   </p><p>
   This method is the preferred way of creating global instructions. For
-  example, creating a type instruction is done as
+  example, creating a type instruction for a 32-bit signed integer is done as
   <code>get_global_inst('OpTypeInt', 32, 1)</code>
   </p></dd>
 
@@ -131,27 +129,34 @@ TBD
 
   <dt><code>instructions()</code></dt>
   <dd><p>
-  Iterator for iterating over the module's instructions in the order they are located in the SPIR-V binary.
+  Iterator for iterating over the module's instructions in the order they are
+  located in the SPIR-V binary.
   </p><p>
-  It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  It is allowed to insert or remove instructions while iterating, although
+  instructions inserted during iteration are not guaranteed to be seen during
+  the iteration.
   </p><p>
-  It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
+  It is not allowed to insert/remove basic blocks or functions while iterating
+  over the instructions.
   </p></dd>
 
   <dt><code>instructions_reversed()</code></dt>
   <dd><p>
   Iterator for iterating over the module's instructions in reverse order.
   </p><p>
-  It is allowed to insert or remove instructions while iterating over the module, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  It is allowed to insert or remove instructions while iterating, although
+  instructions inserted during iteration are not guaranteed to be seen during
+  the iteration.
   </p><p>
-  It is not allowed to insert/remove basic blocks or functions while iterating over the instructions.
+  It is not allowed to insert/remove basic blocks or functions while iterating
+  over the instructions.
   </p></dd>
 
   <dt><code>optimize()</code></dt>
   <dd><p>
   Run basic optimization passes.
   </p><p>
-  The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously needless code (such as <code>-(-a)</code> is changed to <code>a</code>), and promoting function-local <code>OpVariable</code> to registers.
+  The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously useless code (such as <code>-(-a)</code> is changed to <code>a</code>), and promoting function-local <code>OpVariable</code> to registers.
   </p></dd>
 
   <dt><code>prepend_function(function)</code></dt>
@@ -169,59 +174,73 @@ TBD
   containing the module's global instructions.</dd>
 
   <dt><code>functions</code></dt>
-  <dd>A list of the functions within this module.</dd>
+  <dd>A list of the functions in this module.</dd>
 </dl>
 
 ###class ir.Function
 ####ir.Function – Methods
 <dl>
   <dt><code>append_basic_block(basic_block)</code></dt>
-  <dd>Insert basic block <code>basic_block</code> at the end of the function.</dd>
+  <dd>Insert basic block <code>basic_block</code> at the end of the
+  function.</dd>
 
   <dt><code>append_parameter(inst)</code></dt>
-  <dd>Insert the <code>OpFunctionParameter</code> <code>inst</code> at the end of the function's parameter list.</dd>
+  <dd>Insert the <code>OpFunctionParameter</code> instruction <code>inst</code>
+  at the end of the function's parameter list.</dd>
 
   <dt><code>destroy()</code></dt>
   <dd><p>
   Destroy this function.
   </p><p>
-  This removes the function from the module (if it is attached to a module), and destroys all basic blocks and instructions used in the function.
+  This removes the function from the module (if it is attached to a module),
+  and destroys the function's basic blocks and instructions.
   </p><p>
   The function must not be used after it is destroyed.
   </p></dd>
 
   <dt><code>dump(stream=sys.stdout)</code></dt>
-  <dd><p>Write a debug dump of the function to stream.
+  <dd><p>Write a debug dump of the function to <code>stream</code>.
   </p><p>
-  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  The format of the dump is similar to the high level assembly syntax used by
+  <code>read_il</code> and <code>write_il</code>.
   </p></dd>
 
   <dt><code>insert_basic_block_after(basic_block, insert_pos_basic_block)</code></dt>
-  <dd>Insert basic block <code>basic_block</code> after the basic_block <code>insert_pos_basic_block</code>.</dd>
+  <dd>Insert basic block <code>basic_block</code> after the basic block
+  <code>insert_pos_basic_block</code>.</dd>
 
   <dt><code>insert_basic_block_before(basic_block, insert_pos_basic_block)</code></dt>
-  <dd>Insert basic block <code>basic_block</code> before the basic_block <code>insert_pos_basic_block</code>.</dd>
+  <dd>Insert basic block <code>basic_block</code> before the basic block
+  <code>insert_pos_basic_block</code>.</dd>
 
   <dt><code>instructions()</code></dt>
   <dd><p>
-  Iterator for iterating over the function's instructions in the order they are located in the SPIR-V binary.
+  Iterator for iterating over the function's instructions in the order they
+  are located in the SPIR-V binary.
   </p><p>
-  It is allowed to insert or remove instructions while iterating over the function, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  It is allowed to insert or remove instructions while iterating, although
+  instructions inserted during iteration are not guaranteed to be seen during
+  the iteration.
   </p><p>
-  It is not allowed to insert/remove basic blocks while iterating over the instructions.
+  It is not allowed to insert/remove basic blocks while iterating over the
+  instructions.
   </p></dd>
 
   <dt><code>instructions_reversed()</code></dt>
   <dd><p>
   Iterator for iterating over the function's instructions in reverse order.
   </p><p>
-  It is allowed to insert or remove instructions while iterating over the function, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  It is allowed to insert or remove instructions while iterating, although
+  instructions inserted during iteration are not guaranteed to be seen during
+  the iteration.
   </p><p>
-  It is not allowed to insert/remove basic blocks while iterating over the instructions.
+  It is not allowed to insert/remove basic blocks while iterating over the
+  instructions.
   </p></dd>
 
   <dt><code>prepend_basic_block(basic_block)</code></dt>
-  <dd>Insert basic block <code>basic_block</code> at the top of the function.</dd>
+  <dd>Insert basic block <code>basic_block</code> at the top of the
+  function.</dd>
 
   <dt><code>remove()</code></dt>
   <dd>Remove this function from the module.</dd>
@@ -235,7 +254,7 @@ TBD
   the function's parameters.</dd>
 
   <dt><code>basic_blocks</code></dt>
-  <dd>A list of the basic_blocks within this function.</dd>
+  <dd>A list of the basic blocks within this function.</dd>
 
   <dt><code>inst</code></dt>
   <dd>The <code>OpFunction</code> instruction defining this function.</dd>
@@ -257,15 +276,16 @@ TBD
   <dd><p>
   Destroy this basic block.
   </p><p>
-  This removes the basic block from the function (if it is attached to a function), and destroys all instructions used in the basic block.
+  This removes the basic block from the function (if it is attached to a function), and destroys all the basic block's instructions.
   </p><p>
   The basic block must not be used after it is destroyed.
   </p></dd>
 
   <dt><code>dump(stream=sys.stdout)</code></dt>
-  <dd><p>Write a debug dump of the module to stream.
+  <dd><p>Write a debug dump of the basic block to <code>stream</code>.
   </p><p>
-  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  The format of the dump is similar to the high level assembly syntax used by
+  <code>read_il</code> and <code>write_il</code>.
   </p></dd>
 
   <dt><code>get_successors()</code></dt>
@@ -305,7 +325,7 @@ TBD
 
   <dt><code>insts</code></dt>
   <dd>The instructions in this basic block (not including the
-  <code>OpLabel</code>)</dd>
+  <code>OpLabel</code> instruction).</dd>
 
   <dt><code>module</code></dt>
   <dd>The module this basic block is associated with.</dd>
@@ -318,9 +338,8 @@ TBD
   <dd><p>Return a copy of the instruction.
   </p><p>
   The new instruction is identical to this instruction, except that
-  it has a new <code>result_id</code> (if the instruction type has a
-  <code>result_id</code>), and the new instruction is not bound to
-  any basic block.
+  it has a new <code>result_id</code> (for instruction types that have a
+  <code>result_id</code>).
   </p></dd>
 
   <dt><code>insert_after(insert_pos_inst)</code></dt>
@@ -336,7 +355,9 @@ TBD
   <dd><p>
   Destroy this instruction.
   </p><p>
-  This removes the instruction from the basic block (if it is attached to a basic block), and destroys the ID representing this function (if its <code>result_id</code> is not <code>None</code>).
+  This removes the instruction from the basic block (if it is in a basic
+  block), and destroys the ID representing this instruction (if its
+  <code>result_id</code> is not <code>None</code>).
   </p><p>
   The instruction must not be used after it is destroyed.
   </p></dd>
@@ -352,8 +373,7 @@ TBD
   <dd><p>
   Return all instructions using this instruction.
   </p><p>
-  Debug and decoration instructions are not considered using
-  any instruction.
+  Debug and decoration instructions are not returned.
   </p></dd>
 
   <dt><code>get_decorations()</code></dt>
@@ -380,9 +400,8 @@ TBD
   </p></dd>
 
   <dt><code>has_side_effects()</code></dt>
-  <dd>Return <code>True</code> if the instruction may have side effects (and
-  thus cannot be removed if its result is not used), <code>False</code>
-  otherwise.</dd>
+  <dd>Return <code>True</code> if the instruction may have side effects,
+  <code>False</code> otherwise.</dd>
 
   <dt><code>is_commutative()</code></dt>
   <dd>Return <code>True</code> if the instruction is commutative,
@@ -442,7 +461,7 @@ TBD
 <dl>
   <dt><code>inst</code></dt>
   <dd>The instruction which has this ID as <code>result_id</code>, or
-  <code>None</code> if there are no such instruction.</dd>
+  <code>None</code> if there is no such instruction.</dd>
 
   <dt><code>is_temp</code></dt>
   <dd><code>True</code> if this is a temporary ID (i.e. an ID that has not
@@ -450,43 +469,53 @@ TBD
 
   <dt><code>uses</code></dt>
   <dd>A set containing all instructions in the module that are using this ID
-  (excluding the instruction in <code>inst</code>). Only instructions tha
-  thave been inserted into the module are included in the set (i.e. removing
+  (excluding the instruction in <code>inst</code>). Only instructions that
+  have been inserted into the module are included in the set (i.e. removing
   an instruction from a basic block will get it removed from the
   <code>uses</code> set too).</dd>
 
   <dt><code>value</code></dt>
-  <dd>The ID's value.</dd>
+  <dd><p>
+  The ID's value.
+  </p><p>
+  Temporary IDs have a value outside of the valid range.
+  </p></dd>
 </dl>
 
 ###class ir._GlobalInstructions
 ####ir._GlobalInstructions – Methods
 <dl>
   <dt><code>dump(stream=sys.stdout)</code></dt>
-  <dd><p>Write a debug dump of the module to stream.
+  <dd><p>Write a debug dump of the global instructions to <code>stream</code>.
   </p><p>
-  The format of the dump is similar to the high level assembly syntax used by <code>read_il</code> and <code>write_il</code>.
+  The format of the dump is similar to the high level assembly syntax used by
+  <code>read_il</code> and <code>write_il</code>.
   </p></dd>
 
   <dt><code>instructions()</code></dt>
   <dd><p>
-  Iterator for iterating over the global instructions in the order they are located in the SPIR-V binary.
+  Iterator for iterating over the global instructions in the order they are
+  located in the SPIR-V binary.
   </p><p>
-  It is allowed to insert or remove instructions while iterating, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  It is allowed to insert or remove instructions while iterating, although
+  instructions inserted during iteration are not guaranteed to be seen during
+  the iteration.
   </p></dd>
 
   <dt><code>instructions_reversed()</code></dt>
   <dd><p>
   Iterator for iterating over the global instructions in reverse order.
   </p><p>
-  It is allowed to insert or remove instructions while iterating, although instructions inserted during iteration are not guaranteed to be seen during the iteration.
+  It is allowed to insert or remove instructions while iterating, although
+  instructions inserted during iteration are not guaranteed to be seen during
+  the iteration.
   </p></dd>
 
   <dt><code>get_inst(op_name, type_id, operands)</code></dt>
   <dd>
   Return a global instruction corresponding to the <code>op_name</code>,
   <code>type_id</code>, and <code>operations</code>. An existing instruction
-  is returned if it exist, otherwise a newly created instruction is returned
+  is returned if it exists, otherwise a newly created instruction is returned
   and inserted into the module.
   </dd>
 
@@ -562,7 +591,6 @@ TBD
   <dd>A list containing the type declaration, constant, spec-constant, and
   global <code>OpVariable</code> instructions.</dd>
 </dl>
-**TODO**
 
 ## Input/Output
 TBD
