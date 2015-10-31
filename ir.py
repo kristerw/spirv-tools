@@ -485,6 +485,10 @@ class Function(object):
         self.inst = None
         self.end_inst = None
 
+    def remove(self):
+        """Remove function from module."""
+        self.module.functions.remove(self)
+
     def dump(self, stream=sys.stdout):
         """Write debug dump to stream."""
         stream.write(str(self.inst) + '\n')
