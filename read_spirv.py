@@ -123,7 +123,7 @@ def parse_literal_string(binary):
         for _ in range(4):
             octet = word & 255
             if octet == 0:
-                return ''.join(result).decode('utf-8')
+                return ''.join(result)
             result.append(chr(octet))
             word >>= 8
     raise ParseError('bad encoding')

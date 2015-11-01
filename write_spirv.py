@@ -60,8 +60,7 @@ def output_instruction(stream, inst):
         elif kind in ir.MASKS:
             inst_data.append(mask_to_value(kind, operand))
         elif kind == 'LiteralString':
-            operand = operand.encode('utf-8') + '\x00'
-            for i in range(0, len(operand), 4):
+            for i in range(0, len(operand) + 1, 4):
                 word = 0
                 for char in reversed(operand[i:i+4]):
                     word = word << 8 | ord(char)
