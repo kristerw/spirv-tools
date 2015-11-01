@@ -4,8 +4,8 @@ import argparse
 import os
 import sys
 
-import read_il
-import write_spirv
+from spirv_tools import read_il
+from spirv_tools import write_spirv
 
 
 def main():
