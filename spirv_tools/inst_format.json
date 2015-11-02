@@ -1492,7 +1492,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemanticsMasks", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -1580,7 +1580,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemanticsMasks"
+            "MemorySemanticsMask"
         ]
     }, 
     "OpLogicalEqual": {
@@ -1619,7 +1619,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemanticsMasks"
+            "MemorySemanticsMask"
         ]
     }, 
     "OpFOrdNotEqual": {
@@ -1713,7 +1713,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemanticsMasks", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -1942,7 +1942,7 @@
         "result": false, 
         "operands": [
             "Scope", 
-            "MemorySemanticsMasks"
+            "MemorySemanticsMask"
         ]
     }, 
     "OpFunctionParameter": {
@@ -2074,7 +2074,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemanticsMasks", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }, 
@@ -2161,7 +2161,7 @@
         "operands": [
             "Id", 
             "Scope", 
-            "MemorySemanticsMasks", 
+            "MemorySemanticsMask", 
             "Id"
         ]
     }
