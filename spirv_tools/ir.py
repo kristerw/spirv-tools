@@ -1,10 +1,10 @@
-import json
 import os
 import sys
 
 import dead_inst_elim
 import dead_func_elim
 import instcombine
+import inst_format
 import mem2reg
 import simplify_cfg
 import spirv
@@ -959,8 +959,7 @@ MAGIC = 0x07230203
 GENERATOR_MAGIC = 0
 VERSION = 99
 
-with open(os.path.join(os.path.dirname(__file__), 'inst_format.json')) as fd:
-    INST_FORMAT = json.load(fd)
+INST_FORMAT = inst_format.INST_FORMAT
 
 OPCODE_TO_OPNAME = dict(zip(spirv.spv['Op'].values(), spirv.spv['Op'].keys()))
 
