@@ -2,8 +2,9 @@
 import re
 from operator import itemgetter
 
-import spirv
-import ir
+from spirv_tools import ext_inst
+from spirv_tools import spirv
+from spirv_tools import ir
 
 
 class ParseError(Exception):
@@ -342,6 +343,52 @@ def parse_var_operand(lexer, module, kind, type_id):
     return operands
 
 
+def parse_extinst_set(lexer, module):
+    """Parse the set field of OpExtInst instruction."""
+    token, tag = lexer.get_next_token()
+    if tag == 'ID':
+        extimport_id = create_id(module, token, tag)
+        if (extimport_id.inst is None or
+                extimport_id.inst.op_name != 'OpExtInstImport'):
+            raise ParseError('ID is not an OpExtInstImport instruction.')
+        return extimport_id
+    elif tag == 'STRING':
+        assert token[0] == '"' and token[-1] == '"'
+        inst = module.get_global_inst('OpExtInstImport', None, [token[1:-1]])
+        return inst.result_id
+    else:
+        raise ParseError('Expected an extended instruction set ID or string.')
+
+
+def parse_extinst_instruction(lexer, set_id):
+    """Parse instruction field of OpExtInst instruction."""
+    assert set_id.inst.op_name == 'OpExtInstImport'
+    _, tag = lexer.get_next_token(peek=True)
+    if tag == 'INT':
+        return parse_literal_number(lexer)
+    elif tag == 'NAME':
+        token, _ = lexer.get_next_token()
+        if set_id.inst.operands[0] not in ext_inst.EXT_INST:
+            return ParseError('Unknown extended instruction set.')
+        ext_ops = ext_inst.EXT_INST[set_id.inst.operands[0]]
+        for operation in ext_ops:
+            if ext_ops[operation]['name'] == token:
+                return operation
+        raise ParseError('Unknown instruction.')
+    else:
+        raise ParseError('Expected an integer or operation name.')
+
+
+def parse_extinst_operands(lexer, module, type_id):
+    """Parse operands for an OpExtInst instruction."""
+    set_id = parse_extinst_set(lexer, module)
+    lexer.get_next_token(',')
+    instruction = parse_extinst_instruction(lexer, set_id)
+    lexer.get_next_token(',')
+    operands = parse_operand(lexer, module, 'VariableIds', type_id)
+    return [set_id, instruction] + operands
+
+
 def parse_operand(lexer, module, kind, type_id):
     """Parse one instruction operand of the specified kind.
 
@@ -431,7 +478,10 @@ def parse_instruction(lexer, module):
         type_id = None
 
     parse_decorations(lexer, module, result_id, op_name)
-    operands = parse_operands(lexer, module, op_format, type_id)
+    if op_name == 'OpExtInst':
+        operands = parse_extinst_operands(lexer, module, type_id)
+    else:
+        operands = parse_operands(lexer, module, op_format, type_id)
     lexer.done_with_line()
 
     if op_name == 'OpFunction':

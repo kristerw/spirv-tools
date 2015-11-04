@@ -268,7 +268,18 @@ def canonicalize_inst(module, inst):
 
     The canonical form is that a commutative instruction with one constant
     operand always has the constant as its second operand."""
-    if (inst.is_commutative() and
+    if inst.op_name == 'OpExtInst':
+        extset_inst = inst.operands[0].inst
+        assert extset_inst.op_name == 'OpExtInstImport'
+        if extset_inst.operands[0] in ir.EXT_INST:
+            ext_ops = ir.EXT_INST[extset_inst.operands[0]]
+            if ext_ops[inst.operands[1]]['is_commutative']:
+                new_inst = ir.Instruction(module, 'OpExtInst', inst.type_id,
+                                          [inst.operands[0], inst.operands[1],
+                                           inst.operands[3], inst.operands[2]])
+                new_inst.insert_before(inst)
+                return new_inst
+    elif (inst.is_commutative() and
             inst.operands[0].inst.op_name in ir.CONSTANT_INSTRUCTIONS and
             inst.operands[1].inst.op_name not in ir.CONSTANT_INSTRUCTIONS):
         new_inst = ir.Instruction(module, inst.op_name, inst.type_id,

@@ -3,6 +3,7 @@ import sys
 
 import dead_inst_elim
 import dead_func_elim
+import ext_inst
 import instcombine
 import inst_format
 import mem2reg
@@ -789,10 +790,18 @@ class Instruction(object):
 
     def has_side_effects(self):
         """Return True if the instruction may have side effects."""
-        # XXX Need to handle OpExtInst correctly (it is conservative now)
-        if self.result_id is None and self.result_id != 'OpNop':
+        if self.result_id is None and self.op_name != 'OpNop':
             return True
-        return self.op_name in _HAS_SIDE_EFFECT
+        if self.op_name == 'OpExtInst':
+            extset_inst = self.operands[0].inst
+            assert extset_inst.op_name == 'OpExtInstImport'
+            if extset_inst.operands[0] in ext_inst.EXT_INST:
+                ext_ops = ext_inst.EXT_INST[extset_inst.operands[0]]
+                return ext_ops[self.operands[1]]['has_side_effects']
+            else:
+                return True
+        else:
+            return self.op_name in _HAS_SIDE_EFFECT
 
     def is_commutative(self):
         """True if the instruction is commutative."""
@@ -960,6 +969,7 @@ GENERATOR_MAGIC = 0
 VERSION = 99
 
 INST_FORMAT = inst_format.INST_FORMAT
+EXT_INST = ext_inst.EXT_INST
 
 OPCODE_TO_OPNAME = dict(zip(spirv.spv['Op'].values(), spirv.spv['Op'].keys()))
 

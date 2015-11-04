@@ -1,8 +1,9 @@
 """Write module to a stream as high-level assembler."""
 import re
 
-import spirv
-import ir
+from spirv_tools import ext_inst
+from spirv_tools import spirv
+from spirv_tools import ir
 
 
 def id_name(module, operand):
@@ -23,8 +24,51 @@ def format_mask(kind, mask_list):
     return separator.join(mask_list)
 
 
+def output_extinst_instruction(stream, module, inst, is_raw_mode, indent='  '):
+    """Output an OpExtInst instruction."""
+    assert inst.op_name == 'OpExtInst'
+    line = indent
+    if inst.result_id is not None:
+        result_id = inst.result_id
+        if result_id in module.id_to_symbol_name:
+            result_id = module.id_to_symbol_name[result_id]
+        line = line + str(result_id) + ' = '
+    line = line + inst.op_name
+    if inst.type_id is not None:
+        line = line + ' ' + module.type_id_to_name[inst.type_id]
+
+    if not is_raw_mode:
+        line = line + format_decorations_for_inst(inst)
+
+    operand = inst.operands[0]
+    assert operand.inst.op_name == 'OpExtInstImport'
+    import_name = operand.inst.operands[0]
+    if is_raw_mode:
+        line = line + ' ' + id_name(module, operand) + ', '
+    else:
+        line = line + ' "' + import_name + '", '
+
+    operand = inst.operands[1]
+    if import_name in ext_inst.EXT_INST:
+        line = line + ext_inst.EXT_INST[import_name][operand]['name'] + ', '
+    else:
+        line = line + str(operand) + ', '
+
+    operands = inst.operands[2:]
+    for operand in operands:
+        line = line + id_name(module, operand) + ', '
+    line = line[:-2]
+
+    stream.write(line + '\n')
+
+
 def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     """Output one instruction."""
+    if inst.op_name == 'OpExtInst':
+        output_extinst_instruction(stream, module, inst, is_raw_mode,
+                                   indent=indent)
+        return
+
     line = indent
     if inst.result_id is not None:
         result_id = inst.result_id
@@ -317,7 +361,7 @@ def write_module(stream, module, is_raw_mode=False):
         # extra work here...
         globals = module.global_instructions
         output_instructions(stream, module, globals.op_source_insts,
-                            is_raw_mode,newline=False)
+                            is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_source_extension_insts,
                             is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_capability_insts,
