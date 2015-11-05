@@ -876,12 +876,14 @@ class Instruction(object):
 
 
 class Id(object):
-    _temp_id_counter = 0
+    # Keep the counter in a list so that the object is mutable
+    # and can be updated/shared between different Id objects.
+    _temp_id_counter = [0]
 
     def __init__(self, module, value=None):
         if value is None:
-            self._temp_id_counter += 1
-            self.value = self._temp_id_counter
+            self._temp_id_counter[0] += 1
+            self.value = self._temp_id_counter[0]
             self.is_temp = True
         else:
             assert 0 < value < 0xffffffff
