@@ -119,10 +119,10 @@ def optimize_OpLogicalNot(inst):
 
 def optimize_OpLogicalNotEqual(module, inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        # Equal(x, false) -> x
+        # NotEqual(x, false) -> x
         if inst.operands[1].inst.is_constant_value(False):
             return inst.operands[0].inst
-        # Equal(x, true) -> not(x)
+        # NotEqual(x, true) -> not(x)
         if inst.operands[1].inst.is_constant_value(True):
             new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
                                       [inst.operands[0]])
