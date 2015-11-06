@@ -196,7 +196,7 @@ class _GlobalInstructions(object):
     def dump(self, stream=sys.stdout):
         """Write debug dump to stream."""
         for inst in self.instructions():
-            stream.write('  ' + str(inst) + '\n')
+            stream.write(str(inst) + '\n')
 
     def _get_insts_list(self, op_name):
         """Get the list containing instructions of inst's kind.
