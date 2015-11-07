@@ -165,13 +165,6 @@ position.
   over the instructions.
   </p></dd>
 
-  <dt><code>optimize()</code></dt>
-  <dd><p>
-  Run basic optimization passes.
-  </p><p>
-  The aim of the optimization passes is to only do optimizations that are profitable for all architectures, which means that it only do things like removing dead code, simple peephole optimizations in order to get rid of obviously useless code (such as <code>-(-a)</code> is changed to <code>a</code>), and promoting function-local <code>OpVariable</code> to registers.
-  </p></dd>
-
   <dt><code>prepend_function(function)</code></dt>
   <dd>Insert function at the top of the module.</dd>
 

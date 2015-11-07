@@ -6,6 +6,7 @@ import sys
 
 from spirv_tools import read_spirv
 from spirv_tools import write_il
+from spirv_tools import passes
 
 
 def main():
@@ -40,7 +41,7 @@ def main():
         sys.exit(1)
 
     if args.O:
-        module.optimize()
+        passes.optimize(module)
 
     try:
         with open(output_file_name, 'w') as stream:

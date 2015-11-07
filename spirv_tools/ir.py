@@ -1,14 +1,8 @@
-import os
 import sys
 
-import dead_inst_elim
-import dead_func_elim
-import ext_inst
-import instcombine
-import inst_format
-import mem2reg
-import simplify_cfg
-import spirv
+from spirv_tools import ext_inst
+from spirv_tools import inst_format
+from spirv_tools import spirv
 
 
 class IRError(Exception):
@@ -27,21 +21,6 @@ class Module(object):
         for function in self.functions:
             stream.write('\n')
             function.dump(stream)
-
-    def optimize(self):
-        """Do basic optimizations.
-
-        This only runs optimization passes that are likely to be profitable
-        on all architectures (such as removing dead code)."""
-        instcombine.run(self)
-        simplify_cfg.run(self)
-        dead_inst_elim.run(self)
-        dead_func_elim.run(self)
-        mem2reg.run(self)
-        instcombine.run(self)
-        simplify_cfg.run(self)
-        dead_inst_elim.run(self)
-        dead_func_elim.run(self)
 
     def instructions(self):
         """Iterate over all instructions in the module."""
