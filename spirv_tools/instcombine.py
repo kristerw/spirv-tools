@@ -171,13 +171,15 @@ def optimize_OpVectorShuffle(module, inst):
     vec2_inst = inst.operands[1].inst
     components = inst.operands[2:]
 
-    # Change vectors shuffles "A, unused" or "unused, A" to "A, A" where
-    # the second operand is not used.
+    # Change vector shuffles "A, unused" or "unused, A" to "A, A" where
+    # the second operand is not used (and change to OpUndef if no elements
+    # of the input vectors are used).
     #
     # We use this form for swizzles instead of using an OpUndef for the
-    # unused vector, as it avoids adding extra operations for the OpUndef,
-    # and it makes the constant folder handle the shuffle for constant A
-    # without needing to special case OpUndef operands.
+    # unused vector in order to avoid adding an extra instruction for the
+    # OpUndef. This form also makes the constant folder handle the shuffle
+    # for constant A without needing to special the case where one operand
+    # is constant, and one is OpUndef.
     using_vec1 = False
     using_vec2 = False
     vec1_type_inst = vec1_inst.type_id.inst
