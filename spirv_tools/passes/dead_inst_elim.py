@@ -3,7 +3,7 @@
 The definition of "unused instruction" is an instruction having a return
 ID that is not used by any non-debug and non-decoration instruction, and
 does not have side effects."""
-import ir
+from spirv_tools import ir
 
 
 def remove_debug_if_dead(inst):

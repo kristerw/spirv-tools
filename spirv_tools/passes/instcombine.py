@@ -2,8 +2,8 @@
 
 This pass tends to leave dead instructions, so dead_inst_elim should
 be run after."""
-import ir
-import constprop
+from spirv_tools import ir
+from spirv_tools.passes import constprop
 
 
 def optimize_OpBitcast(module, inst):
@@ -59,7 +59,7 @@ def optimize_OpCompositeConstruct(module, inst):
     return inst
 
 
-def optimize_OpIAdd(module, inst):
+def optimize_OpIAdd(inst):
     # x + 0 -> x
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         if inst.operands[1].inst.is_constant_value(0):
@@ -84,7 +84,7 @@ def optimize_OpIMul(module, inst):
     return inst
 
 
-def optimize_OpLogicalAnd(module, inst):
+def optimize_OpLogicalAnd(inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # x and true -> x
         if inst.operands[1].inst.is_constant_value(True):
@@ -131,7 +131,7 @@ def optimize_OpLogicalNotEqual(module, inst):
     return inst
 
 
-def optimize_OpLogicalOr(module, inst):
+def optimize_OpLogicalOr(inst):
     if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
         # x or true -> true
         if inst.operands[1].inst.is_constant_value(True):
@@ -240,11 +240,11 @@ def peephole_inst(module, inst):
     if inst.op_name == 'OpCompositeConstruct':
         inst = optimize_OpCompositeConstruct(module, inst)
     elif inst.op_name == 'OpIAdd':
-        inst = optimize_OpIAdd(module, inst)
+        inst = optimize_OpIAdd(inst)
     elif inst.op_name == 'OpIMul':
         inst = optimize_OpIMul(module, inst)
     elif inst.op_name == 'OpLogicalAnd':
-        inst = optimize_OpLogicalAnd(module, inst)
+        inst = optimize_OpLogicalAnd(inst)
     elif inst.op_name == 'OpLogicalEqual':
         inst = optimize_OpLogicalEqual(module, inst)
     elif inst.op_name == 'OpLogicalNot':
@@ -252,7 +252,7 @@ def peephole_inst(module, inst):
     elif inst.op_name == 'OpLogicalNotEqual':
         inst = optimize_OpLogicalNotEqual(module, inst)
     elif inst.op_name == 'OpLogicalOr':
-        inst = optimize_OpLogicalOr(module, inst)
+        inst = optimize_OpLogicalOr(inst)
     elif inst.op_name == 'OpNot':
         inst = optimize_OpNot(inst)
     elif inst.op_name == 'OpSNegate':
@@ -282,8 +282,8 @@ def canonicalize_inst(module, inst):
                 new_inst.insert_before(inst)
                 return new_inst
     elif (inst.is_commutative() and
-            inst.operands[0].inst.op_name in ir.CONSTANT_INSTRUCTIONS and
-            inst.operands[1].inst.op_name not in ir.CONSTANT_INSTRUCTIONS):
+          inst.operands[0].inst.op_name in ir.CONSTANT_INSTRUCTIONS and
+          inst.operands[1].inst.op_name not in ir.CONSTANT_INSTRUCTIONS):
         new_inst = ir.Instruction(module, inst.op_name, inst.type_id,
                                   [inst.operands[1], inst.operands[0]])
         new_inst.insert_before(inst)

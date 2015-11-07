@@ -1,8 +1,8 @@
 """Write module to a stream as a SPIR-V binary."""
 import array
 
-import spirv
-import ir
+from spirv_tools import spirv
+from spirv_tools import ir
 
 
 def mask_to_value(kind, mask_list):

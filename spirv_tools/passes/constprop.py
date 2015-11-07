@@ -2,7 +2,7 @@
 
 This pass tends to leave dead instructions, so dead_inst_elim should
 be run after."""
-import ir
+from spirv_tools import ir
 
 
 def get_or_create_const_composite(module, type_id, operands):

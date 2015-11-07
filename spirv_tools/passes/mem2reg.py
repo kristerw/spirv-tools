@@ -10,7 +10,7 @@ This pass tends to leave dead OpPhi instructions, so dead_inst_elim should
 be run after."""
 import collections
 
-import ir
+from spirv_tools import ir
 
 
 def calculate_pred(func):

@@ -10,7 +10,7 @@ Specifically:
 * Changes conditional branches or switch operations to an unconditional
   branch if all branch targets are identical.
 """
-import ir
+from spirv_tools import ir
 
 
 def update_conditional_branch(module, inst, dest_id):

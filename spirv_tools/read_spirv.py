@@ -2,8 +2,8 @@
 import array
 from operator import itemgetter
 
-import spirv
-import ir
+from spirv_tools import spirv
+from spirv_tools import ir
 
 
 class ParseError(Exception):
