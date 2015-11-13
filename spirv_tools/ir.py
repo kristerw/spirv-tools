@@ -426,6 +426,8 @@ class Function(object):
     def dump(self, stream=sys.stdout):
         """Write debug dump to stream."""
         stream.write(str(self.inst) + '\n')
+        for inst in self.parameters:
+            stream.write(str(inst) + '\n')
         for basic_block in self.basic_blocks:
             basic_block.dump(stream)
         stream.write(str(self.end_inst) + '\n')
