@@ -5,6 +5,63 @@ be run after."""
 from spirv_tools import ir
 
 
+def get_value(inst):
+    # TODO: Handler integers and floats too.
+    assert (inst.op_name == 'OpConstantTrue' or
+            inst.op_name == 'OpConstantFalse')
+    return True if inst.op_name == 'OpConstantTrue' else False
+
+
+def transform_1op_componentwise(module, transform, type_id, const_inst):
+    """Helper function for transform_componentwise)."""
+    if type_id.inst.op_name in ['OpTypeVector', 'OpTypeMatrix']:
+        operands = []
+        for op1_id in const_inst.operands:
+            inst = transform_1op_componentwise(module, transform,
+                                               type_id.inst.operands[0],
+                                               op1_id.inst)
+            operands.append(inst.result_id)
+        return module.get_global_inst('OpConstantComposite', type_id, operands)
+    else:
+        assert type_id.inst.op_name in ['OpTypeBool', 'OpTypeInt',
+                                        'OpTypeFloat']
+        value = transform(const_inst)
+        return module.get_constant(type_id, value)
+
+
+def transform_2op_componentwise(module, transform, type_id, inst1, inst2):
+    """Helper function for transform_componentwise)."""
+    if type_id.inst.op_name in ['OpTypeVector', 'OpTypeMatrix']:
+        operands = []
+        for op1_id, op2_id in zip(inst1.operands, inst2.operands):
+            inst = transform_2op_componentwise(module, transform,
+                                               type_id.inst.operands[0],
+                                               op1_id.inst, op2_id.inst)
+            operands.append(inst.result_id)
+        return module.get_global_inst('OpConstantComposite', type_id, operands)
+    else:
+        assert type_id.inst.op_name in ['OpTypeBool', 'OpTypeInt',
+                                        'OpTypeFloat']
+        value = transform(inst1, inst2)
+        return module.get_constant(type_id, value)
+
+
+def transform_componentwise(module, transform, type_id, inst):
+    """Constant fold inst per component.
+
+    The result has the type_id, and the computation is done per component
+    using the provided transform function.
+    """
+    if len(inst.operands) == 1:
+        return transform_1op_componentwise(module, transform, type_id,
+                                           inst.operands[0].inst)
+    else:
+        assert len(inst.operands) == 2
+        return transform_2op_componentwise(module, transform, type_id,
+                                           inst.operands[0].inst,
+                                           inst.operands[1].inst)
+
+
 def get_or_create_const_composite(module, type_id, operands):
     """Get an OpConstantComposite instruction with given type/operands.
 
@@ -27,6 +84,31 @@ def optimize_OpCompositeExtract(inst):
     for index in inst.operands[1:]:
         result_inst = result_inst.operands[index].inst
     return result_inst
+
+
+def optimize_OpLogicalAnd(module, inst):
+    transform = lambda x, y: get_value(x) and get_value(y)
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpLogicalEqual(module, inst):
+    transform = lambda x, y: get_value(x) == get_value(y)
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpLogicalNot(module, inst):
+    transform = lambda x: not get_value(x)
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpLogicalNotEqual(module, inst):
+    transform = lambda x, y: get_value(x) != get_value(y)
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpLogicalOr(module, inst):
+    transform = lambda x, y: get_value(x) or get_value(y)
+    return transform_componentwise(module, transform, inst.type_id, inst)
 
 
 def optimize_OpVectorShuffle(module, inst):
@@ -57,6 +139,16 @@ def optimize_inst(module, inst):
         inst = optimize_OpCompositeConstruct(module, inst)
     elif inst.op_name == 'OpCompositeExtract':
         inst = optimize_OpCompositeExtract(inst)
+    elif inst.op_name == 'OpLogicalAnd':
+        inst = optimize_OpLogicalAnd(module, inst)
+    elif inst.op_name == 'OpLogicalEqual':
+        inst = optimize_OpLogicalEqual(module, inst)
+    elif inst.op_name == 'OpLogicalNot':
+        inst = optimize_OpLogicalNot(module, inst)
+    elif inst.op_name == 'OpLogicalNotEqual':
+        inst = optimize_OpLogicalNotEqual(module, inst)
+    elif inst.op_name == 'OpLogicalOr':
+        inst = optimize_OpLogicalOr(module, inst)
     elif inst.op_name == 'OpVectorShuffle':
         inst = optimize_OpVectorShuffle(module, inst)
 

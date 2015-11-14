@@ -61,51 +61,65 @@ def optimize_OpCompositeConstruct(module, inst):
 
 def optimize_OpIAdd(inst):
     # x + 0 -> x
-    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        if inst.operands[1].inst.is_constant_value(0):
-            return inst.operands[0].inst
+    if inst.operands[1].inst.is_constant_value(0):
+        return inst.operands[0].inst
     return inst
 
 
 def optimize_OpIMul(module, inst):
-    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        # x * 0 -> 0
-        if inst.operands[1].inst.is_constant_value(0):
-            return inst.operands[1].inst
-        # x * 1 -> 1
-        if inst.operands[1].inst.is_constant_value(1):
-            return inst.operands[0].inst
-        # x * -1 -> -x
-        if inst.operands[1].inst.is_constant_value(-1):
-            new_inst = ir.Instruction(module, 'OpSNegate', inst.type_id,
-                                      [inst.operands[0]])
-            new_inst.insert_before(inst)
-            return new_inst
+    # x * 0 -> 0
+    if inst.operands[1].inst.is_constant_value(0):
+        return inst.operands[1].inst
+    # x * 1 -> 1
+    if inst.operands[1].inst.is_constant_value(1):
+        return inst.operands[0].inst
+    # x * -1 -> -x
+    if inst.operands[1].inst.is_constant_value(-1):
+        new_inst = ir.Instruction(module, 'OpSNegate', inst.type_id,
+                                  [inst.operands[0]])
+        new_inst.insert_before(inst)
+        return new_inst
     return inst
 
 
-def optimize_OpLogicalAnd(inst):
-    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        # x and true -> x
-        if inst.operands[1].inst.is_constant_value(True):
-            return inst.operands[0].inst
-        # x and false -> false
-        if inst.operands[1].inst.is_constant_value(False):
-            return inst.operands[1].inst
+def optimize_OpLogicalAnd(module, inst):
+    # x and true -> x
+    if inst.operands[1].inst.is_constant_value(True):
+        return inst.operands[0].inst
+    # x and false -> false
+    if inst.operands[1].inst.is_constant_value(False):
+        return inst.operands[1].inst
+    # x and x -> x
+    if inst.operands[0] == inst.operands[1]:
+        return inst.operands[0].inst
+    # (not x) and (not y) -> not (x or y)
+    if (inst.operands[0].inst.op_name == 'OpLogicalNot' and
+            inst.operands[1].inst.op_name == 'OpLogicalNot'):
+        op_id0 = inst.operands[0].inst.operands[0]
+        op_id1 = inst.operands[1].inst.operands[0]
+        or_inst = ir.Instruction(module, 'OpLogicalOr', inst.type_id,
+                                 [op_id0, op_id1])
+        or_inst.insert_before(inst)
+        not_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
+                                  [or_inst.result_id])
+        not_inst.insert_after(or_inst)
+        return not_inst
     return inst
 
 
 def optimize_OpLogicalEqual(module, inst):
-    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        # Equal(x, true) -> x
-        if inst.operands[1].inst.is_constant_value(True):
-            return inst.operands[0].inst
-        # Equal(x, false) -> not(x)
-        if inst.operands[1].inst.is_constant_value(False):
-            new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
-                                      [inst.operands[0]])
-            new_inst.insert_before(inst)
-            return new_inst
+    # Equal(x, true) -> x
+    if inst.operands[1].inst.is_constant_value(True):
+        return inst.operands[0].inst
+    # Equal(x, false) -> not(x)
+    if inst.operands[1].inst.is_constant_value(False):
+        new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
+                                  [inst.operands[0]])
+        new_inst.insert_before(inst)
+        return new_inst
+    # Equal(x, x) -> true
+    if inst.operands[0] == inst.operands[1]:
+        return module.get_constant(inst.type_id, True)
     return inst
 
 
@@ -118,27 +132,43 @@ def optimize_OpLogicalNot(inst):
 
 
 def optimize_OpLogicalNotEqual(module, inst):
-    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        # NotEqual(x, false) -> x
-        if inst.operands[1].inst.is_constant_value(False):
-            return inst.operands[0].inst
-        # NotEqual(x, true) -> not(x)
-        if inst.operands[1].inst.is_constant_value(True):
-            new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
-                                      [inst.operands[0]])
-            new_inst.insert_before(inst)
-            return new_inst
+    # NotEqual(x, false) -> x
+    if inst.operands[1].inst.is_constant_value(False):
+        return inst.operands[0].inst
+    # NotEqual(x, true) -> not(x)
+    if inst.operands[1].inst.is_constant_value(True):
+        new_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
+                                  [inst.operands[0]])
+        new_inst.insert_before(inst)
+        return new_inst
+    # NotEqual(x, x) -> false
+    if inst.operands[0] == inst.operands[1]:
+        return module.get_constant(inst.type_id, False)
     return inst
 
 
-def optimize_OpLogicalOr(inst):
-    if inst.operands[1].inst.op_name in ir.CONSTANT_INSTRUCTIONS:
-        # x or true -> true
-        if inst.operands[1].inst.is_constant_value(True):
-            return inst.operands[1].inst
-        # x or false -> x
-        if inst.operands[1].inst.is_constant_value(False):
-            return inst.operands[0].inst
+def optimize_OpLogicalOr(module, inst):
+    # x or true -> true
+    if inst.operands[1].inst.is_constant_value(True):
+        return inst.operands[1].inst
+    # x or false -> x
+    if inst.operands[1].inst.is_constant_value(False):
+        return inst.operands[0].inst
+    # x or x -> x
+    if inst.operands[0] == inst.operands[1]:
+        return inst.operands[0].inst
+    # (not x) or (not y) -> not (x and y)
+    if (inst.operands[0].inst.op_name == 'OpLogicalNot' and
+            inst.operands[1].inst.op_name == 'OpLogicalNot'):
+        op_id0 = inst.operands[0].inst.operands[0]
+        op_id1 = inst.operands[1].inst.operands[0]
+        or_inst = ir.Instruction(module, 'OpLogicalAnd', inst.type_id,
+                                 [op_id0, op_id1])
+        or_inst.insert_before(inst)
+        not_inst = ir.Instruction(module, 'OpLogicalNot', inst.type_id,
+                                  [or_inst.result_id])
+        not_inst.insert_after(or_inst)
+        return not_inst
     return inst
 
 
@@ -244,7 +274,7 @@ def peephole_inst(module, inst):
     elif inst.op_name == 'OpIMul':
         inst = optimize_OpIMul(module, inst)
     elif inst.op_name == 'OpLogicalAnd':
-        inst = optimize_OpLogicalAnd(inst)
+        inst = optimize_OpLogicalAnd(module, inst)
     elif inst.op_name == 'OpLogicalEqual':
         inst = optimize_OpLogicalEqual(module, inst)
     elif inst.op_name == 'OpLogicalNot':
@@ -252,7 +282,7 @@ def peephole_inst(module, inst):
     elif inst.op_name == 'OpLogicalNotEqual':
         inst = optimize_OpLogicalNotEqual(module, inst)
     elif inst.op_name == 'OpLogicalOr':
-        inst = optimize_OpLogicalOr(inst)
+        inst = optimize_OpLogicalOr(module, inst)
     elif inst.op_name == 'OpNot':
         inst = optimize_OpNot(inst)
     elif inst.op_name == 'OpSNegate':
