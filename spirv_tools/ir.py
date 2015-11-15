@@ -1,3 +1,4 @@
+import struct
 import sys
 
 from spirv_tools import ext_inst
@@ -81,8 +82,16 @@ class Module(object):
         as the column count (where each element is a list of the column with
         or a scalar), or a scalar, in which case the value is replicated for
         all elements."""
-        if (type_id.inst.op_name == 'OpTypeInt' or
-                type_id.inst.op_name == 'OpTypeFloat'):
+        if (type_id.inst.op_name == 'OpTypeFloat' and
+                isinstance(value, float)):
+            bitvalue = float_to_bits(type_id.inst.operands[0], value)
+            if type_id.inst.operands[0] == 64:
+                operands = [bitvalue & 0xffffffff, bitvalue >> 32]
+            else:
+                operands = [bitvalue]
+            return self.get_global_inst('OpConstant', type_id, operands)
+        elif (type_id.inst.op_name == 'OpTypeInt' or
+              type_id.inst.op_name == 'OpTypeFloat'):
             min_val, max_val = get_int_type_range(type_id)
             if value < 0:
                 if value < min_val:
@@ -811,12 +820,24 @@ class Instruction(object):
         For matrix types, the value need to be a list of the same length
         as the column count (where each element is a list of the column with
         or a scalar), or a scalar, in which case the value is replicated for
-        all elements."""
+        all elements.
+
+        Floating point values can be provided as either a floating point
+        number (such as. 1.0), or as an integer representing the value
+        (such as 0x3f800000)."""
         if self.op_name not in CONSTANT_INSTRUCTIONS:
             return False
         type_id = self.type_id
-        if (type_id.inst.op_name == 'OpTypeInt' or
-                type_id.inst.op_name == 'OpTypeFloat'):
+        if (type_id.inst.op_name == 'OpTypeFloat' and
+                isinstance(value, float)):
+            bitvalue = float_to_bits(type_id.inst.operands[0], value)
+            if type_id.inst.operands[0] == 64:
+                operands = [bitvalue & 0xffffffff, bitvalue >> 32]
+            else:
+                operands = [bitvalue]
+            return self.operands == operands
+        elif (type_id.inst.op_name == 'OpTypeInt' or
+              type_id.inst.op_name == 'OpTypeFloat'):
             min_val, max_val = get_int_type_range(type_id)
             if value < 0:
                 if value < min_val:
@@ -945,6 +966,26 @@ def get_int_type_range(type_id):
         min_val = 0
 
     return min_val, max_val
+
+
+def float_to_bits(bitwidth, value):
+    """Return an integer whose value represents the bits of the float value."""
+    # TODO: 16-bit float
+    if bitwidth == 32:
+        return struct.unpack('=L', struct.pack('=f', value))[0]
+    else:
+        assert bitwidth == 64
+        return struct.unpack('=Q', struct.pack('=d', value))[0]
+
+
+def bits_to_float(bitwidth, value):
+    """Return a float whose value represents the bits of the integer value."""
+    # TODO: 16-bit float
+    if bitwidth == 32:
+        return struct.unpack('=f', struct.pack('=L', value))[0]
+    else:
+        assert bitwidth == 64
+        return struct.unpack('=d', struct.pack('=Q', value))[0]
 
 
 MAGIC = 0x07230203

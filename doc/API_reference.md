@@ -100,9 +100,6 @@ position.
   instruction is returned if it exists, otherwise a newly created instruction
   is returned and inserted into the module.
   </p><p>
-  <b>TODO</b>: Describe how the value is represented. Floats are not
-  implemented yet.
-  </p><p>
   For vector types, the value need to be a list of the same length
   as the vector size, or a scalar, in which case the value is
   replicated for all elements.
@@ -111,6 +108,10 @@ position.
   as the column count (where each element is a list of the column with
   or a scalar), or a scalar, in which case the value is replicated for
   all elements.
+  </p><p>
+  Floating point values can be provided as either a floating point
+  number (such as. <code>1.0</code>), or as an integer representing
+  the bits of the value (such as <code>0x3f800000</code>).
   </p></dd>
 
   <dt><code>get_global_inst(op_name, type_id, operands)</code></dt>
@@ -420,9 +421,6 @@ position.
   Return <code>True</code> if this instruction is a
   constant with the value <code>value</code>, <code>False</code> otherwise.
   </p><p>
-  <b>TODO</b>: Describe how the value is represented. Floats are not
-  implemented yet.
-  </p><p>
   For vector types, the value need to be a list of the same length
   as the vector size, or a scalar, in which case the value is
   replicated for all elements.
@@ -431,6 +429,10 @@ position.
   as the column count (where each element is a list of the column with
   or a scalar), or a scalar, in which case the value is replicated for
   all elements.
+  </p><p>
+  Floating point values can be provided as either a floating point
+  number (such as. <code>1.0</code>), or as an integer representing
+  the bits of the value (such as <code>0x3f800000</code>).
   </p></dd>
 
   <dt><code>is_global_inst()</code></dt>
