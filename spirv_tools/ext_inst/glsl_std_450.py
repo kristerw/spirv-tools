@@ -270,213 +270,201 @@ INST_FORMAT = {
         'is_commutative' : False
     },
     46 : {
-        'name' : 'Mix',
+        'name' : 'FMix',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     47 : {
+        'name' : 'IMix',
+        'operands' : ['Id', 'Id', 'Id'],
+        'has_side_effects' : False,
+        'is_commutative' : False
+    },
+    48 : {
         'name' : 'Step',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    48 : {
+    49 : {
         'name' : 'Smoothstep',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    49 : {
+    50 : {
         'name' : 'Fma',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    50 : {
+    51 : {
         'name' : 'Frexp',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    51 : {
+    52 : {
         'name' : 'FrexpStruct',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    52 : {
+    53 : {
         'name' : 'Ldexp',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    53 : {
+    54 : {
         'name' : 'PackSnorm4x8',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    54 : {
+    55 : {
         'name' : 'PackUnorm4x8',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    55 : {
-        'name' : 'PackSnorm2x16',
-        'operands' : ['Id'],
-        'has_side_effects' : False,
-        'is_commutative' : False
-    },
     56 : {
-        'name' : 'PackUnrom2x16',
+        'name' : 'PackSnorm2x16',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     57 : {
-        'name' : 'PackHalf2x16',
+        'name' : 'PackUnrom2x16',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     58 : {
-        'name' : 'PackDouble2x32',
+        'name' : 'PackHalf2x16',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     59 : {
-        'name' : 'PackSnorm2x16',
+        'name' : 'PackDouble2x32',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     60 : {
-        'name' : 'UnpackUnorm2x16',
+        'name' : 'PackSnorm2x16',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     61 : {
-        'name' : 'UnpackHalf2x16',
+        'name' : 'UnpackUnorm2x16',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     62 : {
-        'name' : 'UnpackSnorm4x8',
+        'name' : 'UnpackHalf2x16',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     63 : {
-        'name' : 'UnpackUnorm4x8',
+        'name' : 'UnpackSnorm4x8',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     64 : {
-        'name' : 'UnpackDouble2x32',
+        'name' : 'UnpackUnorm4x8',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     65 : {
-        'name' : 'Length',
+        'name' : 'UnpackDouble2x32',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
     66 : {
+        'name' : 'Length',
+        'operands' : ['Id'],
+        'has_side_effects' : False,
+        'is_commutative' : False
+    },
+    67 : {
         'name' : 'Distance',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : True
     },
-    67 : {
+    68 : {
         'name' : 'Cross',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    68 : {
+    69 : {
         'name' : 'Normalize',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    69 : {
+    70 : {
         'name' : 'Faceforward',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    70 : {
+    71 : {
         'name' : 'Reflect',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    71 : {
+    72 : {
         'name' : 'Refract',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    72 : {
+    73 : {
         'name' : 'FindILsb',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    73 : {
+    74 : {
         'name' : 'FindSMsb',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    74 : {
+    75 : {
         'name' : 'FindUMsb',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    75 : {
+    76 : {
         'name' : 'InterpolateAtCentroid',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    76 : {
+    77 : {
         'name' : 'InterpolateAtSample',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    77 : {
+    78 : {
         'name' : 'InterpolateAtOffset',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    78 : {
-        'name' : 'UaddCarry',
-        'operands' : ['Id', 'Id', 'Id'],
-        'has_side_effects' : False,
-        'is_commutative' : False
-    },
-    79 : {
-        'name' : 'UsubBorrow',
-        'operands' : ['Id', 'Id', 'Id'],
-        'has_side_effects' : False,
-        'is_commutative' : False
-    },
-    80 : {
-        'name' : 'UmulExtended',
-        'operands' : ['Id', 'Id', 'Id', 'Id'],
-        'has_side_effects' : False,
-        'is_commutative' : False
-    }
 }
