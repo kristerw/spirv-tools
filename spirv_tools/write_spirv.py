@@ -19,22 +19,18 @@ def format_var_operand(inst_data, kind, operands):
     A var operand may contain of several operands in the instruction.
     The provided operands list contains the instruction operands for
     this operand."""
-    if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+    if kind == 'VariableLiteralNumber':
         for operand in operands:
             inst_data.append(operand)
-    elif kind == 'VariableIds':
+    elif kind == 'VariableId':
         for operand in operands:
             inst_data.append(operand.value)
-    elif kind == 'OptionalImage':
-        inst_data.append(operands[0])
-        for operand in operands[1:]:
-            inst_data.append(operand.value)
-    elif kind == 'VariableIdLiteral':
+    elif kind == 'VariableIdLiteralPair':
         while operands:
             target_id = operands.pop(0)
             inst_data.append(target_id.value)
             inst_data.append(operands.pop(0))
-    elif kind == 'VariableLiteralId':
+    elif kind == 'VariableLiteralIdPair':
         while operands:
             inst_data.append(operands.pop(0))
             target_id = operands.pop(0)
@@ -55,22 +51,19 @@ def output_instruction(stream, inst):
     for operand, kind in zip(inst.operands, op_format['operands']):
         if kind == 'Id' or kind == 'OptionalId':
             inst_data.append(operand.value)
-        elif kind == 'LiteralNumber':
+        elif kind == 'LiteralNumber' or kind == 'OptionalLiteralNumber':
             inst_data.append(operand)
         elif kind in ir.MASKS:
             inst_data.append(mask_to_value(kind, operand))
-        elif kind == 'LiteralString':
+        elif kind[:8] == 'Optional' and kind[-4:] == 'Mask':
+            inst_data.append(mask_to_value(kind[8:], operand))
+        elif kind == 'LiteralString' or kind == 'OptionalLiteralString':
             for i in range(0, len(operand) + 1, 4):
                 word = 0
                 for char in reversed(operand[i:i+4]):
                     word = word << 8 | ord(char)
                 inst_data.append(word)
-        elif kind in ['VariableLiterals',
-                      'OptionalLiteral',
-                      'VariableIds',
-                      'OptionalImage',
-                      'VariableIdLiteral',
-                      'VariableLiteralId']:
+        elif kind[:8] == 'Variable':
             # The variable kind must be the last (as rest of the operands
             # are included in them.
             operands = inst.operands[(len(op_format['operands'])-1):]

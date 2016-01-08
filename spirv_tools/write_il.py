@@ -86,53 +86,52 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     kind = None
     if inst.operands:
         line = line + ' '
-        for operand, kind in zip(inst.operands, op_format['operands']):
+        operand_kind = zip(inst.operands, op_format['operands'])
+        while operand_kind:
+            operand, kind = operand_kind[0]
             if kind == 'Id' or kind == 'OptionalId':
                 line = line + id_name(module, operand) + ', '
-            elif kind == 'LiteralNumber':
+            elif kind == 'LiteralNumber' or kind == 'OptionalLiteralNumber':
                 line = line + str(operand) + ', '
             elif kind in ir.MASKS:
                 line = line + format_mask(kind, operand) + ', '
-            elif kind == 'LiteralString':
+            elif kind == 'LiteralString' or kind == 'OptionalLiteralString':
                 line = line + '"' + operand + '"' + ', '
-            elif kind in ['VariableLiterals',
-                          'OptionalLiteral',
-                          'VariableIds',
-                          'OptionalImage',
-                          'VariableIdLiteral',
-                          'VariableLiteralId']:
-                # The variable kind must be the last (as rest of the operands
-                # are included in them.  But loop will only give us one.
-                # Handle these after the loop.
+            elif kind[:8] == 'Optional' and kind[-4:] == 'Mask':
+                line = line + format_mask(kind[8:], operand) + ', '
+            elif kind[:8] == 'Variable':
+                # This loop handles only one operand/kind per iteration.
+                # Handle the variable elements after this loop (this works
+                # as they are always the last operands).
                 break
             elif kind in spirv.spv:
                 line = line + operand + ', '
             else:
                 raise Exception('Unhandled kind ' + kind)
+            operand_kind = operand_kind[1:]
 
-        if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
-            operands = inst.operands[(len(op_format['operands'])-1):]
-            for operand in operands:
-                line = line + str(operand) + ', '
-        elif kind == 'VariableIds':
-            operands = inst.operands[(len(op_format['operands'])-1):]
-            for operand in operands:
-                line = line + id_name(module, operand) + ', '
-        elif kind == 'OptionalImage':
-            operands = inst.operands[(len(op_format['operands'])-1):]
-            line = line + str(operands[0]) + ', '
-            for operand in operands[1:]:
-                line = line + id_name(module, operand) + ', '
-        elif kind == 'VariableIdLiteral':
-            operands = inst.operands[(len(op_format['operands'])-1):]
-            while operands:
-                line = line + id_name(module, operands.pop(0)) + ', '
-                line = line + str(operands.pop(0)) + ', '
-        elif kind == 'VariableLiteralId':
-            operands = inst.operands[(len(op_format['operands'])-1):]
-            while operands:
-                line = line + str(operands.pop(0)) + ', '
-                line = line + id_name(module, operands.pop(0)) + ', '
+        while operand_kind:
+            operand, kind = operand_kind.pop(0)
+            if kind == 'VariableIdLiteralPair':
+                operands = inst.operands[(len(op_format['operands'])-1):]
+                while operands:
+                    line = line + id_name(module, operands.pop(0)) + ', '
+                    line = line + str(operands.pop(0)) + ', '
+            elif kind == 'VariableId':
+                operands = inst.operands[(len(op_format['operands'])-1):]
+                for operand in operands:
+                    line = line + id_name(module, operand) + ', '
+            elif kind == 'VariableLiteralIdPair':
+                operands = inst.operands[(len(op_format['operands'])-1):]
+                while operands:
+                    line = line + str(operands.pop(0)) + ', '
+                    line = line + id_name(module, operands.pop(0)) + ', '
+            elif kind == 'VariableLiteralNumber':
+                operands = inst.operands[(len(op_format['operands'])-1):]
+                for operand in operands:
+                    line = line + str(operand) + ', '
+            else:
+                raise Exception('Unhandled kind ' + kind)
 
         line = line[:-2]
 

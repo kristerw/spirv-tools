@@ -165,32 +165,26 @@ def parse_operand(binary, module, kind):
         return [binary.get_next_word()]
     elif kind == 'LiteralString':
         return [parse_literal_string(binary)]
-    elif kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+    elif kind == 'OptionalLiteralString':
+        word = binary.get_next_word(peek=True, accept_eol=True)
+        if word is None:
+            return []
+        return [parse_literal_string(binary)]
+    elif kind == 'VariableLiteralNumber' or kind == 'OptionalLiteralNumber':
         operands = []
         while True:
             word = binary.get_next_word(accept_eol=True)
             if word is None:
                 return operands
             operands.append(word)
-    elif kind == 'OptionalImage':
-        operands = []
-        word = binary.get_next_word(accept_eol=True)
-        if word is None:
-            return operands
-        operands.append(word)
-        while True:
-            tmp_id = parse_id(binary, module, accept_eol=True)
-            if tmp_id is None:
-                return operands
-            operands.append(tmp_id)
-    elif kind in ['VariableIds', 'OptionalId']:
+    elif kind in ['VariableId', 'OptionalId']:
         operands = []
         while True:
             tmp_id = parse_id(binary, module, accept_eol=True)
             if tmp_id is None:
                 return operands
             operands.append(tmp_id)
-    elif kind == 'VariableIdLiteral':
+    elif kind == 'VariableIdLiteralPair':
         operands = []
         while True:
             tmp_id = parse_id(binary, module, accept_eol=True)
@@ -199,7 +193,7 @@ def parse_operand(binary, module, kind):
             operands.append(tmp_id)
             word = binary.get_next_word()
             operands.append(word)
-    elif kind == 'VariableLiteralId':
+    elif kind == 'VariableLiteralIdPair':
         operands = []
         while True:
             word = binary.get_next_word(accept_eol=True)
@@ -208,6 +202,11 @@ def parse_operand(binary, module, kind):
             operands.append(word)
             tmp_id = parse_id(binary, module)
             operands.append(tmp_id)
+    elif kind[:8] == 'Optional' and kind[-4:] == 'Mask':
+        val = binary.get_next_word(accept_eol=True)
+        if val is None:
+            return []
+        return [expand_mask(kind[8:], val)]
     elif kind in ir.MASKS:
         val = binary.get_next_word()
         return [expand_mask(kind, val)]

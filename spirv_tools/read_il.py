@@ -312,13 +312,13 @@ def parse_var_operand(lexer, module, kind, type_id):
     Operands of the 'Id' kind may be a literal, in which case a constant
     inst is created using the type in type_id.
     """
-    if kind == 'VariableLiterals' or kind == 'OptionalLiteral':
+    if kind == 'VariableLiteralNumber':
         kinds = ['LiteralNumber']
-    elif kind == 'VariableIds' or kind == 'OptionalId':
+    elif kind == 'VariableId':
         kinds = ['Id']
-    elif kind == 'VariableIdLiteral':
+    elif kind == 'VariableIdLiteralPair':
         kinds = ['Id', 'LiteralNumber']
-    elif kind == 'VariableLiteralId':
+    elif kind == 'VariableLiteralIdPair':
         kinds = ['LiteralNumber', 'Id']
     else:
         raise Exception("Invalid kind " + str(kind))
@@ -385,7 +385,7 @@ def parse_extinst_operands(lexer, module, type_id):
     lexer.get_next_token(',')
     instruction = parse_extinst_instruction(lexer, set_id)
     lexer.get_next_token(',')
-    operands = parse_operand(lexer, module, 'VariableIds', type_id)
+    operands = parse_operand(lexer, module, 'VariableId', type_id)
     return [set_id, instruction] + operands
 
 
@@ -395,30 +395,21 @@ def parse_operand(lexer, module, kind, type_id):
     Operands of the 'Id' kind may be a literal, in which case a constant
     inst is created using the type in type_id.
     """
-    if kind == 'Id':
+    if kind == 'Id' or kind == 'OptionalId':
         operands = [parse_id(lexer, module, type_id=type_id)]
-    elif kind == 'LiteralNumber':
+    elif kind == 'LiteralNumber' or kind == 'OptionalLiteralNumber':
         operands = [parse_literal_number(lexer)]
+    elif kind[:8] == 'Optional' and kind[-4:] == 'Mask':
+        operands = [parse_mask(lexer, kind[8:])]
     elif kind in ir.MASKS:
         operands = [parse_mask(lexer, kind)]
-    elif kind in ['VariableLiterals', 'OptionalLiteral', 'VariableIds',
-                  'OptionalId', 'VariableIdLiteral', 'VariableLiteralId']:
+    elif kind[:8] == 'Variable':
         operands = parse_var_operand(lexer, module, kind, type_id)
-    elif kind == 'LiteralString':
+    elif kind == 'LiteralString' or kind == 'OptionalLiteralString':
         token, tag = lexer.get_next_token()
         if tag != 'STRING':
             raise ParseError('Expected a string literal')
         operands = [token[1:-1]]
-    elif kind == 'OptionalImage':
-        operands = []
-        token, _ = lexer.get_next_token(peek=True, accept_eol=True)
-        if token != '':
-            operands.append(parse_literal_number(lexer))
-            token, _ = lexer.get_next_token(peek=True, accept_eol=True)
-            if token == ',':
-                lexer.get_next_token()
-                operands = operands + parse_var_operand(lexer, module,
-                                                        'VariableIds', type_id)
     elif kind in spirv.spv:
         value, _ = lexer.get_next_token()
         if value not in spirv.spv[kind]:
@@ -447,9 +438,7 @@ def parse_operands(lexer, module, op_format, type_id):
     # remaining instruction operands are optional.
     while kinds:
         kind = kinds.pop(0)
-        if kind not in ['OptionalLiteral', 'OptionalId', 'VariableLiterals',
-                        'VariableIds', 'OptionalImage', 'VariableIdLiteral',
-                        'VariableLiteralId']:
+        if kind[:8] != 'Variable' and kind[:8] != 'Optional':
             raise ParseError('Missing operands')
 
     return operands

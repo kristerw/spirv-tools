@@ -2,7 +2,7 @@ INST_FORMAT = {
     'OpAccessChain' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'VariableIds'],
+        'operands': ['Id', 'VariableId'],
     },
     'OpAll' : {
         'type': True,
@@ -18,11 +18,6 @@ INST_FORMAT = {
         'type': True,
         'result': True,
         'operands': ['Id', 'LiteralNumber'],
-    },
-    'OpAsyncGroupCopy' : {
-        'type': True,
-        'result': True,
-        'operands': ['Scope', 'Id', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpAtomicAnd' : {
         'type': True,
@@ -43,6 +38,16 @@ INST_FORMAT = {
         'type': True,
         'result': True,
         'operands': ['Id', 'Scope', 'MemorySemanticsMask', 'Id'],
+    },
+    'OpAtomicFlagClear' : {
+        'type': False,
+        'result': False,
+        'operands': ['Id', 'Scope', 'MemorySemanticsMask'],
+    },
+    'OpAtomicFlagTestAndSet' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Scope', 'MemorySemanticsMask'],
     },
     'OpAtomicIAdd' : {
         'type': True,
@@ -157,7 +162,7 @@ INST_FORMAT = {
     'OpBranchConditional' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'Id', 'VariableLiterals'],
+        'operands': ['Id', 'Id', 'Id', 'VariableLiteralNumber'],
     },
     'OpBuildNDRange' : {
         'type': True,
@@ -177,37 +182,37 @@ INST_FORMAT = {
     'OpCommitReadPipe' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id'],
     },
     'OpCommitWritePipe' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id'],
     },
     'OpCompositeConstruct' : {
         'type': True,
         'result': True,
-        'operands': ['VariableIds'],
+        'operands': ['VariableId'],
     },
     'OpCompositeExtract' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'VariableLiterals'],
+        'operands': ['Id', 'VariableLiteralNumber'],
     },
     'OpCompositeInsert' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'VariableLiterals'],
+        'operands': ['Id', 'Id', 'VariableLiteralNumber'],
     },
     'OpConstant' : {
         'type': True,
         'result': True,
-        'operands': ['VariableLiterals'],
+        'operands': ['VariableLiteralNumber'],
     },
     'OpConstantComposite' : {
         'type': True,
         'result': True,
-        'operands': ['VariableIds'],
+        'operands': ['VariableId'],
     },
     'OpConstantFalse' : {
         'type': True,
@@ -267,12 +272,12 @@ INST_FORMAT = {
     'OpCopyMemory' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'OptionalLiteral'],
+        'operands': ['Id', 'Id', 'OptionalMemoryAccessMask'],
     },
     'OpCopyMemorySized' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'Id', 'OptionalLiteral'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalMemoryAccessMask'],
     },
     'OpCopyObject' : {
         'type': True,
@@ -317,7 +322,7 @@ INST_FORMAT = {
     'OpDecorate' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Decoration', 'VariableLiterals'],
+        'operands': ['Id', 'Decoration', 'VariableLiteralNumber'],
     },
     'OpDecorationGroup' : {
         'type': False,
@@ -352,7 +357,7 @@ INST_FORMAT = {
     'OpEnqueueKernel' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'VariableIds'],
+        'operands': ['Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'Id', 'VariableId'],
     },
     'OpEnqueueMarker' : {
         'type': True,
@@ -362,17 +367,17 @@ INST_FORMAT = {
     'OpEntryPoint' : {
         'type': False,
         'result': False,
-        'operands': ['ExecutionModel', 'Id', 'LiteralString'],
+        'operands': ['ExecutionModel', 'Id', 'LiteralString', 'VariableId'],
     },
     'OpExecutionMode' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'ExecutionMode', 'OptionalLiteral'],
+        'operands': ['Id', 'ExecutionMode', 'OptionalLiteralNumber'],
     },
     'OpExtInst' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'LiteralNumber', 'VariableIds'],
+        'operands': ['Id', 'LiteralNumber', 'VariableId'],
     },
     'OpExtInstImport' : {
         'type': False,
@@ -492,7 +497,7 @@ INST_FORMAT = {
     'OpFunctionCall' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'VariableIds'],
+        'operands': ['Id', 'VariableId'],
     },
     'OpFunctionEnd' : {
         'type': False,
@@ -562,12 +567,12 @@ INST_FORMAT = {
     'OpGetMaxPipePackets' : {
         'type': True,
         'result': True,
-        'operands': ['Id'],
+        'operands': ['Id', 'Id', 'Id'],
     },
     'OpGetNumPipePackets' : {
         'type': True,
         'result': True,
-        'operands': ['Id'],
+        'operands': ['Id', 'Id', 'Id'],
     },
     'OpGroupAll' : {
         'type': True,
@@ -579,6 +584,11 @@ INST_FORMAT = {
         'result': True,
         'operands': ['Scope', 'Id'],
     },
+    'OpGroupAsyncCopy' : {
+        'type': True,
+        'result': True,
+        'operands': ['Scope', 'Id', 'Id', 'Id', 'Id', 'Id'],
+    },
     'OpGroupBroadcast' : {
         'type': True,
         'result': True,
@@ -587,17 +597,17 @@ INST_FORMAT = {
     'OpGroupCommitReadPipe' : {
         'type': False,
         'result': False,
-        'operands': ['Scope', 'Id', 'Id'],
+        'operands': ['Scope', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpGroupCommitWritePipe' : {
         'type': False,
         'result': False,
-        'operands': ['Scope', 'Id', 'Id'],
+        'operands': ['Scope', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpGroupDecorate' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'VariableIds'],
+        'operands': ['Id', 'VariableId'],
     },
     'OpGroupFAdd' : {
         'type': True,
@@ -622,17 +632,17 @@ INST_FORMAT = {
     'OpGroupMemberDecorate' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'VariableIdLiteral'],
+        'operands': ['Id', 'VariableIdLiteralPair'],
     },
     'OpGroupReserveReadPipePackets' : {
         'type': True,
         'result': True,
-        'operands': ['Scope', 'Id', 'Id'],
+        'operands': ['Scope', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpGroupReserveWritePipePackets' : {
         'type': True,
         'result': True,
-        'operands': ['Scope', 'Id', 'Id'],
+        'operands': ['Scope', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpGroupSMax' : {
         'type': True,
@@ -654,6 +664,11 @@ INST_FORMAT = {
         'result': True,
         'operands': ['Scope', 'GroupOperation', 'Id'],
     },
+    'OpGroupWaitEvents' : {
+        'type': False,
+        'result': False,
+        'operands': ['Scope', 'Id', 'Id'],
+    },
     'OpIAdd' : {
         'type': True,
         'result': True,
@@ -662,7 +677,7 @@ INST_FORMAT = {
     'OpIAddCarry' : {
         'type': True,
         'result': True,
-        'operands': [],
+        'operands': ['Id', 'Id'],
     },
     'OpIEqual' : {
         'type': True,
@@ -673,11 +688,6 @@ INST_FORMAT = {
         'type': True,
         'result': True,
         'operands': ['Id', 'Id'],
-    },
-    'OpIMulExtended' : {
-        'type': True,
-        'result': True,
-        'operands': [],
     },
     'OpINotEqual' : {
         'type': True,
@@ -692,27 +702,27 @@ INST_FORMAT = {
     'OpISubBorrow' : {
         'type': True,
         'result': True,
-        'operands': [],
+        'operands': ['Id', 'Id'],
+    },
+    'OpImage' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id'],
     },
     'OpImageDrefGather' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageFetch' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageGather' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'OptionalImage'],
-    },
-    'OpImageQueryDim' : {
-        'type': True,
-        'result': True,
-        'operands': ['Id'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageQueryFormat' : {
         'type': True,
@@ -752,47 +762,107 @@ INST_FORMAT = {
     'OpImageRead' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleDrefExplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleDrefImplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleExplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleImplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleProjDrefExplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleProjDrefImplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleProjExplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpImageSampleProjImplicitLod' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'OptionalImage'],
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseDrefGather' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseFetch' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseGather' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleDrefExplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleDrefImplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleExplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleImplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleProjDrefExplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleProjDrefImplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleProjExplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseSampleProjImplicitLod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
+    },
+    'OpImageSparseTexelsResident' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id'],
     },
     'OpImageTexelPointer' : {
         'type': True,
@@ -802,12 +872,17 @@ INST_FORMAT = {
     'OpImageWrite' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'OptionalImageOperandsMask', 'VariableId'],
     },
     'OpInBoundsAccessChain' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'VariableIds'],
+        'operands': ['Id', 'VariableId'],
+    },
+    'OpInBoundsPtrAccessChain' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id', 'VariableId'],
     },
     'OpIsFinite' : {
         'type': True,
@@ -867,12 +942,12 @@ INST_FORMAT = {
     'OpLine' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'LiteralNumber', 'LiteralNumber'],
+        'operands': ['Id', 'LiteralNumber', 'LiteralNumber'],
     },
     'OpLoad' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'OptionalLiteral'],
+        'operands': ['Id', 'OptionalMemoryAccessMask'],
     },
     'OpLogicalAnd' : {
         'type': True,
@@ -902,7 +977,7 @@ INST_FORMAT = {
     'OpLoopMerge' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'LoopControlMask'],
+        'operands': ['Id', 'Id', 'LoopControlMask'],
     },
     'OpMatrixTimesMatrix' : {
         'type': True,
@@ -922,7 +997,7 @@ INST_FORMAT = {
     'OpMemberDecorate' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'LiteralNumber', 'Decoration', 'VariableLiterals'],
+        'operands': ['Id', 'LiteralNumber', 'Decoration', 'VariableLiteralNumber'],
     },
     'OpMemberName' : {
         'type': False,
@@ -943,6 +1018,11 @@ INST_FORMAT = {
         'type': False,
         'result': False,
         'operands': ['Id', 'LiteralString'],
+    },
+    'OpNoLine' : {
+        'type': False,
+        'result': False,
+        'operands': [],
     },
     'OpNop' : {
         'type': False,
@@ -967,12 +1047,12 @@ INST_FORMAT = {
     'OpPhi' : {
         'type': True,
         'result': True,
-        'operands': ['VariableIds'],
+        'operands': ['VariableId'],
     },
     'OpPtrAccessChain' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'VariableIds'],
+        'operands': ['Id', 'Id', 'VariableId'],
     },
     'OpPtrCastToGeneric' : {
         'type': True,
@@ -987,7 +1067,7 @@ INST_FORMAT = {
     'OpReadPipe' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id'],
     },
     'OpReleaseEvent' : {
         'type': False,
@@ -997,22 +1077,22 @@ INST_FORMAT = {
     'OpReserveReadPipePackets' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id'],
     },
     'OpReserveWritePipePackets' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id'],
     },
     'OpReservedReadPipe' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpReservedWritePipe' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id', 'Id', 'Id'],
     },
     'OpRetainEvent' : {
         'type': False,
@@ -1060,6 +1140,11 @@ INST_FORMAT = {
         'operands': ['Id', 'Id'],
     },
     'OpSMod' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id'],
+    },
+    'OpSMulExtended' : {
         'type': True,
         'result': True,
         'operands': ['Id', 'Id'],
@@ -1127,7 +1212,12 @@ INST_FORMAT = {
     'OpSource' : {
         'type': False,
         'result': False,
-        'operands': ['SourceLanguage', 'LiteralNumber'],
+        'operands': ['SourceLanguage', 'LiteralNumber', 'OptionalId', 'OptionalLiteralString'],
+    },
+    'OpSourceContinued' : {
+        'type': False,
+        'result': False,
+        'operands': ['LiteralString'],
     },
     'OpSourceExtension' : {
         'type': False,
@@ -1137,12 +1227,12 @@ INST_FORMAT = {
     'OpSpecConstant' : {
         'type': True,
         'result': True,
-        'operands': ['VariableLiterals'],
+        'operands': ['VariableLiteralNumber'],
     },
     'OpSpecConstantComposite' : {
         'type': True,
         'result': True,
-        'operands': ['VariableIds'],
+        'operands': ['VariableId'],
     },
     'OpSpecConstantFalse' : {
         'type': True,
@@ -1152,7 +1242,7 @@ INST_FORMAT = {
     'OpSpecConstantOp' : {
         'type': True,
         'result': True,
-        'operands': ['LiteralNumber', 'VariableIds'],
+        'operands': ['LiteralNumber', 'VariableId'],
     },
     'OpSpecConstantTrue' : {
         'type': True,
@@ -1162,7 +1252,7 @@ INST_FORMAT = {
     'OpStore' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'OptionalLiteral'],
+        'operands': ['Id', 'Id', 'OptionalMemoryAccessMask'],
     },
     'OpString' : {
         'type': False,
@@ -1172,7 +1262,7 @@ INST_FORMAT = {
     'OpSwitch' : {
         'type': False,
         'result': False,
-        'operands': ['Id', 'Id', 'VariableLiteralId'],
+        'operands': ['Id', 'Id', 'VariableLiteralIdPair'],
     },
     'OpTranspose' : {
         'type': True,
@@ -1204,15 +1294,20 @@ INST_FORMAT = {
         'result': True,
         'operands': ['LiteralNumber'],
     },
+    'OpTypeForwardPointer' : {
+        'type': False,
+        'result': False,
+        'operands': ['Id', 'StorageClass'],
+    },
     'OpTypeFunction' : {
         'type': False,
         'result': True,
-        'operands': ['Id', 'VariableIds'],
+        'operands': ['Id', 'VariableId'],
     },
     'OpTypeImage' : {
         'type': False,
         'result': True,
-        'operands': ['Id', 'Dim', 'LiteralNumber', 'LiteralNumber', 'LiteralNumber', 'LiteralNumber', 'ImageFormat', 'OptionalLiteral'],
+        'operands': ['Id', 'Dim', 'LiteralNumber', 'LiteralNumber', 'LiteralNumber', 'LiteralNumber', 'ImageFormat', 'OptionalAccessQualifierMask'],
     },
     'OpTypeInt' : {
         'type': False,
@@ -1232,7 +1327,7 @@ INST_FORMAT = {
     'OpTypePipe' : {
         'type': False,
         'result': True,
-        'operands': ['Id', 'AccessQualifier'],
+        'operands': ['AccessQualifier'],
     },
     'OpTypePointer' : {
         'type': False,
@@ -1267,7 +1362,7 @@ INST_FORMAT = {
     'OpTypeStruct' : {
         'type': False,
         'result': True,
-        'operands': ['VariableIds'],
+        'operands': ['VariableId'],
     },
     'OpTypeVector' : {
         'type': False,
@@ -1314,6 +1409,11 @@ INST_FORMAT = {
         'result': True,
         'operands': ['Id', 'Id'],
     },
+    'OpUMulExtended' : {
+        'type': True,
+        'result': True,
+        'operands': ['Id', 'Id'],
+    },
     'OpUndef' : {
         'type': True,
         'result': True,
@@ -1347,7 +1447,7 @@ INST_FORMAT = {
     'OpVectorShuffle' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id', 'VariableLiterals'],
+        'operands': ['Id', 'Id', 'VariableLiteralNumber'],
     },
     'OpVectorTimesMatrix' : {
         'type': True,
@@ -1359,14 +1459,9 @@ INST_FORMAT = {
         'result': True,
         'operands': ['Id', 'Id'],
     },
-    'OpWaitGroupEvents' : {
-        'type': False,
-        'result': False,
-        'operands': ['Scope', 'Id', 'Id'],
-    },
     'OpWritePipe' : {
         'type': True,
         'result': True,
-        'operands': ['Id', 'Id'],
+        'operands': ['Id', 'Id', 'Id', 'Id'],
     },
 }

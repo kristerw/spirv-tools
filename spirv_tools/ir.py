@@ -990,7 +990,7 @@ def bits_to_float(bitwidth, value):
 
 MAGIC = 0x07230203
 GENERATOR_MAGIC = 0
-VERSION = 99
+VERSION = 0x00010000
 
 INST_FORMAT = inst_format.INST_FORMAT
 EXT_INST = ext_inst.EXT_INST
