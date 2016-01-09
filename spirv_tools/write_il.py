@@ -359,10 +359,6 @@ def write_module(stream, module, is_raw_mode=False):
         # instructions eliminated for non-raw mode), so we need to do some
         # extra work here...
         globals = module.global_instructions
-        output_instructions(stream, module, globals.op_source_insts,
-                            is_raw_mode, newline=False)
-        output_instructions(stream, module, globals.op_source_extension_insts,
-                            is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_capability_insts,
                             is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_extension_insts,
@@ -380,8 +376,6 @@ def write_module(stream, module, is_raw_mode=False):
             output_instructions(stream, module, globals.op_string_insts,
                                 is_raw_mode)
             output_instructions(stream, module, globals.name_insts,
-                                is_raw_mode)
-            output_instructions(stream, module, globals.op_line_insts,
                                 is_raw_mode)
             output_instructions(stream, module, globals.decoration_insts,
                                 is_raw_mode)

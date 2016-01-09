@@ -155,8 +155,6 @@ class Module(object):
 class _GlobalInstructions(object):
     def __init__(self, module):
         self.module = module
-        self.op_source_insts = []
-        self.op_source_extension_insts = []
         self.op_capability_insts = []
         self.op_extension_insts = []
         self.op_extinstimport_insts = []
@@ -165,7 +163,6 @@ class _GlobalInstructions(object):
         self.op_execution_mode_insts = []
         self.op_string_insts = []
         self.name_insts = []
-        self.op_line_insts = []
         self.decoration_insts = []
         self.type_insts = []
 
@@ -191,60 +188,48 @@ class _GlobalInstructions(object):
 
         The function returns both the list and the list's position in the
         order the lists are written in the binary."""
-        if op_name == 'OpSource':
-            insts_list = self.op_source_insts
-            order = 0
-        elif op_name == 'OpSourceExtension':
-            insts_list = self.op_source_extension_insts
-            order = 1
-        elif op_name == 'OpCapability':
+        if op_name == 'OpCapability':
             insts_list = self.op_capability_insts
-            order = 2
+            order = 0
         elif op_name == 'OpExtension':
             insts_list = self.op_extension_insts
-            order = 3
+            order = 1
         elif op_name == 'OpExtInstImport':
             insts_list = self.op_extinstimport_insts
-            order = 4
+            order = 2
         elif op_name == 'OpMemoryModel':
             insts_list = self.op_memory_model_insts
-            order = 5
+            order = 3
         elif op_name == 'OpEntryPoint':
             insts_list = self.op_entry_point_insts
-            order = 6
+            order = 4
         elif op_name == 'OpExecutionMode':
             insts_list = self.op_execution_mode_insts
-            order = 7
-        elif op_name == 'OpString':
+            order = 5
+        elif op_name in ['OpString',
+                         'OpSourceExtension',
+                         'OpSource',
+                         'OpSourceContinued']:
             insts_list = self.op_string_insts
-            order = 8
+            order = 6
         elif op_name in ['OpName', 'OpMemberName']:
             insts_list = self.name_insts
-            order = 9
-        elif op_name == 'OpLine':
-            insts_list = self.op_line_insts
-            order = 10
+            order = 7
         elif op_name in DECORATION_INSTRUCTIONS:
             insts_list = self.decoration_insts
-            order = 11
+            order = 8
         elif (op_name in TYPE_DECLARATION_INSTRUCTIONS or
               op_name in CONSTANT_INSTRUCTIONS or
               op_name in SPECCONSTANT_INSTRUCTIONS or
               op_name in  GLOBAL_VARIABLE_INSTRUCTIONS):
             insts_list = self.type_insts
-            order = 12
+            order = 9
         else:
             raise IRError(op_name + ' is not a valid global instruction')
         return insts_list, order
 
     def instructions(self):
         """Iterate over all global instructions."""
-        for inst in self.op_source_insts[:]:
-            if inst.basic_block is not None:
-                yield inst
-        for inst in self.op_source_extension_insts[:]:
-            if inst.basic_block is not None:
-                yield inst
         for inst in self.op_capability_insts[:]:
             if inst.basic_block is not None:
                 yield inst
@@ -269,9 +254,6 @@ class _GlobalInstructions(object):
         for inst in self.name_insts[:]:
             if inst.basic_block is not None:
                 yield inst
-        for inst in self.op_line_insts[:]:
-            if inst.basic_block is not None:
-                yield inst
         for inst in self.decoration_insts[:]:
             if inst.basic_block is not None:
                 yield inst
@@ -285,9 +267,6 @@ class _GlobalInstructions(object):
             if inst.basic_block is not None:
                 yield inst
         for inst in reversed(self.decoration_insts[:]):
-            if inst.basic_block is not None:
-                yield inst
-        for inst in reversed(self.op_line_insts[:]):
             if inst.basic_block is not None:
                 yield inst
         for inst in reversed(self.name_insts[:]):
@@ -312,12 +291,6 @@ class _GlobalInstructions(object):
             if inst.basic_block is not None:
                 yield inst
         for inst in reversed(self.op_capability_insts[:]):
-            if inst.basic_block is not None:
-                yield inst
-        for inst in reversed(self.op_source_extension_insts[:]):
-            if inst.basic_block is not None:
-                yield inst
-        for inst in reversed(self.op_source_insts[:]):
             if inst.basic_block is not None:
                 yield inst
 
@@ -1012,8 +985,6 @@ BRANCH_INSTRUCTIONS = set([
 # The instructions in the first part of the binary (before debug and
 # annotation instructions).
 INITIAL_INSTRUCTIONS = set([
-    'OpSource',
-    'OpSourceExtension',
     'OpCapability',
     'OpExtension',
     'OpExtInstImport',
@@ -1024,9 +995,11 @@ INITIAL_INSTRUCTIONS = set([
 
 DEBUG_INSTRUCTIONS = set([
     'OpString',
+    'OpSourceExtension',
+    'OpSource',
+    'OpSourceContinued',
     'OpName',
     'OpMemberName',
-    'OpLine',
 ])
 
 DECORATION_INSTRUCTIONS = set([

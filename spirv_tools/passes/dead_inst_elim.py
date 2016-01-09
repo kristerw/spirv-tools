@@ -9,7 +9,7 @@ from spirv_tools import ir
 def remove_debug_if_dead(inst):
     """Remove debug instruction if it is not used."""
     assert inst.op_name in ir.DEBUG_INSTRUCTIONS
-    if inst.op_name != 'OpString':
+    if inst.op_name == 'OpName':
         if inst.operands[0].inst is None:
             inst.destroy()
 
@@ -34,8 +34,6 @@ def run(module):
     # Note: the debug and decoration instructions that are live at the start
     # of this pass is handled by the real pass when the instruction they
     # point to is removed.
-    for inst in module.global_instructions.op_line_insts:
-        remove_debug_if_dead(inst)
     for inst in module.global_instructions.name_insts:
         remove_debug_if_dead(inst)
     for inst in module.global_instructions.op_string_insts:
