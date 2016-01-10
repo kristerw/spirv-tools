@@ -1,3 +1,4 @@
+"""Instruction descriptions for the OpenCL extended instruction set."""
 INST_FORMAT = {
     0 : {
         'name' : 'acos',
@@ -397,13 +398,13 @@ INST_FORMAT = {
     },
     66 : {
         'name' : 'trunc',
-        'operands' : ['Id', 'Id'],
+        'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : True
     },
     67 : {
         'name' : 'half_cos',
-        'operands' : ['Id', 'Id'],
+        'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
@@ -569,7 +570,6 @@ INST_FORMAT = {
         'has_side_effects' : False,
         'is_commutative' : False
     },
-
     95 : {
         'name' : 'fclamp',
         'operands' : ['Id', 'Id', 'Id'],
@@ -666,24 +666,6 @@ INST_FORMAT = {
         'has_side_effects' : False,
         'is_commutative' : False
     },
-    129 : {
-        'name' : 'write_imagef_mipmap_lod',
-        'operands' : ['Id', 'Id', 'Id', 'Id'],
-        'has_side_effects' : True,
-        'is_commutative' : False
-    },
-    130 : {
-        'name' : 'write_imagei_mipmap_lod',
-        'operands' : ['Id', 'Id', 'Id', 'Id'],
-        'has_side_effects' : True,
-        'is_commutative' : False
-    },
-    131 : {
-        'name' : 'write_imageui_mipmap_lod',
-        'operands' : ['Id', 'Id', 'Id', 'Id'],
-        'has_side_effects' : True,
-        'is_commutative' : False
-    },
     141 : {
         'name' : 's_abs',
         'operands' : ['Id'],
@@ -724,13 +706,13 @@ INST_FORMAT = {
         'name' : 's_rhadd',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     148 : {
         'name' : 'u_rhadd',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     149 : {
         'name' : 's_clamp',
@@ -776,15 +758,15 @@ INST_FORMAT = {
     },
     158 : {
         'name' : 's_min',
-        'operands' : ['Id'],
+        'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     159 : {
         'name' : 'u_min',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     160 : {
         'name' : 's_mul_hi',
@@ -844,13 +826,13 @@ INST_FORMAT = {
         'name' : 's_mul24',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     170 : {
         'name' : 'u_mul24',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     171 : {
         'name' : 'vloadn',
@@ -970,7 +952,7 @@ INST_FORMAT = {
         'name' : 'u_mul_hi',
         'operands' : ['Id', 'Id'],
         'has_side_effects' : False,
-        'is_commutative' : False
+        'is_commutative' : True
     },
     204 : {
         'name' : 'u_mad_hi',
