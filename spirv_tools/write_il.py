@@ -363,18 +363,17 @@ def write_module(stream, module, is_raw_mode=False):
                             is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_extension_insts,
                             is_raw_mode, newline=False)
+        output_instructions(stream, module, globals.op_extinstimport_insts,
+                            is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_memory_model_insts,
                             is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_entry_point_insts,
                             is_raw_mode, newline=False)
         output_instructions(stream, module, globals.op_execution_mode_insts,
                             is_raw_mode, newline=False)
-
-        output_instructions(stream, module, globals.op_extinstimport_insts,
-                            is_raw_mode)
+        output_instructions(stream, module, globals.op_string_insts,
+                            is_raw_mode, newline=False)
         if is_raw_mode:
-            output_instructions(stream, module, globals.op_string_insts,
-                                is_raw_mode)
             output_instructions(stream, module, globals.name_insts,
                                 is_raw_mode)
             output_instructions(stream, module, globals.decoration_insts,
