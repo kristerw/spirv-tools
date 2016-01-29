@@ -662,7 +662,7 @@ def parse_function_definition(lexer, module):
                                                 operands)
     function = ir.Function(module, [], function_type_inst.result_id,
                            result_id=result_id) # XXX
-    for (param_type, param_id) in parameters:
+    for param_type, param_id in parameters:
         param_inst = ir.Instruction(module, 'OpFunctionParameter', param_type,
                                     [], result_id=param_id)
         function.append_parameter(param_inst)

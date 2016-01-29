@@ -146,8 +146,8 @@ class Module(object):
             for inst in old_id.uses:
                 if inst.type_id == old_id:
                     inst.type_id = new_id
-                for i in range(len(inst.operands)):
-                    if inst.operands[i] == old_id:
+                for i, operand in enumerate(inst.operands):
+                    if operand == old_id:
                         inst.operands[i] = new_id
             new_id.uses = old_id.uses
 
@@ -733,8 +733,8 @@ class Instruction(object):
             _remove_use_from_id(inst)
             if inst.type_id == self.result_id:
                 inst.type_id = new_inst.result_id
-            for idx in range(len(inst.operands)):
-                if inst.operands[idx] == self.result_id:
+            for idx, operand in enumerate(inst.operands):
+                if operand == self.result_id:
                     inst.operands[idx] = new_inst.result_id
             _add_use_to_id(inst)
 

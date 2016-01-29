@@ -228,9 +228,9 @@ def optimize_OpVectorShuffle(module, inst):
     elif not using_vec2:
         vec2_inst = vec1_inst
     elif not using_vec1:
-        for idx in range(len(components)):
-            if components[idx] != 0xffffffff:
-                components[idx] = components[idx] - vec1_len
+        for idx, component in enumerate(components):
+            if component != 0xffffffff:
+                components[idx] = component - vec1_len
         vec1_inst = vec2_inst
 
     # Change shuffle "A, A" so that only the first is used.
@@ -238,15 +238,15 @@ def optimize_OpVectorShuffle(module, inst):
         vec1_type_inst = vec1_inst.type_id.inst
         assert vec1_type_inst.op_name == 'OpTypeVector'
         vec1_len = vec1_type_inst.operands[1]
-        for idx in range(len(components)):
-            if components[idx] != 0xffffffff and components[idx] >= vec1_len:
-                components[idx] = components[idx] - vec1_len
+        for idx, component in enumerate(components):
+            if component != 0xffffffff and component >= vec1_len:
+                components[idx] = component - vec1_len
 
     # Eliminate identity swizzles.
     if vec1_inst == vec2_inst:
         if inst.type_id == vec1_inst.type_id:
-            for idx in range(len(components)):
-                if components[idx] != 0xffffffff and components[idx] != idx:
+            for idx, component in enumerate(components):
+                if component != 0xffffffff and component != idx:
                     break
             else:
                 return vec1_inst
