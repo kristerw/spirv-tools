@@ -7,8 +7,8 @@ from spirv_tools.passes import constprop
 
 
 def optimize_OpBitcast(module, inst):
-    # bitcast(bitcast(x)) -> bitcast(x) or x
     operand_inst = inst.operands[0].inst
+    # bitcast(bitcast(x)) -> bitcast(x) or x
     if operand_inst.op_name == 'OpBitcast':
         if inst.type_id == operand_inst.operands[0].inst.type_id:
             return operand_inst.operands[0].inst
@@ -18,6 +18,11 @@ def optimize_OpBitcast(module, inst):
             new_inst.copy_decorations(inst)
             new_inst.insert_before(inst)
             return new_inst
+    # bitcast(undef) -> undef
+    if operand_inst.op_name == 'OpUndef':
+        new_inst = ir.Instruction(module, 'OpUndef', inst.type_id, [])
+        new_inst.insert_before(inst)
+        return new_inst
     return inst
 
 
@@ -63,6 +68,12 @@ def optimize_OpIAdd(inst):
     # x + 0 -> x
     if inst.operands[1].inst.is_constant_value(0):
         return inst.operands[0].inst
+    # x + undef -> undef
+    if inst.operands[1].inst.op_name == 'OpUndef':
+        return inst.operands[1].inst
+    # undef + x -> undef
+    if inst.operands[0].inst.op_name == 'OpUndef':
+        return inst.operands[0].inst
     return inst
 
 
@@ -79,6 +90,12 @@ def optimize_OpIMul(module, inst):
                                   [inst.operands[0]])
         new_inst.insert_before(inst)
         return new_inst
+    # x * undef -> undef
+    if inst.operands[1].inst.op_name == 'OpUndef':
+        return inst.operands[1].inst
+    # undef * x -> undef
+    if inst.operands[0].inst.op_name == 'OpUndef':
+        return inst.operands[0].inst
     return inst
 
 
@@ -91,6 +108,12 @@ def optimize_OpLogicalAnd(module, inst):
         return inst.operands[1].inst
     # x and x -> x
     if inst.operands[0] == inst.operands[1]:
+        return inst.operands[0].inst
+    # x and undef -> undef
+    if inst.operands[1].inst.op_name == 'OpUndef':
+        return inst.operands[1].inst
+    # undef and x -> undef
+    if inst.operands[0].inst.op_name == 'OpUndef':
         return inst.operands[0].inst
     # (not x) and (not y) -> not (x or y)
     if (inst.operands[0].inst.op_name == 'OpLogicalNot' and
@@ -120,14 +143,23 @@ def optimize_OpLogicalEqual(module, inst):
     # Equal(x, x) -> true
     if inst.operands[0] == inst.operands[1]:
         return module.get_constant(inst.type_id, True)
+    # Equal(x, undef) -> undef
+    if inst.operands[1].inst.op_name == 'OpUndef':
+        return inst.operands[1].inst
+    # Equal(undef, x) -> undef
+    if inst.operands[0].inst.op_name == 'OpUndef':
+        return inst.operands[0].inst
     return inst
 
 
 def optimize_OpLogicalNot(inst):
-    # not(not(x)) -> x
     operand_inst = inst.operands[0].inst
+    # not(not(x)) -> x
     if operand_inst.op_name == 'OpLogicalNot':
         return operand_inst.operands[0].inst
+    # not(undef) -> undef
+    if operand_inst.op_name == 'OpUndef':
+        return operand_inst
     return inst
 
 
@@ -144,6 +176,12 @@ def optimize_OpLogicalNotEqual(module, inst):
     # NotEqual(x, x) -> false
     if inst.operands[0] == inst.operands[1]:
         return module.get_constant(inst.type_id, False)
+    # NotEqual(x, undef) -> undef
+    if inst.operands[1].inst.op_name == 'OpUndef':
+        return inst.operands[1].inst
+    # NotEqual(undef, x) -> undef
+    if inst.operands[0].inst.op_name == 'OpUndef':
+        return inst.operands[0].inst
     return inst
 
 
@@ -156,6 +194,12 @@ def optimize_OpLogicalOr(module, inst):
         return inst.operands[0].inst
     # x or x -> x
     if inst.operands[0] == inst.operands[1]:
+        return inst.operands[0].inst
+    # x and undef -> undef
+    if inst.operands[1].inst.op_name == 'OpUndef':
+        return inst.operands[1].inst
+    # undef and x -> undef
+    if inst.operands[0].inst.op_name == 'OpUndef':
         return inst.operands[0].inst
     # (not x) or (not y) -> not (x and y)
     if (inst.operands[0].inst.op_name == 'OpLogicalNot' and
@@ -173,26 +217,35 @@ def optimize_OpLogicalOr(module, inst):
 
 
 def optimize_OpNot(inst):
-    # not(not(x)) -> x
     operand_inst = inst.operands[0].inst
+    # not(not(x)) -> x
     if operand_inst.op_name == 'OpNot':
         return operand_inst.operands[0].inst
+    # not(undef) -> undef
+    if operand_inst.op_name == 'OpUndef':
+        return operand_inst
     return inst
 
 
 def optimize_OpSNegate(inst):
-    # neg(neg(x)) -> x
     operand_inst = inst.operands[0].inst
+    # neg(neg(x)) -> x
     if operand_inst.op_name == 'OpSNegate':
         return operand_inst.operands[0].inst
+    # neg(undef) -> undef
+    if operand_inst.op_name == 'OpUndef':
+        return operand_inst
     return inst
 
 
 def optimize_OpTranspose(inst):
-    # transpose(transpose(m)) -> m
     operand_inst = inst.operands[0].inst
+    # transpose(transpose(m)) -> m
     if operand_inst.op_name == 'OpTranspose':
         return operand_inst.operands[0].inst
+    # not(undef) -> undef
+    if operand_inst.op_name == 'OpUndef':
+        return operand_inst
     return inst
 
 
@@ -200,6 +253,12 @@ def optimize_OpVectorShuffle(module, inst):
     vec1_inst = inst.operands[0].inst
     vec2_inst = inst.operands[1].inst
     components = inst.operands[2:]
+
+    # VectorShuffle of undef -> undef
+    if vec1_inst.op_name == 'OpUndef' and vec2_inst.op_name == 'OpUndef':
+        new_inst = ir.Instruction(module, 'OpUndef', inst.type_id, [])
+        new_inst.insert_before(inst)
+        return new_inst
 
     # Change vector shuffles "A, unused" or "unused, A" to "A, A" where
     # the second operand is not used (and change to OpUndef if no elements
