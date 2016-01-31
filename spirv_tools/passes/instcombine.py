@@ -109,11 +109,9 @@ def optimize_OpLogicalAnd(module, inst):
     # x and x -> x
     if inst.operands[0] == inst.operands[1]:
         return inst.operands[0].inst
-    # x and undef -> undef
-    if inst.operands[1].inst.op_name == 'OpUndef':
-        return inst.operands[1].inst
-    # undef and x -> undef
-    if inst.operands[0].inst.op_name == 'OpUndef':
+    # undef and undef -> undef
+    if (inst.operands[0].inst.op_name == 'OpUndef' and
+            inst.operands[1].inst.op_name == 'OpUndef'):
         return inst.operands[0].inst
     # (not x) and (not y) -> not (x or y)
     if (inst.operands[0].inst.op_name == 'OpLogicalNot' and
@@ -195,11 +193,9 @@ def optimize_OpLogicalOr(module, inst):
     # x or x -> x
     if inst.operands[0] == inst.operands[1]:
         return inst.operands[0].inst
-    # x and undef -> undef
-    if inst.operands[1].inst.op_name == 'OpUndef':
-        return inst.operands[1].inst
-    # undef and x -> undef
-    if inst.operands[0].inst.op_name == 'OpUndef':
+    # undef or undef -> undef
+    if (inst.operands[0].inst.op_name == 'OpUndef' and
+            inst.operands[1].inst.op_name == 'OpUndef'):
         return inst.operands[0].inst
     # (not x) or (not y) -> not (x and y)
     if (inst.operands[0].inst.op_name == 'OpLogicalNot' and
@@ -243,7 +239,7 @@ def optimize_OpTranspose(inst):
     # transpose(transpose(m)) -> m
     if operand_inst.op_name == 'OpTranspose':
         return operand_inst.operands[0].inst
-    # not(undef) -> undef
+    # transpose(undef) -> undef
     if operand_inst.op_name == 'OpUndef':
         return operand_inst
     return inst
