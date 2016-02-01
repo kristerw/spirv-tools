@@ -628,6 +628,41 @@ class Instruction(object):
             res = res[:-2]
         return res
 
+    @property
+    def value_signed(self):
+        """Get value of a scalar integer OpConstant as a signed integer."""
+        assert self.op_name == 'OpConstant'
+        assert self.type_id.inst.op_name == 'OpTypeInt'
+        unsigned = self.value
+        min_val, max_val = get_int_type_range(self.type_id)
+        signed_max_val = max_val ^ -min_val
+        if unsigned <= signed_max_val:
+            return unsigned
+        else:
+            return unsigned - max_val - 1
+
+    @property
+    def value(self):
+        """Get value of a scalar constant.
+
+        Integer constants are returned as an unsigned integer."""
+        if self.op_name == 'OpConstantTrue':
+            return True
+        elif self.op_name == 'OpConstantFalse':
+            return False
+        elif self.op_name == 'OpConstant':
+            assert (self.type_id.inst.op_name == 'OpTypeInt' or
+                    self.type_id.inst.op_name == 'OpTypeFloat')
+            val = self.operands[0]
+            if self.type_id.inst.operands[0] == 64:
+                val = val | (self.operands[1] << 32)
+            if self.type_id.inst.op_name == 'OpTypeFloat':
+                bitwidth = self.type_id.inst.operands[0]
+                return bits_to_float(bitwidth, val)
+            else:
+                return val
+        raise IRError('Unhandled instruction: ' + str(self))
+
     def clone(self):
         """Create a copy of the instruction.
 
