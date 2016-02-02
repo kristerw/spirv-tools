@@ -633,7 +633,7 @@ class Instruction(object):
         """Get value of a scalar integer OpConstant as a signed integer."""
         assert self.op_name == 'OpConstant'
         assert self.type_id.inst.op_name == 'OpTypeInt'
-        unsigned = self.value
+        unsigned = self.value_unsigned
         min_val, max_val = get_int_type_range(self.type_id)
         signed_max_val = max_val ^ -min_val
         if unsigned <= signed_max_val:
@@ -642,25 +642,35 @@ class Instruction(object):
             return unsigned - max_val - 1
 
     @property
-    def value(self):
-        """Get value of a scalar constant.
+    def value_unsigned(self):
+        """Get value of a scalar integer OpConstant as an unsigned integer."""
+        assert self.op_name == 'OpConstant'
+        assert self.type_id.inst.op_name == 'OpTypeInt'
+        val = self.operands[0]
+        if self.type_id.inst.operands[0] == 64:
+            val = val | (self.operands[1] << 32)
+        return val
 
-        Integer constants are returned as an unsigned integer."""
+    @property
+    def value(self):
+        """Get value of a scalar constant."""
         if self.op_name == 'OpConstantTrue':
             return True
         elif self.op_name == 'OpConstantFalse':
             return False
         elif self.op_name == 'OpConstant':
-            assert (self.type_id.inst.op_name == 'OpTypeInt' or
-                    self.type_id.inst.op_name == 'OpTypeFloat')
-            val = self.operands[0]
-            if self.type_id.inst.operands[0] == 64:
-                val = val | (self.operands[1] << 32)
-            if self.type_id.inst.op_name == 'OpTypeFloat':
+            if self.type_id.inst.op_name == 'OpTypeInt':
+                is_signed = self.type_id.inst.operands[1]
+                if is_signed:
+                    return self.value_signed
+                else:
+                    return self.value_unsigned
+            elif self.type_id.inst.op_name == 'OpTypeFloat':
+                val = self.operands[0]
+                if self.type_id.inst.operands[0] == 64:
+                    val = val | (self.operands[1] << 32)
                 bitwidth = self.type_id.inst.operands[0]
                 return bits_to_float(bitwidth, val)
-            else:
-                return val
         raise IRError('Unhandled instruction: ' + str(self))
 
     def clone(self):
