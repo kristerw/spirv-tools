@@ -647,8 +647,14 @@ class Instruction(object):
         assert self.op_name == 'OpConstant'
         assert self.type_id.inst.op_name == 'OpTypeInt'
         val = self.operands[0]
-        if self.type_id.inst.operands[0] == 64:
+        bitwidth = self.type_id.inst.operands[0]
+        if bitwidth == 64:
             val = val | (self.operands[1] << 32)
+        # 16- and 8-bit values are stored in a 32-bit word. The specification
+        # does not say anyting about the unused high order bits, so we clear
+        # them here just to be sure we get a value within the valid range for
+        # the type...
+        val = val & ((1 << bitwidth) - 1)
         return val
 
     @property
