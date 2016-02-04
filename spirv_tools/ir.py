@@ -630,7 +630,15 @@ class Instruction(object):
 
     @property
     def value_signed(self):
-        """Get value of a scalar integer OpConstant as a signed integer."""
+        """Get value of an integer constant as a signed integer.
+
+        The constant may be of integer scalar, vector, or matrix type,
+        and the value is returned as an integer or a list in the same
+        way as the input format to Module.get_constant."""
+        if (self.op_name == 'OpConstantComposite'
+                and (self.type_id.inst.op_name == 'OpTypeVector' or
+                     self.type_id.inst.op_name == 'OpTypeMatrix')):
+            return [elem_id.inst.value_signed for elem_id in self.operands]
         assert self.op_name == 'OpConstant'
         assert self.type_id.inst.op_name == 'OpTypeInt'
         unsigned = self.value_unsigned
@@ -643,7 +651,15 @@ class Instruction(object):
 
     @property
     def value_unsigned(self):
-        """Get value of a scalar integer OpConstant as an unsigned integer."""
+        """Get value of an integer constant as an unsigned integer.
+
+        The constant may be of integer scalar, vector, or matrix type,
+        and the value is returned as an integer or a list in the same
+        way as the input format to Module.get_constant."""
+        if (self.op_name == 'OpConstantComposite'
+                and (self.type_id.inst.op_name == 'OpTypeVector' or
+                     self.type_id.inst.op_name == 'OpTypeMatrix')):
+            return [elem_id.inst.value_unsigned for elem_id in self.operands]
         assert self.op_name == 'OpConstant'
         assert self.type_id.inst.op_name == 'OpTypeInt'
         val = self.operands[0]
@@ -659,7 +675,11 @@ class Instruction(object):
 
     @property
     def value(self):
-        """Get value of a scalar constant."""
+        """Get value of a constant.
+
+        The constant may be of scalar, vector, or matrix type, and
+        the value is returned as a scalar value or a list in the same
+        way as the input format to Module.get_constant."""
         if self.op_name == 'OpConstantTrue':
             return True
         elif self.op_name == 'OpConstantFalse':
@@ -677,6 +697,10 @@ class Instruction(object):
                     val = val | (self.operands[1] << 32)
                 bitwidth = self.type_id.inst.operands[0]
                 return bits_to_float(bitwidth, val)
+        elif self.op_name == 'OpConstantComposite':
+            if (self.type_id.inst.op_name == 'OpTypeVector' or
+                    self.type_id.inst.op_name == 'OpTypeMatrix'):
+                return [elem_id.inst.value for elem_id in self.operands]
         raise IRError('Unhandled instruction: ' + str(self))
 
     def clone(self):
