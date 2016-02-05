@@ -84,35 +84,31 @@ class Module(object):
         all elements."""
         if (type_id.inst.op_name == 'OpTypeFloat' and
                 isinstance(value, float)):
-            bitvalue = float_to_bits(type_id.inst.operands[0], value)
-            if type_id.inst.operands[0] == 64:
+            bitwidth = type_id.inst.operands[0]
+            bitvalue = float_to_bits(bitwidth, value)
+            if bitwidth == 64:
                 operands = [bitvalue & 0xffffffff, bitvalue >> 32]
             else:
                 operands = [bitvalue]
             return self.get_global_inst('OpConstant', type_id, operands)
         elif (type_id.inst.op_name == 'OpTypeInt' or
               type_id.inst.op_name == 'OpTypeFloat'):
-            min_val, max_val = get_int_type_range(type_id)
-            if value < 0:
-                if value < min_val:
-                    raise IRError('Value out of range')
-                value = value & max_val
-            else:
-                if value > max_val:
-                    raise IRError('Value out of range')
-            if type_id.inst.operands[0] == 64:
+            bitwidth = type_id.inst.operands[0]
+            value = value & ((1 << bitwidth) - 1)
+            if bitwidth == 64:
                 operands = [value & 0xffffffff, value >> 32]
             else:
                 operands = [value]
             return self.get_global_inst('OpConstant', type_id, operands)
         elif (type_id.inst.op_name == 'OpTypeVector' or
               type_id.inst.op_name == 'OpTypeMatrix'):
+            elem_type_id = type_id.inst.operands[0]
             nof_elements = type_id.inst.operands[1]
             if not isinstance(value, (list, tuple)):
                 value = [value] * nof_elements
             operands = []
             for elem in value:
-                instr = self.get_constant(type_id.inst.operands[0], elem)
+                instr = self.get_constant(elem_type_id, elem)
                 operands.append(instr.result_id)
             return self.get_global_inst('OpConstantComposite', type_id,
                                         operands)
