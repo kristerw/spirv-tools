@@ -874,23 +874,18 @@ class Instruction(object):
         type_id = self.type_id
         if (type_id.inst.op_name == 'OpTypeFloat' and
                 isinstance(value, float)):
-            bitvalue = float_to_bits(type_id.inst.operands[0], value)
-            if type_id.inst.operands[0] == 64:
+            bitwidth = type_id.inst.operands[0]
+            bitvalue = float_to_bits(bitwidth, value)
+            if bitwidth == 64:
                 operands = [bitvalue & 0xffffffff, bitvalue >> 32]
             else:
                 operands = [bitvalue]
             return self.operands == operands
         elif (type_id.inst.op_name == 'OpTypeInt' or
               type_id.inst.op_name == 'OpTypeFloat'):
-            min_val, max_val = get_int_type_range(type_id)
-            if value < 0:
-                if value < min_val:
-                    raise IRError('Value out of range')
-                value = value & max_val
-            else:
-                if value > max_val:
-                    raise IRError('Value out of range')
-            if type_id.inst.operands[0] == 64:
+            bitwidth = type_id.inst.operands[0]
+            value = value & ((1 << bitwidth) - 1)
+            if bitwidth == 64:
                 operands = [value & 0xffffffff, value >> 32]
             else:
                 operands = [value]
