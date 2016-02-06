@@ -5,13 +5,6 @@ be run after."""
 from spirv_tools import ir
 
 
-def get_value(inst):
-    # TODO: Handler integers and floats too.
-    assert (inst.op_name == 'OpConstantTrue' or
-            inst.op_name == 'OpConstantFalse')
-    return True if inst.op_name == 'OpConstantTrue' else False
-
-
 def transform_1op_componentwise(module, transform, type_id, const_inst):
     """Helper function for transform_componentwise)."""
     if type_id.inst.op_name in ['OpTypeVector', 'OpTypeMatrix']:
@@ -86,28 +79,48 @@ def optimize_OpCompositeExtract(inst):
     return result_inst
 
 
+def optimize_OpIAdd(module, inst):
+    transform = lambda x, y: x.value_unsigned + y.value_unsigned
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpIMul(module, inst):
+    transform = lambda x, y: x.value_unsigned * y.value_unsigned
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
 def optimize_OpLogicalAnd(module, inst):
-    transform = lambda x, y: get_value(x) and get_value(y)
+    transform = lambda x, y: x.value and y.value
     return transform_componentwise(module, transform, inst.type_id, inst)
 
 
 def optimize_OpLogicalEqual(module, inst):
-    transform = lambda x, y: get_value(x) == get_value(y)
+    transform = lambda x, y: x.value == y.value
     return transform_componentwise(module, transform, inst.type_id, inst)
 
 
 def optimize_OpLogicalNot(module, inst):
-    transform = lambda x: not get_value(x)
+    transform = lambda x: not x.value
     return transform_componentwise(module, transform, inst.type_id, inst)
 
 
 def optimize_OpLogicalNotEqual(module, inst):
-    transform = lambda x, y: get_value(x) != get_value(y)
+    transform = lambda x, y: x.value != y.value
     return transform_componentwise(module, transform, inst.type_id, inst)
 
 
 def optimize_OpLogicalOr(module, inst):
-    transform = lambda x, y: get_value(x) or get_value(y)
+    transform = lambda x, y: x.value or y.value
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpNot(module, inst):
+    transform = lambda x: x.value_unsigned^((1<<x.type_id.inst.operands[0])-1)
+    return transform_componentwise(module, transform, inst.type_id, inst)
+
+
+def optimize_OpSNegate(module, inst):
+    transform = lambda x: -x.value_signed
     return transform_componentwise(module, transform, inst.type_id, inst)
 
 
@@ -139,6 +152,10 @@ def optimize_inst(module, inst):
         inst = optimize_OpCompositeConstruct(module, inst)
     elif inst.op_name == 'OpCompositeExtract':
         inst = optimize_OpCompositeExtract(inst)
+    elif inst.op_name == 'OpIAdd':
+        inst = optimize_OpIAdd(module, inst)
+    elif inst.op_name == 'OpIMul':
+        inst = optimize_OpIMul(module, inst)
     elif inst.op_name == 'OpLogicalAnd':
         inst = optimize_OpLogicalAnd(module, inst)
     elif inst.op_name == 'OpLogicalEqual':
@@ -149,6 +166,10 @@ def optimize_inst(module, inst):
         inst = optimize_OpLogicalNotEqual(module, inst)
     elif inst.op_name == 'OpLogicalOr':
         inst = optimize_OpLogicalOr(module, inst)
+    elif inst.op_name == 'OpNot':
+        inst = optimize_OpNot(module, inst)
+    elif inst.op_name == 'OpSNegate':
+        inst = optimize_OpSNegate(module, inst)
     elif inst.op_name == 'OpVectorShuffle':
         inst = optimize_OpVectorShuffle(module, inst)
 
