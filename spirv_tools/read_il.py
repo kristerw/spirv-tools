@@ -107,12 +107,32 @@ class Lexer(object):
         self.line = None
 
 
+def get_int_type_range(type_id):
+    """Get valid range of an integer literal of the given type."""
+    # Type must be OpTypeInt or OpTypeFloat (the OpTypeFloat is valid,
+    # as its value is stored as integer words, and these words must
+    # have value within the integer range).
+    if type_id.inst.op_name not in ['OpTypeInt', 'OpTypeFloat']:
+        raise ParseError('Type must be OpTypeInt or OpTypeFloat')
+    bitwidth = type_id.inst.operands[0]
+    assert bitwidth in [16, 32, 64]
+    min_val = -(1 << (bitwidth - 1))
+    max_val = (1 << bitwidth) - 1
+    if type_id.inst.op_name == 'OpTypeFloat':
+        # A negative value for OpTypeFloat probably mean that the caller
+        # has made a mistake (as it does not make much sense to specify
+        # the bits of a float using negative values), so don't permit
+        # negative values.
+        min_val = 0
+    return min_val, max_val
+
+
 def get_scalar_value(token, tag, type_id):
     """Return a value from token representing a scalar constant."""
     if tag == 'INT':
         if type_id.inst.op_name != 'OpTypeInt':
             raise ParseError('Type must be OpTypeInt')
-        min_val, max_val = ir.get_int_type_range(type_id)
+        min_val, max_val = get_int_type_range(type_id)
         value = get_integer_value(token, min_val, max_val)
     elif token in ['true', 'false']:
         if type_id.inst.op_name != 'OpTypeBool':

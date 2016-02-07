@@ -638,12 +638,12 @@ class Instruction(object):
         assert self.op_name == 'OpConstant'
         assert self.type_id.inst.op_name == 'OpTypeInt'
         unsigned = self.value_unsigned
-        min_val, max_val = get_int_type_range(self.type_id)
-        signed_max_val = max_val ^ -min_val
+        bitwidth = self.type_id.inst.operands[0]
+        signed_max_val = (1 << (bitwidth - 1)) - 1
         if unsigned <= signed_max_val:
             return unsigned
         else:
-            return unsigned - max_val - 1
+            return unsigned - (1 << bitwidth)
 
     @property
     def value_unsigned(self):
@@ -977,34 +977,6 @@ def _remove_use_from_id(inst):
         if isinstance(operand, Id):
             if inst in operand.uses:
                 operand.uses.remove(inst)
-
-
-def get_int_type_range(type_id):
-    # Type must be OpTypeInt or OpTypeFloat (the OpTypeFloat is valid,
-    # as its value is stored as integer words, and these words must
-    # have value within the integer range).
-    if type_id.inst.op_name not in ['OpTypeInt', 'OpTypeFloat']:
-        raise IRError('Type must be OpTypeInt or OpTypeFloat')
-    bitwidth = type_id.inst.operands[0]
-    assert bitwidth in [16, 32, 64]
-    if bitwidth == 16:
-        min_val = -0x8000
-        max_val = 0xffff
-    elif bitwidth == 32:
-        min_val = -0x80000000
-        max_val = 0xffffffff
-    else:
-        min_val = -0x8000000000000000
-        max_val = 0xffffffffffffffff
-
-    if type_id.inst.op_name == 'OpTypeFloat':
-        # A negative value for OpTypeFloat probably mean that the caller
-        # has made a mistake (as it does not make much sense to specify
-        # the bits of a float using negative values), so don't permit
-        # negative values.
-        min_val = 0
-
-    return min_val, max_val
 
 
 def float_to_bits(bitwidth, value):
