@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015 The Khronos Group Inc.
+# Copyright (c) 2014-2016 The Khronos Group Inc.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and/or associated documentation files (the "Materials"),
@@ -42,7 +42,7 @@
 spv = {
     'MagicNumber' : 0x07230203,
     'Version' : 0x00010000,
-    'Revision' : 2,
+    'Revision' : 4,
     'OpCodeMask' : 0xffff,
     'WordCountShift' : 16,
 
@@ -554,6 +554,7 @@ spv = {
         'GeometryStreams' : 54,
         'StorageImageReadWithoutFormat' : 55,
         'StorageImageWriteWithoutFormat' : 56,
+        'MultiViewport' : 57,
     },
 
     'Op' : {
@@ -850,6 +851,7 @@ spv = {
         'OpNoLine' : 317,
         'OpAtomicFlagTestAndSet' : 318,
         'OpAtomicFlagClear' : 319,
+        'OpImageSparseRead' : 320,
     },
 
 }
