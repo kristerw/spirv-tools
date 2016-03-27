@@ -316,6 +316,12 @@ position.
   <dt><code>prepend_inst(inst)</code></dt>
   <dd>Insert instruction <code>inst</code> at the top of the basic block.</dd>
 
+  <dt><code>insert_after(insert_pos_bb)</code></dt>
+  <dd>Insert this basic block after the basic block <code>insert_pos_bb</code>.</dd>
+
+  <dt><code>insert_before(insert_pos_bb)</code></dt>
+  <dd>Insert this basic block before the basic block <code>insert_pos_bb</code>.</dd>
+
   <dt><code>remove()</code></dt>
   <dd>Remove this basic block from function.</dd>
 
@@ -471,6 +477,10 @@ position.
   <dt><code>basic_block</code></dt>
   <dd>The basic block containing this instruction, or <code>None</code> if
   this instruction is not inserted into a basic block.</dd>
+
+  <dt><code>function</code></dt>
+  <dd>The function containing this instruction, or <code>None</code> if
+  this instruction is not inserted into a function.</dd>
 </dl>
 
 ###class ir.Id

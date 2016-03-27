@@ -344,6 +344,7 @@ class _GlobalInstructions(object):
             idx = insert_list.index(insert_pos_inst)
             insert_list.insert(idx, inst)
             inst.basic_block = self
+            inst.function = self.function
             _add_use_to_id(inst)
         else:
             if inst_ord < insert_ord:
@@ -369,8 +370,10 @@ class Function(object):
                                 type_id.inst.operands[0],
                                 [function_control, type_id],
                                 result_id=result_id)
+        self.inst.function = self
         _add_use_to_id(self.inst)
         self.end_inst = Instruction(self.module, 'OpFunctionEnd', None, [])
+        self.end_inst.function = self
         _add_use_to_id(self.end_inst)
 
     def __str__(self):
@@ -449,31 +452,46 @@ class Function(object):
         if inst.type_id != params[param_idx]:
             raise IRError('Incorrect parameter type')
         self.parameters.append(inst)
+        inst.function = self
         _add_use_to_id(inst)
 
     def append_basic_block(self, basic_block):
         """Insert basic block at the end of the function."""
         self.basic_blocks.append(basic_block)
         basic_block.function = self
+        basic_block.inst.function = self
+        for inst in basic_block.insts:
+            inst.function = self
 
     def prepend_basic_block(self, basic_block):
         """Insert basic block at the top of the function."""
         self.basic_blocks = [basic_block] + self.basic_blocks
         basic_block.function = self
+        basic_block.inst.function = self
+        for inst in basic_block.insts:
+            inst.function = self
 
     def insert_basic_block_after(self, basic_block, insert_pos_basic_block):
         """Insert basic block after an existing basic block."""
         idx = self.basic_blocks.index(insert_pos_basic_block)
         self.basic_blocks.insert(idx + 1, basic_block)
+        basic_block.function = self
+        basic_block.inst.function = self
+        for inst in basic_block.insts:
+            inst.function = self
 
     def insert_basic_block_before(self, basic_block, insert_pos_basic_block):
         """Insert basic block before an existing basic block."""
         idx = self.basic_blocks.index(insert_pos_basic_block)
         self.basic_blocks.insert(idx, basic_block)
+        basic_block.function = self
+        basic_block.inst.function = self
+        for inst in basic_block.insts:
+            inst.function = self
 
 
 class BasicBlock(object):
-    def __init__(self, module, label_id):
+    def __init__(self, module, label_id=None):
         self.function = None
         self.module = module
         self.inst = Instruction(self.module, 'OpLabel', None, [],
@@ -525,6 +543,7 @@ class BasicBlock(object):
             raise IRError(inst.op_name + ' is a global instruction')
         self.insts.append(inst)
         inst.basic_block = self
+        inst.function = self.function
         _add_use_to_id(inst)
 
     def prepend_inst(self, inst):
@@ -533,6 +552,7 @@ class BasicBlock(object):
             raise IRError(inst.op_name + ' is a global instruction')
         self.insts = [inst] + self.insts
         inst.basic_block = self
+        inst.function = self.function
         _add_use_to_id(inst)
 
     def insert_inst_after(self, inst, insert_pos_inst):
@@ -540,6 +560,7 @@ class BasicBlock(object):
         idx = self.insts.index(insert_pos_inst)
         self.insts.insert(idx + 1, inst)
         inst.basic_block = self
+        inst.function = self.function
         _add_use_to_id(inst)
 
     def insert_inst_before(self, inst, insert_pos_inst):
@@ -547,6 +568,7 @@ class BasicBlock(object):
         idx = self.insts.index(insert_pos_inst)
         self.insts.insert(idx, inst)
         inst.basic_block = self
+        inst.function = self.function
         _add_use_to_id(inst)
 
     def remove_inst(self, inst):
@@ -554,6 +576,21 @@ class BasicBlock(object):
         _remove_use_from_id(inst)
         self.insts.remove(inst)
         inst.basic_block = None
+        inst.function = None
+
+    def insert_after(self, insert_pos_bb):
+        """Insert basic block after an existing basic_block."""
+        function = insert_pos_bb.function
+        if function is None:
+            raise IRError('Basic block is not in a function')
+        function.insert_basic_block_after(self, insert_pos_bb)
+
+    def insert_before(self, insert_pos_bb):
+        """Insert basic_block before an existing basic block."""
+        function = insert_pos_bb.function
+        if function is None:
+            raise IRError('Basic block is not in a function')
+        function.insert_basic_block_before(self, insert_pos_bb)
 
     def remove(self):
         """Remove basic block from function."""
@@ -561,6 +598,8 @@ class BasicBlock(object):
             raise IRError('Basic block is not in function')
         self.function.basic_blocks.remove(self)
         self.function = None
+        for inst in self.insts:
+            inst.function = self
 
     def destroy(self):
         """Destroy the basic block.
@@ -601,6 +640,7 @@ class Instruction(object):
         self.type_id = type_id
         self.operands = operands
         self.basic_block = None
+        self.function = None
         if op_name == 'OpFunction':
             function_type_inst = operands[1].inst
             if function_type_inst.op_name != 'OpTypeFunction':
@@ -748,6 +788,7 @@ class Instruction(object):
         if self.result_id is not None:
             self.result_id.inst = None
         self.basic_block = None
+        self.function = None
         self.op_name = None
         self.result_id = None
         self.type_id = None
