@@ -350,14 +350,6 @@ position.
 ###class ir.Instruction
 ####ir.Instruction – Methods
 <dl>
-  <dt><code>clone()</code></dt>
-  <dd><p>Return a copy of the instruction.
-  </p><p>
-  The new instruction is identical to this instruction, except that
-  it has a new <code>result_id</code> (for instruction types that have a
-  <code>result_id</code>).
-  </p></dd>
-
   <dt><code>insert_after(insert_pos_inst)</code></dt>
   <dd>Insert this instruction after the instruction <code>insert_pos_inst</code>.</dd>
 

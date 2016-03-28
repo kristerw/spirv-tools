@@ -739,15 +739,6 @@ class Instruction(object):
                 return [elem_id.inst.value for elem_id in self.operands]
         raise IRError('Unhandled instruction: ' + str(self))
 
-    def clone(self):
-        """Create a copy of the instruction.
-
-        The new instruction is identical to this instruction, except that
-        it has a new result_id (if the instruction type has a result_id),
-        and it is not bound to any basic block."""
-        return Instruction(self.module, self.op_name, self.type_id,
-                           self.operands[:])
-
     def insert_after(self, insert_pos_inst):
         """Insert instruction after an existing instruction."""
         basic_block = insert_pos_inst.basic_block
