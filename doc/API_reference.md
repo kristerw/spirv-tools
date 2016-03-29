@@ -473,6 +473,24 @@ position.
   <dt><code>function</code></dt>
   <dd>The function containing this instruction, or <code>None</code> if
   this instruction is not inserted into a function.</dd>
+
+  <dt><code>value</code></dt>
+  <dd>The value of a constant instruction.
+  The constant may be of scalar, vector, or matrix type, and the value is
+  returned as a scalar value or a list in the same way as the input format to
+  <code>Module.get_constant</code>.</dd>
+
+  <dt><code>value_signed</code></dt>
+  <dd>The value of an integer constant instruction as signed integer.
+  The constant may be of scalar, vector, or matrix type, and the value is
+  returned as a scalar value or a list in the same way as the input format to
+  <code>Module.get_constant</code>.</dd>
+
+  <dt><code>value_unsigned</code></dt>
+  <dd>The value of an integer constant instruction as unsigned integer.
+  The constant may be of scalar, vector, or matrix type, and the value is
+  returned as a scalar value or a list in the same way as the input format to
+  <code>Module.get_constant</code>.</dd>
 </dl>
 
 ###class ir.Id
