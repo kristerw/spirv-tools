@@ -1,4 +1,7 @@
-"""Instruction descriptions for the OpenCL extended instruction set."""
+"""Instruction descriptions for the "OpenCL Extended Instruction Set"
+version 1.00, revision 2.
+"""
+
 INST_FORMAT = {
     0 : {
         'name' : 'acos',
