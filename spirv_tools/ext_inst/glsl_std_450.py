@@ -1,3 +1,7 @@
+"""Instruction descriptions for the "SPIR-V Extended Instructions for GLSL"
+version 1.00, revision 2.
+"""
+
 INST_FORMAT = {
     1 : {
         'name' : 'Round',
@@ -198,7 +202,7 @@ INST_FORMAT = {
         'is_commutative' : False
     },
     34 : {
-        'name' : 'Inverse',
+        'name' : 'MatrixInverse',
         'operands' : ['Id'],
         'has_side_effects' : False,
         'is_commutative' : False
@@ -271,12 +275,6 @@ INST_FORMAT = {
     },
     46 : {
         'name' : 'FMix',
-        'operands' : ['Id', 'Id', 'Id'],
-        'has_side_effects' : False,
-        'is_commutative' : False
-    },
-    47 : {
-        'name' : 'IMix',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
@@ -414,7 +412,7 @@ INST_FORMAT = {
         'is_commutative' : False
     },
     70 : {
-        'name' : 'Faceforward',
+        'name' : 'FaceForward',
         'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
@@ -464,6 +462,24 @@ INST_FORMAT = {
     78 : {
         'name' : 'InterpolateAtOffset',
         'operands' : ['Id', 'Id'],
+        'has_side_effects' : False,
+        'is_commutative' : False
+    },
+    79 : {
+        'name' : 'NMin',
+        'operands' : ['Id', 'Id'],
+        'has_side_effects' : False,
+        'is_commutative' : False
+    },
+    80 : {
+        'name' : 'NMax',
+        'operands' : ['Id', 'Id'],
+        'has_side_effects' : False,
+        'is_commutative' : False
+    },
+    81 : {
+        'name' : 'NClamp',
+        'operands' : ['Id', 'Id', 'Id'],
         'has_side_effects' : False,
         'is_commutative' : False
     },
