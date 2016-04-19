@@ -22,6 +22,32 @@ def remove_decoration_if_dead(inst):
             inst.destroy()
 
 
+def process_function(module, function):
+    """Run the pass on one function."""
+    # We need to re-run the pass if elimination of a phi-node makes
+    # instructions dead in an already processed basic block.
+    rerun = True
+    while rerun:
+        rerun = False
+        processed_bbs = set()
+        for inst in function.instructions_reversed():
+            if inst.op_name == 'OpLabel':
+                processed_bbs.add(inst.basic_block)
+            if not inst.has_side_effects() and not inst.uses():
+                if inst.op_name == 'OpPhi':
+                    processed_bbs.add(inst.basic_block)
+                    operands = inst.operands[:]
+                    inst.destroy()
+                    for operand in operands:
+                        if (operand.inst.op_name != 'OpLabel' and
+                                operand.inst.basic_block in processed_bbs and
+                                not operand.inst.uses()):
+                            rerun = True
+                            break
+                else:
+                    inst.destroy()
+
+
 def run(module):
     """Remove all unused instructions."""
 
@@ -41,27 +67,11 @@ def run(module):
     for inst in reversed(module.global_instructions.decoration_insts):
         remove_decoration_if_dead(inst)
 
-    # Remove unused instructions.
-    #
-    # We need to re-run the pass if elimination of a phi-node makes
-    # instructions dead in an already processed basic block.
-    rerun = True
-    while rerun:
-        rerun = False
-        processed_bbs = set()
-        for inst in module.instructions_reversed():
-            if inst.op_name == 'OpLabel':
-                processed_bbs.add(inst.basic_block)
-            if not inst.has_side_effects() and not inst.uses():
-                if inst.op_name == 'OpPhi':
-                    processed_bbs.add(inst.basic_block)
-                    operands = inst.operands[:]
-                    inst.destroy()
-                    for operand in operands:
-                        if (operand.inst.op_name != 'OpLabel' and
-                                operand.inst.basic_block in processed_bbs and
-                                not operand.inst.uses()):
-                            rerun = True
-                            break
-                else:
-                    inst.destroy()
+    # Remove unused instructions in functions.
+    for function in module.functions:
+        process_function(module, function)
+
+    # Remove unused global instructions.
+    for inst in module.global_instructions.instructions_reversed():
+        if not inst.has_side_effects() and not inst.uses():
+            inst.destroy()

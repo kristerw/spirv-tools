@@ -399,10 +399,15 @@ def optimize_inst(module, inst):
     return inst
 
 
+def process_function(module, function):
+    """Run the pass on one function."""
+    for inst in function.instructions():
+        optimized_inst = optimize_inst(module, inst)
+        if optimized_inst != inst:
+            inst.replace_uses_with(optimized_inst)
+
+
 def run(module):
     """Combine/simplify instructions, to fewer/simpler instructions"""
     for function in module.functions:
-        for inst in function.instructions():
-            optimized_inst = optimize_inst(module, inst)
-            if optimized_inst != inst:
-                inst.replace_uses_with(optimized_inst)
+        process_function(module, function)

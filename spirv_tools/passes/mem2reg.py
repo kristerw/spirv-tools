@@ -97,13 +97,17 @@ def optimize_variable(module, func, var_inst):
     var_inst.destroy()
 
 
+def process_function(module, function):
+    """Run the pass on one function."""
+    for inst in function.basic_blocks[0].insts[:]:
+        # The variables must be defined at the top of the basic block,
+        # i.e. we are done when we find the first non-OpVariable inst.
+        if inst.op_name != 'OpVariable':
+            break
+        optimize_variable(module, function, inst)
+
+
 def run(module):
     """Change OpVariable (of Function storage class) to registers."""
     for function in module.functions:
-        for inst in function.basic_blocks[0].insts[:]:
-            # The variables must be defined at the top of the basic block,
-            # i.e. we are done when we find the first non-OpVariable inst.
-            if inst.op_name != 'OpVariable':
-                break
-
-            optimize_variable(module, function, inst)
+        process_function(module, function)
