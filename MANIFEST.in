@@ -1,0 +1,4 @@
+include doc/*md
+
+include README.rst
+include LICENSE
