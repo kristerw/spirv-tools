@@ -21,7 +21,14 @@ def format_mask(kind, mask_list):
     if not mask_list:
         return [val for val in spirv.spv[kind] if spirv.spv[kind][val] == 0][0]
     separator = ' | '
-    return separator.join(mask_list)
+
+    def stringify_mask_entry(e):
+        if isinstance(e, tuple):
+            return "%s(%s)" % (e[0], ", ".join(str(i) for i in e[1:]))
+        else:
+            return e
+
+    return separator.join(stringify_mask_entry(e) for e in mask_list)
 
 
 def output_extinst_instruction(stream, module, inst, is_raw_mode, indent='  '):

@@ -202,6 +202,20 @@ def parse_operand(binary, module, kind):
             operands.append(word)
             tmp_id = parse_id(binary, module)
             operands.append(tmp_id)
+    elif kind == 'OptionalMemoryAccessMask':
+        val = binary.get_next_word(accept_eol=True)
+        if val is None:
+            return []
+        result = expand_mask(kind[8:], val)
+        try:
+            aligned_idx = result.index('Aligned')
+        except ValueError:
+            pass
+        else:
+            result[aligned_idx] = (
+                    'Aligned', binary.get_next_word(accept_eol=False))
+        return [result]
+
     elif kind[:8] == 'Optional' and kind[-4:] == 'Mask':
         val = binary.get_next_word(accept_eol=True)
         if val is None:
