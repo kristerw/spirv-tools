@@ -310,7 +310,7 @@ def format_type_name(module, inst):
         if width not in [8, 16, 32, 64]:
             raise ir.IRError("Invalid OpTypeInt width " + str(width))
         signedness = inst.operands[1]
-        if not signedness in [0, 1]:
+        if signedness not in [0, 1]:
             error = "Invalid OpTypeInt signedness " + str(signedness)
             raise ir.IRError(error)
         type_name = 's' if signedness else 'u'
