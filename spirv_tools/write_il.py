@@ -86,7 +86,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     kind = None
     if inst.operands:
         line = line + ' '
-        operand_kind = zip(inst.operands, op_format['operands'])
+        operand_kind = list(zip(inst.operands, op_format['operands']))
         while operand_kind:
             operand, kind = operand_kind[0]
             if kind == 'Id' or kind == 'OptionalId':
