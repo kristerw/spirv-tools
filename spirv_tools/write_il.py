@@ -21,7 +21,14 @@ def format_mask(kind, mask_list):
     if not mask_list:
         return [val for val in spirv.spv[kind] if spirv.spv[kind][val] == 0][0]
     separator = ' | '
-    return separator.join(mask_list)
+
+    def stringify_mask_entry(e):
+        if isinstance(e, tuple):
+            return "%s(%s)" % (e[0], ", ".join(str(i) for i in e[1:]))
+        else:
+            return e
+
+    return separator.join(stringify_mask_entry(e) for e in mask_list)
 
 
 def output_extinst_instruction(stream, module, inst, is_raw_mode, indent='  '):
@@ -86,7 +93,7 @@ def output_instruction(stream, module, inst, is_raw_mode, indent='  '):
     kind = None
     if inst.operands:
         line = line + ' '
-        operand_kind = zip(inst.operands, op_format['operands'])
+        operand_kind = list(zip(inst.operands, op_format['operands']))
         while operand_kind:
             operand, kind = operand_kind[0]
             if kind == 'Id' or kind == 'OptionalId':
@@ -310,7 +317,7 @@ def format_type_name(module, inst):
         if width not in [8, 16, 32, 64]:
             raise ir.IRError("Invalid OpTypeInt width " + str(width))
         signedness = inst.operands[1]
-        if not signedness in [0, 1]:
+        if signedness not in [0, 1]:
             error = "Invalid OpTypeInt signedness " + str(signedness)
             raise ir.IRError(error)
         type_name = 's' if signedness else 'u'
